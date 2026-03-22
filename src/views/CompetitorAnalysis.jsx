@@ -34,12 +34,12 @@ const CompetitorAnalysis = () => {
           details: item.details
         }));
 
-        // 2. Fetch Social Mentions
+        // 2. Fetch Social Mentions (sort by insertion time to guarantee fresh data)
         const { data: mentions, error: errMentions } = await supabase
           .from('social_mentions')
           .select('*')
-          .order('posted_at', { ascending: false })
-          .limit(100); // Fetch enough for pagination
+          .order('created_at', { ascending: false })
+          .limit(40); // Only show the newly pulled region-specific data
           
         if (errMentions) console.error("Error fetching mentions:", errMentions);
 
