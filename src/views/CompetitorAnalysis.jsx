@@ -46,14 +46,15 @@ const CompetitorAnalysis = () => {
         const formattedMentions = (mentions || []).map(item => ({
           platform: item.platform,
           brand: item.brand,
-          date: new Date(item.posted_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+          date: new Date(item.posted_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
           username: item.username,
           snippet: item.snippet,
           views: item.views || 0,
           likes: item.likes || 0,
           comments: item.comments || 0,
           shares: item.shares || 0,
-          url: item.url
+          url: item.url,
+          raw_date: new Date(item.posted_at) // Added for internal sorting
         }));
 
         // Fallback mock data if DB is completely empty (just for UI preview right after creation)
@@ -62,7 +63,9 @@ const CompetitorAnalysis = () => {
         }
 
         // 3. Process Trend Data from mentions (Group by date and brand)
-        // This is a simple client-side aggregation. In production, a database view or RPC is better.
+        // Sort mentions by raw_date desc before setting
+        const sortedMentions = formattedMentions.sort((a, b) => b.raw_date - a.raw_date);
+
         const trends = {};
         (mentions || []).forEach(m => {
           const dateStr = new Date(m.posted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -78,7 +81,7 @@ const CompetitorAnalysis = () => {
         const formattedTrends = Object.values(trends).sort((a, b) => new Date(a.date) - new Date(b.date));
 
         setCompetitorData(formattedUpdates);
-        setMentionsData(formattedMentions);
+        setMentionsData(sortedMentions);
         setTrendData(formattedTrends);
         
       } catch (err) {
