@@ -51,19 +51,31 @@ const CompetitorAnalysis = () => {
           return true;
         });
 
-        const formattedMentions = uniqueMentions.map(item => ({
-          platform: item.platform,
-          brand: item.brand,
-          date: new Date(item.posted_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
-          username: item.username,
-          snippet: item.snippet,
-          views: item.views || 0,
-          likes: item.likes || 0,
-          comments: item.comments || 0,
-          shares: item.shares || 0,
-          url: item.url,
-          raw_date: new Date(item.posted_at) // Added for internal sorting
-        }));
+        const formattedMentions = uniqueMentions.map(item => {
+          let snippet = item.snippet;
+          let type = '';
+          if (item.platform === 'instagram' && snippet && snippet.startsWith('[TYPE:')) {
+            const endIdx = snippet.indexOf(']');
+            if (endIdx > 0) {
+              type = snippet.substring(6, endIdx);
+              snippet = snippet.substring(endIdx + 1).trim();
+            }
+          }
+          return {
+            platform: item.platform,
+            brand: item.brand,
+            date: new Date(item.posted_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
+            username: item.username,
+            snippet: snippet,
+            type: type,
+            views: item.views || 0,
+            likes: item.likes || 0,
+            comments: item.comments || 0,
+            shares: item.shares || 0,
+            url: item.url,
+            raw_date: new Date(item.posted_at)
+          };
+        });
 
         // Fallback mock data if DB is completely empty (just for UI preview right after creation)
         if (formattedUpdates.length === 0 && formattedMentions.length === 0) {
