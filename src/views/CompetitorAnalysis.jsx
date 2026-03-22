@@ -94,7 +94,7 @@ const CompetitorAnalysis = () => {
   return (
     <div className="view-container fade-in">
       <div className="view-header">
-        <h1>Market Intelligence</h1>
+        <h1>Market Intelligence (Supabase Edition)</h1>
         <p>Real-time tracking of brand demand, search interest, and competitor activities.</p>
       </div>
 
