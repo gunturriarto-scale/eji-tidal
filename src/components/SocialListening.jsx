@@ -245,7 +245,7 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
         {SOCIAL_TABS.map(tab => (
           <button
             key={tab.id}
@@ -274,10 +274,64 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
         ))}
       </div>
 
+      {/* Brand Section: Skintific */}
+      <div style={{ marginBottom: '3rem', padding: '1.5rem', background: 'rgba(99, 102, 241, 0.03)', borderRadius: '16px', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#6366f1' }}></div>
+          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Skintific Performance</h3>
+        </div>
+        
+        {/* Skintific Scorecards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {[
+            { label: 'Views', value: skintificData.reduce((acc, m) => acc + (m.views || 0), 0), icon: <Eye size={16} />, color: 'var(--text-primary)' },
+            { label: 'Likes', value: skintificData.reduce((acc, m) => acc + (m.likes || 0), 0), icon: <Heart size={16} />, color: 'var(--accent-tertiary)' },
+            { label: 'Comments', value: skintificData.reduce((acc, m) => acc + (m.comments || 0), 0), icon: <MessageCircle size={16} />, color: 'var(--accent-primary)' },
+            { label: 'Shares', value: skintificData.reduce((acc, m) => acc + (m.shares || 0), 0), icon: <Share2 size={16} />, color: 'var(--success)' }
+          ].map((metric, i) => (
+            <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ color: metric.color }}>{metric.icon}</div>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{metric.label}</p>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{formatNumber(metric.value)}</h4>
+              </div>
+            </div>
+          ))}
+        </div>
+        {renderTable('Skintific', skintificData, pageSkintific, setPageSkintific)}
+      </div>
+
+      {/* Brand Section: Glad2Glow */}
+      <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(236, 72, 153, 0.03)', borderRadius: '16px', border: '1px solid rgba(236, 72, 153, 0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ec4899' }}></div>
+          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Glad2Glow Performance</h3>
+        </div>
+        
+        {/* Glad2Glow Scorecards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+          {[
+            { label: 'Views', value: glad2glowData.reduce((acc, m) => acc + (m.views || 0), 0), icon: <Eye size={16} />, color: 'var(--text-primary)' },
+            { label: 'Likes', value: glad2glowData.reduce((acc, m) => acc + (m.likes || 0), 0), icon: <Heart size={16} />, color: 'var(--accent-tertiary)' },
+            { label: 'Comments', value: glad2glowData.reduce((acc, m) => acc + (m.comments || 0), 0), icon: <MessageCircle size={16} />, color: 'var(--accent-primary)' },
+            { label: 'Shares', value: glad2glowData.reduce((acc, m) => acc + (m.shares || 0), 0), icon: <Share2 size={16} />, color: 'var(--success)' }
+          ].map((metric, i) => (
+            <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ color: metric.color }}>{metric.icon}</div>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{metric.label}</p>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{formatNumber(metric.value)}</h4>
+              </div>
+            </div>
+          ))}
+        </div>
+        {renderTable('Glad2Glow', glad2glowData, pageGlad2Glow, setPageGlad2Glow)}
+      </div>
+
       {/* Trend Chart Area */}
-      <div style={{ width: '100%', height: '320px', marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '1.5rem' }}>
+      <div style={{ width: '100%', height: '320px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '1.5rem', marginTop: '2rem' }}>
         <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-          Daily Mentions Trend ({activeTab.toUpperCase()})
+          Daily Overall Mentions Trend ({activeTab.toUpperCase()})
         </h3>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={dynamicTrendData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -290,12 +344,6 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
             <Line type="monotone" dataKey="glad2glow" name="Glad2Glow" stroke="#ec4899" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
           </LineChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* Tables Container */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        {renderTable('Skintific', skintificData, pageSkintific, setPageSkintific)}
-        {renderTable('Glad2Glow', glad2glowData, pageGlad2Glow, setPageGlad2Glow)}
       </div>
     </div>
   );
