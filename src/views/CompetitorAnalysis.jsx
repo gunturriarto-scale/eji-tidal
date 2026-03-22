@@ -38,8 +38,8 @@ const CompetitorAnalysis = () => {
         const { data: mentions, error: errMentions } = await supabase
           .from('social_mentions')
           .select('*')
-          .order('created_at', { ascending: false })
-          .limit(400); // Increased limit to show all recent hybrid data
+          .order('posted_at', { ascending: false })
+          .limit(600);
           
         if (errMentions) console.error("Error fetching mentions:", errMentions);
 
