@@ -39,7 +39,7 @@ const CompetitorAnalysis = () => {
           .from('social_mentions')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(40); // Only show the newly pulled region-specific data
+          .limit(400); // Increased limit to show all recent hybrid data
           
         if (errMentions) console.error("Error fetching mentions:", errMentions);
 
