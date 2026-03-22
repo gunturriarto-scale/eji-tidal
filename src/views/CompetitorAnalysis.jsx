@@ -6,6 +6,7 @@ import SocialListening from '../components/SocialListening';
 const CompetitorAnalysis = () => {
   const [competitorData, setCompetitorData] = useState([]);
   const [mentionsData, setMentionsData] = useState([]);
+  const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,30 +23,49 @@ const CompetitorAnalysis = () => {
           { timestamp: "2026-03-19T18:20:00", brand: "Glad2Glow", platform: "TikTok", severity: "Minor", updateType: "KOL Review", details: "Video viral review Pomegranate 5% Niacinamide dari TikToker Skincare. View tembus 500k." }
         ];
         
-        // Mock data for Social Listening / Mentions
+        // Mock data for Social Listening / Mentions Raw
         const mockMentions = [];
         const platforms = ['tiktok', 'x', 'youtube'];
         const brands = ['skintific', 'glad2glow'];
         
-        // Generate 25 fake rows per brand per platform to test pagination
         brands.forEach(brand => {
           platforms.forEach(platform => {
             for (let i = 1; i <= 25; i++) {
               mockMentions.push({
                 platform: platform,
                 brand: brand,
-                date: `Mar ${Math.floor(Math.random() * 22) + 1}, 2026`,
+                date: `Mar ${23 - (i%5)}, 2026`,
                 username: `user_${Math.floor(Math.random() * 9000) + 1000}`,
-                snippet: `Pake ${brand} emang the best sih! Gak nyesel beli pas lagi promo. #skincare #review ${platform} is awesome. Beneran bikin glowing.`,
-                engagement: `${Math.floor(Math.random() * 100)}k`,
+                snippet: platform === 'tiktok' 
+                  ? `[Review] nyobain ${brand} viral ini, worth it gak ya? Tonton sampe habis guys! ✨🔥`
+                  : `Baru aja CO ${brand} pas lagi promo, semoga cocok di kulit kombinasiku. Bismillah! 🥺✨`,
+                views: Math.floor(Math.random() * 500000) + 5000,
+                likes: Math.floor(Math.random() * 50000) + 500,
+                comments: Math.floor(Math.random() * 2000) + 20,
+                shares: Math.floor(Math.random() * 5000) + 10,
                 url: 'https://google.com'
               });
             }
           });
         });
 
+        // Mock data for Mention Trends Line Chart
+        const mockTrendData = [];
+        const days = ['Mar 16', 'Mar 17', 'Mar 18', 'Mar 19', 'Mar 20', 'Mar 21', 'Mar 22'];
+        platforms.forEach(platform => {
+          days.forEach(day => {
+            mockTrendData.push({
+              platform: platform,
+              date: day,
+              skintific: Math.floor(Math.random() * 800) + 200, // Range 200-1000
+              glad2glow: Math.floor(Math.random() * 700) + 150  // Range 150-850
+            });
+          });
+        });
+
         setCompetitorData(mockWatchData);
         setMentionsData(mockMentions);
+        setTrendData(mockTrendData);
       } catch (err) {
         console.error("Error loading data:", err);
       } finally {
@@ -75,7 +95,7 @@ const CompetitorAnalysis = () => {
       <CompetitorWatch data={competitorData} />
 
       {/* Social Listening UI (UGC Mentions) */}
-      <SocialListening mentionsData={mentionsData} />
+      <SocialListening mentionsData={mentionsData} trendData={trendData} />
 
       <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
         <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem', textAlign: 'center' }}>
