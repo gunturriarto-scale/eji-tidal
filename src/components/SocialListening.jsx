@@ -15,13 +15,65 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
   const [pageGlad2Glow, setPageGlad2Glow] = useState(1);
   const itemsPerPage = 10;
 
-  // Filter data by platform
-  const currentData = mentionsData.filter(d => d.platform.toLowerCase() === activeTab);
-  const skintificData = currentData.filter(d => d.brand.toLowerCase() === 'skintific');
-  const glad2glowData = currentData.filter(d => d.brand.toLowerCase() === 'glad2glow');
+  // Date Filter States
+  const [datePreset, setDatePreset] = useState('30d');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Filter trend data by platform
-  const currentTrendData = trendData.filter(d => d.platform.toLowerCase() === activeTab);
+  // Handle Preset Changes
+  const handlePresetChange = (preset) => {
+    setDatePreset(preset);
+    const now = new Date();
+    const end = now.toISOString().split('T')[0];
+    setEndDate(end);
+
+    if (preset === '7d') {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      setStartDate(d.toISOString().split('T')[0]);
+    } else if (preset === '30d') {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      setStartDate(d.toISOString().split('T')[0]);
+    } else if (preset === 'all') {
+      setStartDate('2026-01-01');
+    }
+  };
+
+  // Filter Data based on Date & Platform
+  const filterByDate = (items) => {
+    return items.filter(item => {
+      const dateToCompare = item.posted_at || item.raw_date;
+      if (!dateToCompare) return true;
+      const itemDate = new Date(dateToCompare).toISOString().split('T')[0];
+      return itemDate >= startDate && itemDate <= endDate;
+    });
+  };
+
+  const filteredMentions = filterByDate(mentionsData).filter(d => d.platform.toLowerCase() === activeTab);
+  const skintificData = filteredMentions.filter(d => d.brand.toLowerCase() === 'skintific');
+  const glad2glowData = filteredMentions.filter(d => d.brand.toLowerCase() === 'glad2glow');
+
+  // Trend Data dynamic calculation based on filtered mentions
+  const calculateTrends = () => {
+    const trends = {};
+    filteredMentions.forEach(m => {
+      const dateStr = new Date(m.posted_at || m.raw_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const key = dateStr;
+      if (!trends[key]) {
+        trends[key] = { date: dateStr, skintific: 0, glad2glow: 0, raw_date: new Date(m.posted_at || m.raw_date) };
+      }
+      if (m.brand.toLowerCase() === 'skintific') trends[key].skintific += 1;
+      if (m.brand.toLowerCase() === 'glad2glow') trends[key].glad2glow += 1;
+    });
+    return Object.values(trends).sort((a, b) => a.raw_date - b.raw_date);
+  };
+
+  const dynamicTrendData = calculateTrends();
 
   // Pagination logic
   const paginate = (data, page) => {
@@ -82,11 +134,11 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
             <tbody>
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>No mentions found.</td>
+                  <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>No mentions found in selected range.</td>
                 </tr>
               ) : (
                 paginatedData.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: 'var(--text-primary)', ':hover': {background: 'rgba(255,255,255,0.01)'} }}>
+                  <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: 'var(--text-primary)', hover: {background: 'rgba(255,255,255,0.01)'} }}>
                     <td style={{ padding: '0.75rem 1rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{item.date}</td>
                     <td style={{ padding: '0.75rem 1rem', fontWeight: '500' }}>@{item.username}</td>
                     <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
@@ -138,9 +190,38 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
 
   return (
     <div className="glass-panel" style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <TrendingUp size={20} color="var(--accent-secondary)" />
-        <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Social Listening (UGC & Mentions)</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <TrendingUp size={20} color="var(--accent-secondary)" />
+          <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Social Listening (UGC & Mentions)</h2>
+        </div>
+
+        {/* Date Filter UI */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            {['7d', '30d', 'all', 'custom'].map(p => (
+              <button
+                key={p}
+                onClick={() => handlePresetChange(p)}
+                style={{
+                  padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                  background: datePreset === p ? 'var(--accent-secondary)' : 'rgba(255,255,255,0.05)',
+                  color: datePreset === p ? '#fff' : 'var(--text-secondary)',
+                  transition: '0.2s'
+                }}
+              >
+                {p.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          {datePreset === 'custom' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.75rem', padding: '0.25rem', borderRadius: '4px' }} />
+              <span style={{ color: 'var(--text-tertiary)' }}>to</span>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.75rem', padding: '0.25rem', borderRadius: '4px' }} />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -174,12 +255,12 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
       </div>
 
       {/* Trend Chart Area */}
-      <div style={{ width: '100%', height: '280px', marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '1rem' }}>
+      <div style={{ width: '100%', height: '320px', marginBottom: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '1.5rem' }}>
         <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
           Daily Mentions Trend ({activeTab.toUpperCase()})
         </h3>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={currentTrendData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+          <LineChart data={dynamicTrendData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
             <XAxis dataKey="date" stroke="var(--text-tertiary)" fontSize={11} tickMargin={10} />
             <YAxis stroke="var(--text-tertiary)" fontSize={11} tickFormatter={formatNumber} />
