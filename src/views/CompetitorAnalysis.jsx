@@ -43,7 +43,15 @@ const CompetitorAnalysis = () => {
           
         if (errMentions) console.error("Error fetching mentions:", errMentions);
 
-        const formattedMentions = (mentions || []).map(item => ({
+        // Deduplicate: If multiple records with same URL, keep the first one (latest based on order('created_at', { ascending: false }))
+        const seenUrls = new Set();
+        const uniqueMentions = (mentions || []).filter(item => {
+          if (seenUrls.has(item.url)) return false;
+          seenUrls.add(item.url);
+          return true;
+        });
+
+        const formattedMentions = uniqueMentions.map(item => ({
           platform: item.platform,
           brand: item.brand,
           date: new Date(item.posted_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }),
