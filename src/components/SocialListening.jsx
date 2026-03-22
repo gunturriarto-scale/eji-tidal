@@ -198,8 +198,12 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
                     <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.snippet}
                     </td>
-                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center', fontWeight: '700' }}>{formatNumber(item.views * 1.2)}</td>
-                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>{formatNumber(item.views)}</td>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center', fontWeight: '700' }}>
+                      {activeTab === 'instagram' && item.views === 0 ? <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: '400' }}>N/A</span> : formatNumber(item.views * 1.2)}
+                    </td>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                      {activeTab === 'instagram' && item.views === 0 ? <span style={{ color: 'rgba(255,255,255,0.2)' }}>N/A</span> : formatNumber(item.views)}
+                    </td>
                     <td style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--accent-tertiary)' }}>{formatNumber(item.likes)}</td>
                     <td style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--accent-primary)' }}>{formatNumber(item.comments)}</td>
                     <td style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--success)' }}>{formatNumber(item.shares)}</td>
