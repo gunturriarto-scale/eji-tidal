@@ -111,40 +111,44 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
     const paginatedData = paginate(data, currentPage);
 
     return (
-      <div style={{ flex: 1, minWidth: '100%', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.03)' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>{brand} Mentions</h3>
+      <div style={{ flex: 1, minWidth: '100%', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.03)' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)', fontWeight: '700' }}>{brand} Mentions</h3>
         </div>
         
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+        <div style={{ overflowX: 'auto', width: '100%', scrollbarWidth: 'thin' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', tableLayout: 'auto' }}>
             <thead>
               <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left', color: 'var(--text-secondary)' }}>
-                <th style={{ padding: '0.5rem 0.75rem', fontWeight: '500' }}>Date</th>
-                <th style={{ padding: '0.5rem 0.75rem', fontWeight: '500' }}>User</th>
-                <th style={{ padding: '0.5rem 0.75rem', fontWeight: '500' }}>Content</th>
-                <th style={{ padding: '0.5rem 0.75rem', fontWeight: '500', textAlign: 'center' }}>Views</th>
-                <th style={{ padding: '0.5rem 0.75rem', fontWeight: '500', textAlign: 'center' }}>Likes</th>
-                <th style={{ padding: '0.5rem 0.75rem', fontWeight: '500', textAlign: 'center' }}>Link</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', whiteSpace: 'nowrap' }}>Date</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', whiteSpace: 'nowrap' }}>User</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', minWidth: '150px' }}>Content</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', textAlign: 'center' }}>Views</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', textAlign: 'center' }}>Likes</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', textAlign: 'center' }}>Comms</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', textAlign: 'center' }}>Shares</th>
+                <th style={{ padding: '0.75rem 1rem', fontWeight: '600', textAlign: 'center' }}>Link</th>
               </tr>
             </thead>
             <tbody>
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>No data.</td>
+                  <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>No data found.</td>
                 </tr>
               ) : (
                 paginatedData.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: 'var(--text-primary)' }}>
-                    <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{item.date.split(' ').slice(0,2).join(' ')}</td>
-                    <td style={{ padding: '0.5rem 0.75rem', fontWeight: '500' }}>@{item.username.length > 8 ? item.username.substring(0,8)+'..' : item.username}</td>
-                    <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-secondary)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: 'var(--text-primary)', transition: 'background 0.2s', hover: { background: 'rgba(255,255,255,0.02)' } }}>
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{item.date}</td>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: '600', whiteSpace: 'nowrap' }}>@{item.username}</td>
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.snippet}
                     </td>
-                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>{formatNumber(item.views)}</td>
-                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', color: 'var(--accent-tertiary)' }}>{formatNumber(item.likes)}</td>
-                    <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
-                      <a href={item.url} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-secondary)' }}>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>{formatNumber(item.views)}</td>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--accent-tertiary)' }}>{formatNumber(item.likes)}</td>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--accent-primary)' }}>{formatNumber(item.comments)}</td>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--success)' }}>{formatNumber(item.shares)}</td>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center' }}>
+                      <a href={item.url} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-secondary)', padding: '0.25rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '4px', display: 'inline-flex' }}>
                         <ExternalLink size={12} />
                       </a>
                     </td>
