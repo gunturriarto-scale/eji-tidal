@@ -10,23 +10,59 @@ const CompetitorAnalysis = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        // Mock data to show the UI
+        // Fallback to fetch real data from Sheets if you add your context later
+        // For now, these are the force-run backdated mock updates requested
         const mockData = [
+          // SKINTIFIC
           {
-            timestamp: "Barusan - 13:45 WIB",
-            brand: "Glad2Glow",
+            timestamp: "2026-03-22T13:45:00",
+            brand: "Skintific",
             platform: "Shopee",
             severity: "Major",
-            updateType: "Flash Sale",
-            details: "Glad2Glow baru aja pasang banner Flash Sale buat Blueberry Ceramide Moisturizer. Harga turun jadi Rp 39.000 (dari normal Rp 55.000)."
+            updateType: "Promo Flash Sale",
+            details: "[NEW PROMO DETECTED] Flash Sale 5X Ceramide Barrier Repair Moisturizer Rp 119.000 (diskon dari Rp 169.000)."
           },
           {
-            timestamp: "Hari ini - 10:15 WIB",
+            timestamp: "2026-03-21T09:15:00",
+            brand: "Skintific",
+            platform: "Instagram",
+            severity: "Minor",
+            updateType: "New Post",
+            details: "Postingan edukasi: 'Kenapa kulit sensitif butuh Ceramide?' Terdapat ajakan cek Shopee Mall untuk promo bundling."
+          },
+          {
+            timestamp: "2026-03-20T16:30:00",
             brand: "Skintific",
             platform: "TikTok",
-            severity: "Minor",
+            severity: "Critical",
+            updateType: "Product Launch",
+            details: "Teaser peluncuran MSH Niacinamide Brightening Moisture Gel baru di TikTok Shop. Banyak interaksi dari KOL."
+          },
+          
+          // GLAD2GLOW
+          {
+            timestamp: "2026-03-22T14:10:00",
+            brand: "Glad2Glow",
+            platform: "Shopee",
+            severity: "Critical",
+            updateType: "Price Drop",
+            details: "[NEW PROMO DETECTED] Banting harga! Blueberry 5% Ceramide Moisturizer turun drastis ke Rp 39.000 (Flash Sale)."
+          },
+          {
+            timestamp: "2026-03-21T11:00:00",
+            brand: "Glad2Glow",
+            platform: "Instagram",
+            severity: "Major",
             updateType: "Bundle Promo",
-            details: "Bundle Eksklusif baru di TikTok Shop: 5X Ceramide + MSH Niacinamide dapet free mini cleanser."
+            details: "Promo Payday Sale di IG Story. Bundle Moisturizer + Facial Wash cuma Rp 75.000 (Diskon 50%)."
+          },
+          {
+            timestamp: "2026-03-19T18:20:00",
+            brand: "Glad2Glow",
+            platform: "TikTok",
+            severity: "Minor",
+            updateType: "KOL Review",
+            details: "Video viral review Pomegranate 5% Niacinamide dari TikToker Skincare. View tembus 500k."
           }
         ];
         
