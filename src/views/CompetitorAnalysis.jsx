@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GoogleTrendsWidget from '../components/GoogleTrendsWidget';
 import CompetitorWatch from '../components/CompetitorWatch';
 import SocialListening from '../components/SocialListening';
+import { supabase } from '../lib/supabase';
 
 const CompetitorAnalysis = () => {
   const [competitorData, setCompetitorData] = useState([]);
@@ -13,61 +14,75 @@ const CompetitorAnalysis = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        // Fake data for Competitor Watch
-        const mockWatchData = [
-          { timestamp: "2026-03-22T13:45:00", brand: "Skintific", platform: "Shopee", severity: "Major", updateType: "Promo Flash Sale", details: "[NEW PROMO DETECTED] Flash Sale 5X Ceramide Barrier Repair Moisturizer Rp 119.000 (diskon dari Rp 169.000)." },
-          { timestamp: "2026-03-21T09:15:00", brand: "Skintific", platform: "Instagram", severity: "Minor", updateType: "New Post", details: "Postingan edukasi: 'Kenapa kulit sensitif butuh Ceramide?' Terdapat ajakan cek Shopee Mall untuk promo bundling." },
-          { timestamp: "2026-03-20T16:30:00", brand: "Skintific", platform: "TikTok", severity: "Critical", updateType: "Product Launch", details: "Teaser peluncuran MSH Niacinamide Brightening Moisture Gel baru di TikTok Shop. Banyak interaksi dari KOL." },
-          { timestamp: "2026-03-22T14:10:00", brand: "Glad2Glow", platform: "Shopee", severity: "Critical", updateType: "Price Drop", details: "[NEW PROMO DETECTED] Banting harga! Blueberry 5% Ceramide Moisturizer turun drastis ke Rp 39.000 (Flash Sale)." },
-          { timestamp: "2026-03-21T11:00:00", brand: "Glad2Glow", platform: "Instagram", severity: "Major", updateType: "Bundle Promo", details: "Promo Payday Sale di IG Story. Bundle Moisturizer + Facial Wash cuma Rp 75.000 (Diskon 50%)." },
-          { timestamp: "2026-03-19T18:20:00", brand: "Glad2Glow", platform: "TikTok", severity: "Minor", updateType: "KOL Review", details: "Video viral review Pomegranate 5% Niacinamide dari TikToker Skincare. View tembus 500k." }
-        ];
         
-        // Mock data for Social Listening / Mentions Raw
-        const mockMentions = [];
-        const platforms = ['tiktok', 'x', 'youtube'];
-        const brands = ['skintific', 'glad2glow'];
+        // 1. Fetch Competitor Updates
+        const { data: updates, error: errUpdates } = await supabase
+          .from('competitor_updates')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(20);
+          
+        if (errUpdates) console.error("Error fetching updates:", errUpdates);
         
-        brands.forEach(brand => {
-          platforms.forEach(platform => {
-            for (let i = 1; i <= 25; i++) {
-              mockMentions.push({
-                platform: platform,
-                brand: brand,
-                date: `Mar ${23 - (i%5)}, 2026`,
-                username: `user_${Math.floor(Math.random() * 9000) + 1000}`,
-                snippet: platform === 'tiktok' 
-                  ? `[Review] nyobain ${brand} viral ini, worth it gak ya? Tonton sampe habis guys! ✨🔥`
-                  : `Baru aja CO ${brand} pas lagi promo, semoga cocok di kulit kombinasiku. Bismillah! 🥺✨`,
-                views: Math.floor(Math.random() * 500000) + 5000,
-                likes: Math.floor(Math.random() * 50000) + 500,
-                comments: Math.floor(Math.random() * 2000) + 20,
-                shares: Math.floor(Math.random() * 5000) + 10,
-                url: 'https://google.com'
-              });
-            }
-          });
+        // Format updates for UI
+        const formattedUpdates = (updates || []).map(item => ({
+          timestamp: new Date(item.timestamp).toLocaleString('id-ID', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          brand: item.brand,
+          platform: item.platform,
+          severity: item.severity,
+          updateType: item.update_type,
+          details: item.details
+        }));
+
+        // 2. Fetch Social Mentions
+        const { data: mentions, error: errMentions } = await supabase
+          .from('social_mentions')
+          .select('*')
+          .order('posted_at', { ascending: false })
+          .limit(100); // Fetch enough for pagination
+          
+        if (errMentions) console.error("Error fetching mentions:", errMentions);
+
+        const formattedMentions = (mentions || []).map(item => ({
+          platform: item.platform,
+          brand: item.brand,
+          date: new Date(item.posted_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }),
+          username: item.username,
+          snippet: item.snippet,
+          views: item.views || 0,
+          likes: item.likes || 0,
+          comments: item.comments || 0,
+          shares: item.shares || 0,
+          url: item.url
+        }));
+
+        // Fallback mock data if DB is completely empty (just for UI preview right after creation)
+        if (formattedUpdates.length === 0 && formattedMentions.length === 0) {
+          formattedUpdates.push({ timestamp: new Date().toISOString(), brand: "System", platform: "System", severity: "Minor", updateType: "Initialization", details: "Database connected. Waiting for agent to sync data." });
+        }
+
+        // 3. Process Trend Data from mentions (Group by date and brand)
+        // This is a simple client-side aggregation. In production, a database view or RPC is better.
+        const trends = {};
+        (mentions || []).forEach(m => {
+          const dateStr = new Date(m.posted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const key = `${m.platform}_${dateStr}`;
+          if (!trends[key]) {
+            trends[key] = { platform: m.platform, date: dateStr, skintific: 0, glad2glow: 0 };
+          }
+          if (m.brand.toLowerCase() === 'skintific') trends[key].skintific += 1;
+          if (m.brand.toLowerCase() === 'glad2glow') trends[key].glad2glow += 1;
         });
 
-        // Mock data for Mention Trends Line Chart
-        const mockTrendData = [];
-        const days = ['Mar 16', 'Mar 17', 'Mar 18', 'Mar 19', 'Mar 20', 'Mar 21', 'Mar 22'];
-        platforms.forEach(platform => {
-          days.forEach(day => {
-            mockTrendData.push({
-              platform: platform,
-              date: day,
-              skintific: Math.floor(Math.random() * 800) + 200, // Range 200-1000
-              glad2glow: Math.floor(Math.random() * 700) + 150  // Range 150-850
-            });
-          });
-        });
+        // Convert object to array and sort by date
+        const formattedTrends = Object.values(trends).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        setCompetitorData(mockWatchData);
-        setMentionsData(mockMentions);
-        setTrendData(mockTrendData);
+        setCompetitorData(formattedUpdates);
+        setMentionsData(formattedMentions);
+        setTrendData(formattedTrends);
+        
       } catch (err) {
-        console.error("Error loading data:", err);
+        console.error("Error loading data from Supabase:", err);
       } finally {
         setLoading(false);
       }
@@ -99,7 +114,7 @@ const CompetitorAnalysis = () => {
 
       <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
         <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem', textAlign: 'center' }}>
-          Data disediakan oleh Google Trends API, OpenClaw Competitor Watch Agent, & Apify Social Listeners.
+          Data disediakan oleh Google Trends API, OpenClaw Agent, & Apify (Powered by Supabase).
         </p>
       </div>
     </div>
