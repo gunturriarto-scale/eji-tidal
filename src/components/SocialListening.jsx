@@ -224,6 +224,26 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
         </div>
       </div>
 
+      {/* Metrics Scorecard */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+        {[
+          { label: 'Total Views', value: filteredMentions.reduce((acc, m) => acc + (m.views || 0), 0), icon: <Eye size={18} />, color: 'var(--text-primary)' },
+          { label: 'Total Likes', value: filteredMentions.reduce((acc, m) => acc + (m.likes || 0), 0), icon: <Heart size={18} />, color: 'var(--accent-tertiary)' },
+          { label: 'Total Comments', value: filteredMentions.reduce((acc, m) => acc + (m.comments || 0), 0), icon: <MessageCircle size={18} />, color: 'var(--accent-primary)' },
+          { label: 'Total Shares', value: filteredMentions.reduce((acc, m) => acc + (m.shares || 0), 0), icon: <Share2 size={18} />, color: 'var(--success)' }
+        ].map((metric, i) => (
+          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: metric.color }}>
+              {metric.icon}
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '500' }}>{metric.label}</p>
+              <h4 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: '700' }}>{formatNumber(metric.value)}</h4>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
         {SOCIAL_TABS.map(tab => (
