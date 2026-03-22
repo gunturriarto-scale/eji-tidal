@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Twitter, Video, Youtube, ExternalLink, ChevronLeft, ChevronRight, TrendingUp, Eye, Heart, MessageCircle, Share2 } from 'lucide-react';
+import { Twitter, Video, Youtube, ExternalLink, ChevronLeft, ChevronRight, TrendingUp, Eye, Heart, MessageCircle, Share2, Instagram } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const SOCIAL_TABS = [
   { id: 'tiktok', label: 'TikTok', icon: <Video size={16} /> },
+  { id: 'instagram', label: 'Instagram', icon: <Instagram size={16} /> },
   { id: 'x', label: 'X (Twitter)', icon: <Twitter size={16} /> },
   { id: 'youtube', label: 'YouTube', icon: <Youtube size={16} /> }
 ];
@@ -29,6 +30,7 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
   };
 
   const formatNumber = (num) => {
+    if (!num) return '0';
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num;
@@ -142,7 +144,7 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
         {SOCIAL_TABS.map(tab => (
           <button
             key={tab.id}
@@ -161,7 +163,8 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
               borderRadius: '4px 4px 0 0',
               cursor: 'pointer',
               fontWeight: activeTab === tab.id ? '600' : '400',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
             }}
           >
             {tab.icon}
