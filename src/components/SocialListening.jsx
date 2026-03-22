@@ -106,6 +106,49 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
     return null;
   };
 
+  const getKeywordCloud = (data) => {
+    const stopwords = new Set(['dan', 'di', 'yg', 'yang', 'ini', 'itu', 'ke', 'dari', 'untuk', 'dengan', 'ada', 'bisa', 'aja', 'ya', 'ga', 'gak', 'mau', 'buat', 'sudah', 'telah', 'the', 'and', 'for', 'is', 'in', 'on', 'at', 'skintific', 'glad2glow', 'g2g', 'indonesia', 'promo', 'murah', 'banget', 'bangettt', 'bangetttttt']);
+    const wordsCount = {};
+    data.forEach(m => {
+      const words = (m.snippet || '').toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+      words.forEach(w => {
+        if (w.length > 2 && !stopwords.has(w)) {
+          wordsCount[w] = (wordsCount[w] || 0) + 1;
+        }
+      });
+    });
+    return Object.entries(wordsCount)
+      .sort((a,b) => b[1] - a[1])
+      .slice(0, 15)
+      .map(([word, count]) => ({ word, count }));
+  };
+
+  const renderKeywordCloud = (brandData) => {
+    const keywords = getKeywordCloud(brandData);
+    if (keywords.length === 0) return null;
+    
+    return (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', marginBottom: '1rem', justifyContent: 'center' }}>
+        {keywords.map((kw, i) => (
+          <span 
+            key={i} 
+            style={{ 
+              fontSize: `${Math.min(1.2, 0.7 + (kw.count / 10))}rem`, 
+              color: i % 2 === 0 ? 'var(--accent-secondary)' : 'var(--text-secondary)',
+              fontWeight: kw.count > 5 ? '700' : '400',
+              opacity: 0.5 + (kw.count / 20),
+              background: 'rgba(255,255,255,0.02)',
+              padding: '2px 8px',
+              borderRadius: '4px'
+            }}
+          >
+            {kw.word}
+          </span>
+        ))}
+      </div>
+    );
+  };
+
   const renderTable = (brand, data, currentPage, setPage) => {
     const totalPages = Math.ceil(data.length / itemsPerPage);
     const paginatedData = paginate(data, currentPage);
@@ -293,6 +336,7 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
                ))}
             </div>
           </div>
+          {renderKeywordCloud(skintificData)}
           {renderTable('Skintific', skintificData, pageSkintific, setPageSkintific)}
         </div>
 
@@ -317,6 +361,7 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
                ))}
             </div>
           </div>
+          {renderKeywordCloud(glad2glowData)}
           {renderTable('Glad2Glow', glad2glowData, pageGlad2Glow, setPageGlad2Glow)}
         </div>
 
