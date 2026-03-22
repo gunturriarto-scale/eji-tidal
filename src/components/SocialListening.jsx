@@ -189,161 +189,138 @@ const SocialListening = ({ mentionsData = [], trendData = [] }) => {
   };
 
   return (
-    <div className="glass-panel" style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <TrendingUp size={20} color="var(--accent-secondary)" />
-          <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Social Listening (UGC & Mentions)</h2>
+    <div className="glass-panel" style={{ marginTop: '2rem', padding: '2.5rem', borderRadius: 'var(--radius-xl)', background: 'rgba(15, 15, 25, 0.75)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
+      {/* Header & Global Filter */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ padding: '0.85rem', background: 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)', borderRadius: '14px', boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)' }}>
+            <TrendingUp size={24} color="#fff" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.75rem', margin: 0, fontWeight: '800', letterSpacing: '-0.03em', color: '#fff' }}>Social Intelligence</h2>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', fontWeight: '500' }}>Real-time voice of the community</p>
+          </div>
         </div>
 
-        {/* Date Filter UI */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ display: 'flex', gap: '0.25rem' }}>
+        {/* Unified Filter UI */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'rgba(255,255,255,0.03)', padding: '0.85rem 1.5rem', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', gap: '0.6rem' }}>
             {['7d', '30d', 'all', 'custom'].map(p => (
               <button
                 key={p}
                 onClick={() => handlePresetChange(p)}
                 style={{
-                  padding: '0.35rem 0.75rem', fontSize: '0.75rem', borderRadius: '6px', border: 'none', cursor: 'pointer',
-                  background: datePreset === p ? 'var(--accent-secondary)' : 'rgba(255,255,255,0.05)',
-                  color: datePreset === p ? '#fff' : 'var(--text-secondary)',
-                  transition: '0.2s'
+                  padding: '0.55rem 1.1rem', fontSize: '0.8rem', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  background: datePreset === p ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  color: datePreset === p ? '#fff' : 'rgba(255,255,255,0.5)',
+                  fontWeight: datePreset === p ? '700' : '500',
+                  transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
               >
-                {p.toUpperCase()}
+                {p === 'all' ? 'All Time' : p.toUpperCase()}
               </button>
             ))}
           </div>
           {datePreset === 'custom' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.75rem', padding: '0.25rem', borderRadius: '4px' }} />
-              <span style={{ color: 'var(--text-tertiary)' }}>to</span>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.75rem', padding: '0.25rem', borderRadius: '4px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingLeft: '1.25rem', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem', padding: '0.45rem', borderRadius: '8px' }} />
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem', padding: '0.45rem', borderRadius: '8px' }} />
             </div>
           )}
         </div>
       </div>
 
-      {/* Metrics Scorecard */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        {[
-          { label: 'Total Views', value: filteredMentions.reduce((acc, m) => acc + (m.views || 0), 0), icon: <Eye size={18} />, color: 'var(--text-primary)' },
-          { label: 'Total Likes', value: filteredMentions.reduce((acc, m) => acc + (m.likes || 0), 0), icon: <Heart size={18} />, color: 'var(--accent-tertiary)' },
-          { label: 'Total Comments', value: filteredMentions.reduce((acc, m) => acc + (m.comments || 0), 0), icon: <MessageCircle size={18} />, color: 'var(--accent-primary)' },
-          { label: 'Total Shares', value: filteredMentions.reduce((acc, m) => acc + (m.shares || 0), 0), icon: <Share2 size={18} />, color: 'var(--success)' }
-        ].map((metric, i) => (
-          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '0.75rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: metric.color }}>
-              {metric.icon}
-            </div>
-            <div>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: '500' }}>{metric.label}</p>
-              <h4 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: '700' }}>{formatNumber(metric.value)}</h4>
-            </div>
+      {/* Hero Section: Trend Visualization */}
+      <div style={{ width: '100%', height: '380px', background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%)', borderRadius: '24px', padding: '2.5rem', marginBottom: '3rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: '700' }}>Daily Mentions Trend</h3>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>Volume analysis across tracked platforms</p>
           </div>
-        ))}
-      </div>
-
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', overflowX: 'auto' }}>
-        {SOCIAL_TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => {
-              setActiveTab(tab.id);
-              setPageSkintific(1);
-              setPageGlad2Glow(1);
-            }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.5rem 1rem',
-              background: activeTab === tab.id ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
-              color: activeTab === tab.id ? 'var(--accent-secondary)' : 'var(--text-tertiary)',
-              border: 'none',
-              borderBottom: activeTab === tab.id ? '2px solid var(--accent-secondary)' : '2px solid transparent',
-              borderRadius: '4px 4px 0 0',
-              cursor: 'pointer',
-              fontWeight: activeTab === tab.id ? '600' : '400',
-              transition: 'all 0.2s ease',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Brand Section: Skintific */}
-      <div style={{ marginBottom: '3rem', padding: '1.5rem', background: 'rgba(99, 102, 241, 0.03)', borderRadius: '16px', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#6366f1' }}></div>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Skintific Performance</h3>
+          
+          <div style={{ display: 'flex', gap: '0.6rem', background: 'rgba(0,0,0,0.3)', padding: '0.35rem', borderRadius: '12px' }}>
+            {SOCIAL_TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.6rem',
+                  padding: '0.5rem 1rem', fontSize: '0.8rem', border: 'none', borderRadius: '10px', cursor: 'pointer',
+                  background: activeTab === tab.id ? 'var(--accent-secondary)' : 'transparent',
+                  color: activeTab === tab.id ? '#fff' : 'rgba(255,255,255,0.4)',
+                  transition: '0.3s', fontWeight: activeTab === tab.id ? '600' : '400'
+                }}
+              >
+                {tab.icon} {tab.label.split(' ')[0]}
+              </button>
+            ))}
+          </div>
         </div>
         
-        {/* Skintific Scorecards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-          {[
-            { label: 'Views', value: skintificData.reduce((acc, m) => acc + (m.views || 0), 0), icon: <Eye size={16} />, color: 'var(--text-primary)' },
-            { label: 'Likes', value: skintificData.reduce((acc, m) => acc + (m.likes || 0), 0), icon: <Heart size={16} />, color: 'var(--accent-tertiary)' },
-            { label: 'Comments', value: skintificData.reduce((acc, m) => acc + (m.comments || 0), 0), icon: <MessageCircle size={16} />, color: 'var(--accent-primary)' },
-            { label: 'Shares', value: skintificData.reduce((acc, m) => acc + (m.shares || 0), 0), icon: <Share2 size={16} />, color: 'var(--success)' }
-          ].map((metric, i) => (
-            <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ color: metric.color }}>{metric.icon}</div>
-              <div>
-                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{metric.label}</p>
-                <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{formatNumber(metric.value)}</h4>
-              </div>
-            </div>
-          ))}
-        </div>
-        {renderTable('Skintific', skintificData, pageSkintific, setPageSkintific)}
-      </div>
-
-      {/* Brand Section: Glad2Glow */}
-      <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(236, 72, 153, 0.03)', borderRadius: '16px', border: '1px solid rgba(236, 72, 153, 0.1)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ec4899' }}></div>
-          <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#fff' }}>Glad2Glow Performance</h3>
-        </div>
-        
-        {/* Glad2Glow Scorecards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-          {[
-            { label: 'Views', value: glad2glowData.reduce((acc, m) => acc + (m.views || 0), 0), icon: <Eye size={16} />, color: 'var(--text-primary)' },
-            { label: 'Likes', value: glad2glowData.reduce((acc, m) => acc + (m.likes || 0), 0), icon: <Heart size={16} />, color: 'var(--accent-tertiary)' },
-            { label: 'Comments', value: glad2glowData.reduce((acc, m) => acc + (m.comments || 0), 0), icon: <MessageCircle size={16} />, color: 'var(--accent-primary)' },
-            { label: 'Shares', value: glad2glowData.reduce((acc, m) => acc + (m.shares || 0), 0), icon: <Share2 size={16} />, color: 'var(--success)' }
-          ].map((metric, i) => (
-            <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ color: metric.color }}>{metric.icon}</div>
-              <div>
-                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{metric.label}</p>
-                <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{formatNumber(metric.value)}</h4>
-              </div>
-            </div>
-          ))}
-        </div>
-        {renderTable('Glad2Glow', glad2glowData, pageGlad2Glow, setPageGlad2Glow)}
-      </div>
-
-      {/* Trend Chart Area */}
-      <div style={{ width: '100%', height: '320px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '1.5rem', marginTop: '2rem' }}>
-        <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-          Daily Overall Mentions Trend ({activeTab.toUpperCase()})
-        </h3>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={dynamicTrendData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-            <XAxis dataKey="date" stroke="var(--text-tertiary)" fontSize={11} tickMargin={10} />
-            <YAxis stroke="var(--text-tertiary)" fontSize={11} tickFormatter={formatNumber} />
+        <ResponsiveContainer width="100%" height="75%">
+          <LineChart data={dynamicTrendData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+            <XAxis dataKey="date" stroke="rgba(255,255,255,0.3)" fontSize={11} axisLine={false} tickLine={false} tickMargin={15} />
+            <YAxis stroke="rgba(255,255,255,0.3)" fontSize={11} axisLine={false} tickLine={false} tickFormatter={formatNumber} />
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-            <Line type="monotone" dataKey="skintific" name="Skintific" stroke="#6366f1" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-            <Line type="monotone" dataKey="glad2glow" name="Glad2Glow" stroke="#ec4899" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+            <Legend iconType="circle" wrapperStyle={{ paddingTop: '25px', fontSize: '12px' }} />
+            <Line type="monotone" dataKey="skintific" name="Skintific" stroke="#6366f1" strokeWidth={4} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
+            <Line type="monotone" dataKey="glad2glow" name="Glad2Glow" stroke="#ec4899" strokeWidth={4} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Comparative Grid Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '2.5rem' }}>
+        
+        {/* Skintific Analysis */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
+                 <Video size={20} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: '800', color: '#fff' }}>Skintific</h3>
+            </div>
+            <div style={{ display: 'flex', gap: '1.5rem' }}>
+               {[
+                 { label: 'Views', val: skintificData.reduce((acc, m) => acc + (m.views || 0), 0), col: '#fff' },
+                 { label: 'Engagements', val: skintificData.reduce((acc, m) => acc + (m.likes || 0) + (m.comments || 0), 0), col: '#6366f1' }
+               ].map((s, i) => (
+                 <div key={i} style={{ textAlign: 'right' }}>
+                   <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</p>
+                   <p style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: s.col }}>{formatNumber(s.val)}</p>
+                 </div>
+               ))}
+            </div>
+          </div>
+          {renderTable('Skintific', skintificData, pageSkintific, setPageSkintific)}
+        </div>
+
+        {/* Glad2Glow Analysis */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(236, 72, 153, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ec4899' }}>
+                 <Video size={20} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: '800', color: '#fff' }}>Glad2Glow</h3>
+            </div>
+            <div style={{ display: 'flex', gap: '1.5rem' }}>
+               {[
+                 { label: 'Views', val: glad2glowData.reduce((acc, m) => acc + (m.views || 0), 0), col: '#fff' },
+                 { label: 'Engagements', val: glad2glowData.reduce((acc, m) => acc + (m.likes || 0) + (m.comments || 0), 0), col: '#ec4899' }
+               ].map((s, i) => (
+                 <div key={i} style={{ textAlign: 'right' }}>
+                   <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</p>
+                   <p style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: s.col }}>{formatNumber(s.val)}</p>
+                 </div>
+               ))}
+            </div>
+          </div>
+          {renderTable('Glad2Glow', glad2glowData, pageGlad2Glow, setPageGlad2Glow)}
+        </div>
+
       </div>
     </div>
   );
