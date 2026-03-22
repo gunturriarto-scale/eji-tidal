@@ -1,7 +1,8 @@
 const { ApifyClient } = require('apify-client');
 const { createClient } = require('@supabase/supabase-js');
 
-const APIFY_TOKEN = 'APIFY_TOKEN_REDACTED';
+const APIFY_TOKEN = process.env.APIFY_TOKEN;
+if (!APIFY_TOKEN) throw new Error("Missing APIFY_TOKEN environment variable");
 const SUPABASE_URL = 'https://ysdxidfuwnweqplqkzqb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__O5l9yeFqb36QOOhPjozcw_QsqMCKCd';
 
@@ -16,6 +17,10 @@ const brands = [
 async function updateInstagramOfficial() {
     console.log('--- Starting Instagram Official Account Sync ---');
     
+    // As per user request: Delete ALL existing Instagram data before re-syncing to ensure clean state
+    console.log('Wiping existing Instagram data from Supabase...');
+    await supabase.from('social_mentions').delete().eq('platform', 'instagram');
+    
     for (const brand of brands) {
         console.log(`\nFetching official posts for ${brand.name} (@${brand.handle})...`);
         
@@ -24,7 +29,7 @@ async function updateInstagramOfficial() {
             const run = await client.actor('apify/instagram-scraper').call({
                 directUrls: [`https://www.instagram.com/${brand.handle}/`],
                 resultsType: "posts",
-                resultsLimit: 30
+                resultsLimit: 200
             });
 
             const { items } = await client.dataset(run.defaultDatasetId).listItems();
