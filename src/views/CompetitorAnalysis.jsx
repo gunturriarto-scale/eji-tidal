@@ -67,18 +67,25 @@ const CompetitorAnalysis = () => {
         const sortedMentions = formattedMentions.sort((a, b) => b.raw_date - a.raw_date);
 
         const trends = {};
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
         (mentions || []).forEach(m => {
-          const dateStr = new Date(m.posted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          const key = `${m.platform}_${dateStr}`;
-          if (!trends[key]) {
-            trends[key] = { platform: m.platform, date: dateStr, skintific: 0, glad2glow: 0 };
+          const mDate = new Date(m.posted_at);
+          // Only process trend for the last 30 days
+          if (mDate >= thirtyDaysAgo) {
+            const dateStr = mDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const key = `${m.platform}_${dateStr}`;
+            if (!trends[key]) {
+              trends[key] = { platform: m.platform, date: dateStr, skintific: 0, glad2glow: 0, raw_date: mDate };
+            }
+            if (m.brand.toLowerCase() === 'skintific') trends[key].skintific += 1;
+            if (m.brand.toLowerCase() === 'glad2glow') trends[key].glad2glow += 1;
           }
-          if (m.brand.toLowerCase() === 'skintific') trends[key].skintific += 1;
-          if (m.brand.toLowerCase() === 'glad2glow') trends[key].glad2glow += 1;
         });
 
-        // Convert object to array and sort by date
-        const formattedTrends = Object.values(trends).sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Convert object to array and sort by raw_date ASCENDING for chronological flow (left-to-right)
+        const formattedTrends = Object.values(trends).sort((a, b) => a.raw_date - b.raw_date);
 
         setCompetitorData(formattedUpdates);
         setMentionsData(sortedMentions);
