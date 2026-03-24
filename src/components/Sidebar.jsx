@@ -59,8 +59,6 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { type: 'divider', label: 'AI Creative' },
     { id: 'creativehub', name: 'Creative Hub', icon: <Zap size={20} />, color: '#14B8A6' },
 
-    { type: 'divider', label: 'Market Intelligence' },
-    { id: 'competitor', name: 'Competitor',   icon: <Target size={20} /> },
   ];
 
   return (

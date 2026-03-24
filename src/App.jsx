@@ -5,8 +5,8 @@ import { TikTokRaw } from './views/TikTokRaw'
 import { GoogleRaw } from './views/GoogleRaw'
 import { CriteoRaw } from './views/CriteoRaw'
 import { KOLView } from './views/KOLView'
-import CompetitorAnalysis from './views/CompetitorAnalysis'
-import XMonitoring from './views/XMonitoring'
+// import CompetitorAnalysis from './views/CompetitorAnalysis'
+// import XMonitoring from './views/XMonitoring'
 import { ShopeeView } from './views/ShopeeView'
 import { TikTokShopView } from './views/TikTokShopView'
 import { LazadaView } from './views/LazadaView'
@@ -50,7 +50,7 @@ const Header = ({
           </div>
         </div>
 
-        {!['creativehub', 'competitor'].includes(activeView) && (
+        {!['creativehub'].includes(activeView) && (
           <div className="filter-deck">
             {/* Date Filter Group */}
             <div className="filter-group" style={['shopee', 'tiktokShop', 'lazada', 'tokopedia'].includes(activeView) ? { maxWidth: '400px' } : {}}>
@@ -154,7 +154,7 @@ function App() {
   const [activeView, setActiveView] = useState('overview');
   const { 
     tiktokAdsData, metaAdsData, googleAdsData, offsiteData, kolData, criteoData, ordersData,
-    competitorData, ourSearchData, xMonitoringData, xTopPosts, loading, error 
+    loading, error 
   } = useData();
 
   // Filter State
@@ -299,10 +299,7 @@ function App() {
       criteo: criteoData.filter(d => isMatch(d, false)),
       offsite: offsiteData.filter(d => isMatch(d, false)),
       orders: ordersData.filter(row => !row.normDate || (row.normDate >= dateRange.start && row.normDate <= dateRange.end)),
-      competitor: competitorData, 
-      ourSearch: ourSearchData,
-      xData: xMonitoringData.filter(d => isMatch({ ...d, normDate: d.Date }, false)), // xMonitoring treated as non-KOL
-      xPosts: xTopPosts,
+      
       
       kpiDates: (() => {
         const all = new Set();
@@ -324,7 +321,7 @@ function App() {
     };
   }, [
     tiktokAdsData, metaAdsData, googleAdsData, kolData, offsiteData, criteoData, 
-    competitorData, ourSearchData, xMonitoringData, xTopPosts, loading, dateRange,
+    loading, dateRange,
     productFilter, categoryBrandFilter, categoryFilter, brandFilter
   ]);
 
@@ -337,7 +334,6 @@ function App() {
     google:     'Google Ads Analysis',
     kol:        'KOL Intelligence',
     criteo:     'Criteo Awareness Intelligence',
-    competitor: 'Competitor Analysis',
     shopee:     '🛒 Shopee Performance',
     tiktokShop: '🎵 TikTok Shop Performance',
     lazada:     '🛍️ Lazada Performance',
@@ -356,7 +352,6 @@ function App() {
       case 'google': return <GoogleRaw {...commonProps} />;
       case 'kol': return <KOLView {...commonProps} />; 
       case 'criteo': return <CriteoRaw {...commonProps} />;
-      case 'competitor': return <CompetitorAnalysis {...commonProps} />;
       case 'shopee':     return <ShopeeView {...commonProps} />;
       case 'tiktokShop': return <TikTokShopView {...commonProps} />;
       case 'lazada':    return <LazadaView {...commonProps} />;

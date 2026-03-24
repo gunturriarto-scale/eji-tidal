@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Papa from 'papaparse';
-import { 
-  competitorData as mockCompetitorData, 
-  ourSearchData as mockOurSearchData,
-  xMonitoringData as mockXData,
-  xTopPosts as mockXPosts
-} from '../data/mockData';
+// import { 
+//   competitorData as mockCompetitorData, 
+//   ourSearchData as mockOurSearchData,
+//   xMonitoringData as mockXData,
+//   xTopPosts as mockXPosts
+// } from '../data/mockData';
 
 const DataContext = createContext();
 
@@ -87,10 +87,6 @@ export const DataProvider = ({ children }) => {
     kolData: [],
     criteoData: [],
     ordersData: [],
-    competitorData: [],
-    ourSearchData: [],
-    xMonitoringData: [],
-    xTopPosts: [],
     loading: true,
     error: null
   });
@@ -193,10 +189,6 @@ export const DataProvider = ({ children }) => {
           kolData,
           criteoData: normalizeAdData(criteoDataRaw),
           ordersData: parseOrdersData(ordersRaw),
-          competitorData: mockCompetitorData,
-          ourSearchData: mockOurSearchData,
-          xMonitoringData: mockXData,
-          xTopPosts: mockXPosts,
           loading: false,
           error: null
         });
