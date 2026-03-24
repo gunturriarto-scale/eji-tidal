@@ -363,8 +363,21 @@ function App() {
 
   if (loading) {
     return (
-      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <h2 className="gradient-text">Syncing data from Google Sheets...</h2>
+      <div className="app-container" style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        flexDirection: 'column', 
+        gap: '2rem',
+        textAlign: 'center',
+        padding: '2rem'
+      }}>
+        <img src="/loading_lotr.png" alt="Gandalf in Mordor" style={{ width: '200px', borderRadius: '12px', boxShadow: '0 0 40px rgba(79, 70, 229, 0.2)' }} className="fade-in" />
+        <h2 style={{ maxWidth: '600px', fontSize: '1.25rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.6 }}>
+          "Consulting the archives of Minas Mordor (we moved the library, long story)... <br/>
+          <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>one does not simply CTRL+C into the database 🧙‍♂️💀</span>"
+        </h2>
       </div>
     );
   }
