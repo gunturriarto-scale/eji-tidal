@@ -265,10 +265,10 @@ export const getChannelPerformance = (tiktokAdsData, metaAdsData, googleAdsData,
   const criImp = sumBy(criteoData, "Displays");
 
   return [
-    { name: 'TikTok', cpm: ttImp > 0 ? (ttSpend / ttImp) * 1000 : 0, color: '#00f2fe' },
-    { name: 'Meta', cpm: metaImp > 0 ? (metaSpend / metaImp) * 1000 : 0, color: '#1877f2' },
-    { name: 'Google', cpm: ggImp > 0 ? (ggSpend / ggImp) * 1000 : 0, color: '#ea4335' },
-    { name: 'Criteo', cpm: criImp > 0 ? (criSpend / criImp) * 1000 : 0, color: '#33b3ff' },
+    { name: 'TikTok', cpm: ttImp > 0 ? (ttSpend / ttImp) * 1000 : 0, color: '#4F46E5' },
+    { name: 'Meta', cpm: metaImp > 0 ? (metaSpend / metaImp) * 1000 : 0, color: '#10B981' },
+    { name: 'Google', cpm: ggImp > 0 ? (ggSpend / ggImp) * 1000 : 0, color: '#6366F1' },
+    { name: 'Criteo', cpm: criImp > 0 ? (criSpend / criImp) * 1000 : 0, color: '#94A3B8' },
   ];
 };
 

@@ -60,7 +60,7 @@ export const KOLView = ({ filteredData }) => {
       const tier = d.Tier || 'Unknown';
       map[tier] = (map[tier] || 0) + 1;
     });
-    const colors = ['#00f2fe', '#1877f2', '#ea4335', '#8b5cf6', '#f59e0b'];
+    const colors = ['#4F46E5', '#10B981', '#6366F1', '#94A3B8', '#F59E0B'];
     return Object.entries(map).map(([name, value], idx) => ({ 
       name, 
       value,
@@ -181,8 +181,8 @@ export const KOLView = ({ filteredData }) => {
                 <Bar dataKey="views" fill="url(#colorViews)" radius={[0, 4, 4, 0]} />
                 <defs>
                   <linearGradient id="colorViews" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="5%" stopColor="#00f2fe" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#1877f2" stopOpacity={0.8}/>
+                    <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0.8}/>
                   </linearGradient>
                 </defs>
               </BarChart>

@@ -42,10 +42,10 @@ const TokopediaIcon = ({ size = 20 }) => (
 export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed }) => {
   const menuItems = [
     { type: 'divider', label: 'E-Commerce' },
-    { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#ee4d2d' },
-    { id: 'tiktokShop',name: 'TikTok Shop', icon: <TikTokIcon size={20} />,    color: '#00f2fe' },
-    { id: 'lazada',    name: 'Lazada',       icon: <LazadaIcon size={20} />,    color: '#1877f2' },
-    { id: 'tokopedia', name: 'Tokopedia',    icon: <TokopediaIcon size={20} />, color: '#00aa5b' },
+    { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
+    { id: 'tiktokShop',name: 'TikTok Shop', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
+    { id: 'lazada',    name: 'Lazada',       icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
+    { id: 'tokopedia', name: 'Tokopedia',    icon: <TokopediaIcon size={20} />, color: '#059669' },
 
     { type: 'divider', label: 'Ads Performance' },
     { id: 'overview', name: 'Ads Overview', icon: <LayoutDashboard size={20} /> },

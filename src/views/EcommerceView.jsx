@@ -7,10 +7,10 @@ import { formatCurrency, formatNumber } from '../utils/dataAggregation';
 import { ShoppingBag, TrendingUp, Users, BarChart3, Target, Percent } from 'lucide-react';
 
 const PLATFORM_CONFIG = {
-  shopee:     { label: 'Shopee',      color: '#ee4d2d', accentColor: '#ff6b35', key: 'shopee',     emoji: '🛒' },
-  tiktokShop: { label: 'TikTok Shop', color: '#00f2fe', accentColor: '#8b5cf6', key: 'tiktokShop', emoji: '🎵' },
-  lazada:     { label: 'Lazada',      color: '#0f146d', accentColor: '#1877f2', key: 'lazada',     emoji: '🛍️' },
-  tokopedia:  { label: 'Tokopedia',   color: '#00aa5b', accentColor: '#10b981', key: 'tokopedia',  emoji: '🟢' },
+  shopee:     { label: 'Shopee',      color: '#EE4D2D', accentColor: '#FB923C', key: 'shopee',     emoji: '🛒' },
+  tiktokShop: { label: 'TikTok Shop', color: '#4F46E5', accentColor: '#818CF8', key: 'tiktokShop', emoji: '🎵' },
+  lazada:     { label: 'Lazada',      color: '#1E40AF', accentColor: '#60A5FA', key: 'lazada',     emoji: '🛍️' },
+  tokopedia:  { label: 'Tokopedia',   color: '#059669', accentColor: '#34D399', key: 'tokopedia',  emoji: '🟢' },
 };
 
 const CustomTooltip = ({ active, payload, label }) => {

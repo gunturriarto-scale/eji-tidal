@@ -33,10 +33,10 @@ const Header = ({
       position: 'sticky', 
       top: 0, 
       zIndex: 50, 
-      background: 'rgba(10, 10, 15, 0.9)', 
-      backdropFilter: 'blur(15px)', 
-      padding: '1rem 0',
-      borderBottom: '1px solid rgba(255,255,255,0.08)' 
+      background: 'var(--bg-main)', 
+      backdropFilter: 'blur(10px)', 
+      padding: '0.75rem 0',
+      borderBottom: '1px solid var(--border-color)' 
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -44,7 +44,7 @@ const Header = ({
             <h1 className="gradient-text" style={{ fontSize: '1.75rem', margin: 0 }}>{activeViewName}</h1>
             <p style={{ margin: 0, opacity: 0.6 }}>Real-time performance distribution & analysis</p>
           </div>
-          <div className="status-indicator" style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '0.4rem 0.75rem', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
+          <div className="status-indicator" style={{ background: 'rgba(16, 185, 129, 0.03)', padding: '0.4rem 0.75rem', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.08)' }}>
             <div className="status-dot"></div>
             <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Sync: Live Data</span>
           </div>

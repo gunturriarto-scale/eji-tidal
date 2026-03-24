@@ -77,10 +77,10 @@ export const Overview = ({ filteredData, dateRange }) => {
       cri: chartData.reduce((acc, curr) => acc + (curr.criSpend || 0), 0),
     };
     return [
-      { name: 'TikTok Ads', value: totals.tt, color: '#00f2fe' },
-      { name: 'Meta Ads', value: totals.meta, color: '#1877f2' },
-      { name: 'Google Ads', value: totals.gg, color: '#ea4335' },
-      { name: 'Criteo Ads', value: totals.cri, color: '#33b3ff' },
+      { name: 'TikTok Ads', value: totals.tt, color: '#4F46E5' },
+      { name: 'Meta Ads', value: totals.meta, color: '#10B981' },
+      { name: 'Google Ads', value: totals.gg, color: '#6366F1' },
+      { name: 'Criteo Ads', value: totals.cri, color: '#94A3B8' },
     ].filter(item => item.value > 0);
   }, [chartData]);
 
@@ -94,10 +94,10 @@ export const Overview = ({ filteredData, dateRange }) => {
       cri: chartData.reduce((acc, curr) => acc + (curr.criImp || 0), 0),
     };
     return [
-      { name: 'TikTok', value: totals.tt, color: '#00f2fe' },
-      { name: 'Meta', value: totals.meta, color: '#1877f2' },
-      { name: 'Google', value: totals.gg, color: '#ea4335' },
-      { name: 'Criteo', value: totals.cri, color: '#33b3ff' },
+      { name: 'TikTok', value: totals.tt, color: '#4F46E5' },
+      { name: 'Meta', value: totals.meta, color: '#10B981' },
+      { name: 'Google', value: totals.gg, color: '#6366F1' },
+      { name: 'Criteo', value: totals.cri, color: '#94A3B8' },
     ].filter(item => item.value > 0);
   }, [chartData]);
 
@@ -110,10 +110,10 @@ export const Overview = ({ filteredData, dateRange }) => {
       cri: chartData.reduce((acc, curr) => acc + (curr.criClicks || 0), 0),
     };
     return [
-      { name: 'TikTok', value: totals.tt, color: '#00f2fe' },
-      { name: 'Meta', value: totals.meta, color: '#1877f2' },
-      { name: 'Google', value: totals.gg, color: '#ea4335' },
-      { name: 'Criteo', value: totals.cri, color: '#33b3ff' },
+      { name: 'TikTok', value: totals.tt, color: '#4F46E5' },
+      { name: 'Meta', value: totals.meta, color: '#10B981' },
+      { name: 'Google', value: totals.gg, color: '#6366F1' },
+      { name: 'Criteo', value: totals.cri, color: '#94A3B8' },
     ].filter(item => item.value > 0);
   }, [chartData]);
 
