@@ -211,7 +211,11 @@ export const Overview = ({ filteredData, dateRange }) => {
                 <Pie data={clicksByChannel} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                   {clicksByChannel.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Pie>
-                <Tooltip formatter={(value) => formatNumber(value)} contentStyle={{ background: 'rgba(20, 20, 29, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }} />
+                <Tooltip 
+                  formatter={(value) => formatNumber(value)} 
+                  contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: '8px' }} 
+                  itemStyle={{ color: '#fff' }}
+                />
                 <Legend verticalAlign="bottom" align="center" iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
@@ -231,7 +235,12 @@ export const Overview = ({ filteredData, dateRange }) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false} />
                 <XAxis type="number" stroke="var(--text-tertiary)" fontSize={11} tickLine={false} tickFormatter={(val) => `Rp${(val/1000).toFixed(0)}k`} />
                 <YAxis type="category" dataKey="name" stroke="var(--text-tertiary)" fontSize={11} tickLine={false} />
-                <Tooltip cursor={{fill: 'rgba(255,255,255,0.05)'}} contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: '8px', color: '#fff' }} formatter={(val) => formatCurrency(val)} />
+                <Tooltip 
+                  cursor={{fill: 'rgba(255,255,255,0.05)'}} 
+                  contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: '8px' }} 
+                  itemStyle={{ color: '#fff' }}
+                  formatter={(val) => formatCurrency(val)} 
+                />
                 <Bar dataKey="cpm" name="CPM (IDR)" radius={[0, 4, 4, 0]}>
                   {channelComparison.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                 </Bar>
