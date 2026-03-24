@@ -375,8 +375,8 @@ function App() {
       }}>
         <img src="/loading_lotr.png" alt="Gandalf in Mordor" style={{ width: '200px', borderRadius: '12px', boxShadow: '0 0 40px rgba(79, 70, 229, 0.2)' }} className="fade-in" />
         <h2 style={{ maxWidth: '600px', fontSize: '1.25rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.6 }}>
-          "Consulting the archives of Minas Mordor (we moved the library, long story)... <br/>
-          <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>one does not simply CTRL+C into the database 🧙‍♂️💀</span>"
+          "Consulting the archives of Minas Morgul (we moved the library, long story)... <br/>
+          <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>one does not simply CTRL+C & CTRL+V into the database 🧙‍♂️💀</span>"
         </h2>
       </div>
     );
