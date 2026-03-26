@@ -41,6 +41,9 @@ const TokopediaIcon = ({ size = 20 }) => (
 
 export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed }) => {
   const menuItems = [
+    { type: 'divider', label: 'Command Center' },
+    { id: 'commandCenter', name: 'Perf. Marketing', icon: <Target size={20} />, color: '#F59E0B' },
+
     { type: 'divider', label: 'E-Commerce' },
     { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
     { id: 'tiktokShop',name: 'TikTok Shop', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },

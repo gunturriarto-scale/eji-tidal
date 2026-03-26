@@ -13,6 +13,7 @@ const DataContext = createContext();
 export const useData = () => useContext(DataContext);
 
 const sheet_id = '1jl0wFIfNEWYofEHN27Wb9UM1bdmoxzt5e2NUGyFijHY';
+const command_center_sheet_id = '1IBX2WsOdSn0rDDSBQFG1ZK9Ihp7AoSKU5NX3AbAqPmI';
 const urls = {
   TIKTOK: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=TIKTOK`,
   META:   `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=META`,
@@ -20,7 +21,8 @@ const urls = {
   OFFSITE: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=OFFSITE`,
   KOL: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=KOL`,
   CRITEO: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=CRITEO`,
-  DAILY_ORDERS: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=Daily%20Performance%20Orders`
+  DAILY_ORDERS: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=Daily%20Performance%20Orders`,
+  COMMAND_CENTER: `https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`
 };
 
 const cleanNumbers = (row) => {
@@ -89,6 +91,7 @@ export const DataProvider = ({ children }) => {
     kolData: [],
     criteoData: [],
     ordersData: [],
+    commandCenterData: [],
     loading: true,
     error: null
   });
@@ -206,7 +209,7 @@ export const DataProvider = ({ children }) => {
           }
         };
 
-        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw] = await Promise.all([
+        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw, commandCenterRaw] = await Promise.all([
           fetchCSV(urls.TIKTOK),
           fetchCSV(urls.META),
           fetchCSV(urls.GOOGLE),
@@ -217,7 +220,8 @@ export const DataProvider = ({ children }) => {
           fetchSupabaseAll('meta_ads_performance'),
           fetchSupabaseAll('google_ads_performance'),
           fetchSupabaseAll('tiktok_ads_performance'),
-          fetchSupabaseAll('criteo_ads_performance')
+          fetchSupabaseAll('criteo_ads_performance'),
+          fetchCSV(urls.COMMAND_CENTER)
         ]);
         const metaAdsSupabaseData = metaSupabaseRaw.map(d => ({
           ...d,
@@ -302,6 +306,67 @@ export const DataProvider = ({ children }) => {
           'BRAND': d.brand
         }));
 
+        // Parse Command Center data with normalized field names
+        const commandCenterData = commandCenterRaw.map(row => {
+          const parseNum = (val) => {
+            if (val === undefined || val === null || val === '') return 0;
+            if (typeof val === 'number') return val;
+            const cleaned = String(val).replace(/[,%]/g, '').trim();
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+          };
+          const parsePct = (val) => {
+            if (val === undefined || val === null || val === '') return 0;
+            if (typeof val === 'number') return val;
+            const cleaned = String(val).replace(/[%,]/g, '').trim();
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+          };
+          return {
+            month: row['Month'] || '',
+            monthNum: parseNum(row['M']),
+            year: parseNum(row['Y']),
+            pic: row['PIC PERFORMANCE TEAM'] || row['PIC PERFORMANCE'] || '',
+            digitalStrat: row['DIGITL STRAT'] || '',
+            brand: row['Brand'] || '',
+            category: row['Category'] || '',
+            categoryProduct: row['Category Product'] || row['category product'] || row['category proposal'] || '',
+            product: row['Product'] || '',
+            budgetOverall: parseNum(row['Budget Overall']),
+            estReach: parseNum(row['Est. Reach']),
+            estImp: parseNum(row['Est. Imp']),
+            estCPM: parseNum(row['Est CPM']),
+            budgetMeta: parseNum(row['Budget Meta']),
+            estReachMeta: parseNum(row['Est. Reach Meta']),
+            estImpMeta: parseNum(row['Est. Imp Meta']),
+            budgetTiktok: parseNum(row['Budget Tiktok']),
+            estReachTiktok: parseNum(row['Est. Reach Tiktok']),
+            estImpTiktok: parseNum(row['Est. Imp Tiktok']),
+            budgetSegumento: parseNum(row['Budget Segumento']),
+            budgetDisplay: parseNum(row['Budget Display']),
+            budgetCriteo: parseNum(row['Budget Criteo']),
+            budgetGoogle: parseNum(row['Budget Google']),
+            budgetPinterest: parseNum(row['Budget pinterest']),
+            spent: parseNum(row['Spent']),
+            remainingBudget: parseNum(row['Remaining Budget']),
+            pacing: parsePct(row['% Pacing']),
+            reach: parseNum(row['Reach']),
+            reachPct: parsePct(row['% Reach']),
+            impressions: parseNum(row['Imp.']),
+            impPct: parsePct(row['% Imp.']),
+            spentMeta: parseNum(row['Spent Meta']),
+            actualImpMeta: parseNum(row['Actual Imp Meta']),
+            actualReachMeta: parseNum(row['Actual Reach Meta']),
+            spentTiktok: parseNum(row['Spent Tiktok']),
+            actualImpTiktok: parseNum(row['Actual Imp Tiktok']),
+            actualReachTiktok: parseNum(row['Actual Reach Tiktok']),
+            spentSegumento: parseNum(row['Spent segumento']),
+            spentCriteo: parseNum(row['Spent Criteo']),
+            spentGoogle: parseNum(row['Spent Google']),
+          };
+        }).filter(r => r.budgetOverall > 0 || r.spent > 0);
+        console.log(`Parsed ${commandCenterData.length} command center rows`);
+
         setData({
           tiktokAdsData: tiktokAdsSupabaseData.length > 0 ? normalizeAdData(tiktokAdsSupabaseData) : normalizeAdData(tiktokAdsDataRaw),
           metaAdsData: metaAdsSupabaseData.length > 0 ? normalizeAdData(metaAdsSupabaseData) : normalizeAdData(metaAdsDataRaw),
@@ -311,6 +376,7 @@ export const DataProvider = ({ children }) => {
           kolData,
           criteoData: criteoSupabaseData.length > 0 ? normalizeAdData(criteoSupabaseData) : normalizeAdData(criteoDataRaw),
           ordersData: parseOrdersData(ordersRaw),
+          commandCenterData,
           loading: false,
           error: null
         });

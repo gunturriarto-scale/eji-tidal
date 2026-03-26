@@ -13,6 +13,7 @@ import { LazadaView } from './views/LazadaView'
 import { TokopediaView } from './views/TokopediaView'
 import { Sidebar } from './components/Sidebar'
 import { CreativeHubView } from './views/CreativeHubView'
+import { CommandCenterView } from './views/CommandCenterView'
 import { useData } from './context/DataContext'
 
 const Header = ({ 
@@ -50,7 +51,7 @@ const Header = ({
           </div>
         </div>
 
-        {!['creativehub'].includes(activeView) && (
+        {!['creativehub', 'commandCenter'].includes(activeView) && (
           <div className="filter-deck" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
             <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-end' }}>
               {/* Date Filter Group */}
@@ -153,9 +154,10 @@ const Header = ({
 };
 
 function App() {
-  const [activeView, setActiveView] = useState('overview');
+  const [activeView, setActiveView] = useState('commandCenter');
   const { 
     tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, offsiteData, kolData, criteoData, ordersData,
+    commandCenterData,
     loading, error 
   } = useData();
 
@@ -180,7 +182,8 @@ function App() {
     shopee: { ...initialFilters },
     tiktokShop: { ...initialFilters },
     lazada: { ...initialFilters },
-    tokopedia: { ...initialFilters }
+    tokopedia: { ...initialFilters },
+    commandCenter: { ...initialFilters }
   });
 
   const currentFilters = viewFilters[activeView] || initialFilters;
@@ -333,7 +336,7 @@ function App() {
       criteo: criteoData.filter(d => isMatch(d, false)),
       offsite: offsiteData.filter(d => isMatch(d, false)),
       orders: ordersData.filter(row => !row.normDate || (row.normDate >= dateRange.start && row.normDate <= dateRange.end)),
-      
+      commandCenter: commandCenterData,
       
       kpiDates: (() => {
         const all = new Set();
@@ -355,7 +358,7 @@ function App() {
       })()
     };
   }, [
-    tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, 
+    tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData,
     loading, dateRange, currentFilters
   ]);
 
@@ -373,6 +376,7 @@ function App() {
     lazada:     '🛍️ Lazada Performance',
     tokopedia:  '🟢 Tokopedia Performance',
     creativehub: '✨ AI Creative Hub',
+    commandCenter: '🎯 Performance Marketing Command Center',
   };
 
   const renderView = () => {
@@ -391,6 +395,7 @@ function App() {
       case 'lazada':    return <LazadaView {...commonProps} />;
       case 'tokopedia': return <TokopediaView {...commonProps} />;
       case 'creativehub': return <CreativeHubView {...commonProps} />;
+      case 'commandCenter': return <CommandCenterView {...commonProps} />;
       default: return <Overview {...commonProps} />;
     }
   };
