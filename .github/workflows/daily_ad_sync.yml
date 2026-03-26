@@ -46,3 +46,14 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TIKTOK_ACCESS_TOKEN: ${{ secrets.TIKTOK_ACCESS_TOKEN }}
+          TIKTOK_AD_ACCOUNT_IDS: ${{ secrets.TIKTOK_AD_ACCOUNT_IDS }}
+
+      - name: Run Criteo Ads Sync
+        run: node scripts/fetch_criteo_ads.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CRITEO_CLIENT_ID: ${{ secrets.CRITEO_CLIENT_ID }}
+          CRITEO_CLIENT_SECRET: ${{ secrets.CRITEO_CLIENT_SECRET }}
+          CRITEO_ADVERTISER_ID: ${{ secrets.CRITEO_ADVERTISER_ID }}
+

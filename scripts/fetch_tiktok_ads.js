@@ -6,7 +6,7 @@ const TIKTOK_ACCESS_TOKEN = process.env.TIKTOK_ACCESS_TOKEN || 'YOUR_ACCESS_TOKE
 const TIKTOK_AD_ACCOUNT_IDS = (process.env.TIKTOK_AD_ACCOUNT_IDS || '').split(','); // Array of IDs
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ysdxidfuwnweqplqkzqb.supabase.co';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzZHhpZGZ1d253ZXFwbHFrenFiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDE1OTQ0MiwiZXhwIjoyMDg5NzM1NDQyfQ.Sx0zoD0riV6kQLoaNhJfXvKZzD2kWJaVYbZkRD4Q5QY';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'PLACEHOLDER';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
