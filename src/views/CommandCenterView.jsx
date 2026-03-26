@@ -317,17 +317,30 @@ export const CommandCenterView = ({ filteredData }) => {
     
     data.forEach(d => {
       if (!d.pic || !d.product) return;
+      
+      const picName = d.pic.toUpperCase();
       if (!map[d.pic]) map[d.pic] = { pic: d.pic, categories: {} };
       
-      const cat = d.categoryProduct || 'Uncategorized Category Product';
-      if (!map[d.pic].categories[cat]) map[d.pic].categories[cat] = [];
+      let catName = 'Uncategorized';
+      let labelType = 'Category Product';
+      
+      if (picName.includes('NIKEN') || picName === 'NIKEN') {
+         catName = d.category || 'Uncategorized Category';
+         labelType = 'Category';
+      } else {
+         catName = d.categoryProduct || 'Uncategorized Category Product';
+      }
+      
+      if (!map[d.pic].categories[catName]) {
+         map[d.pic].categories[catName] = { labelType, products: [] };
+      }
       
       const budget = d.budgetOverall || 0;
       const spent = d.spent || 0;
       const estImp = d.estImp || 0;
       const imp = d.impressions || d.imp || 0;
 
-      map[d.pic].categories[cat].push({
+      map[d.pic].categories[catName].products.push({
         product: d.product,
         budget, spent, estImp, imp,
         estCpm: estImp > 0 ? (budget / estImp) * 1000 : 0,
@@ -338,9 +351,10 @@ export const CommandCenterView = ({ filteredData }) => {
 
     return Object.values(map).map(p => ({
       pic: p.pic,
-      categories: Object.entries(p.categories).map(([catName, prods]) => ({
+      categories: Object.entries(p.categories).map(([catName, catData]) => ({
         name: catName,
-        products: prods.sort((a, b) => b.budget - a.budget)
+        labelType: catData.labelType,
+        products: catData.products.sort((a, b) => b.budget - a.budget)
       })).sort((a,b) => a.name.localeCompare(b.name))
     })).sort((a, b) => a.pic.localeCompare(b.pic));
   }, [data]);
@@ -748,7 +762,7 @@ export const CommandCenterView = ({ filteredData }) => {
             {picGroup.categories.map(cat => (
               <div key={cat.name} style={{ marginBottom: '24px' }}>
                 <h4 style={{ fontSize: '13px', color: '#8b8b9e', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #2a2a3a', paddingBottom: '8px' }}>
-                  Category Product: <span style={{ color: '#fff' }}>{cat.name}</span>
+                  {cat.labelType}: <span style={{ color: '#fff' }}>{cat.name}</span>
                 </h4>
                 <div style={{ overflowX: 'auto' }}>
                   <table className="cc2-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
