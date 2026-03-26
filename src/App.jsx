@@ -166,7 +166,7 @@ function App() {
   const [productFilter, setProductFilter] = useState('all');
   const [categoryBrandFilter, setCategoryBrandFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [brandFilter, setBrandFilter] = useState('Hanasui');
+  const [brandFilter, setBrandFilter] = useState('all');
 
   // Extract Unique Filter Options
   const filterOptions = useMemo(() => {

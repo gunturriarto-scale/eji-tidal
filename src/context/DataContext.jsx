@@ -221,8 +221,8 @@ export const DataProvider = ({ children }) => {
         ]);
         const metaAdsSupabaseData = metaSupabaseRaw.map(d => ({
           ...d,
-          normDate: d.day,
-          Day: d.day,
+          normDate: (d.day || '').substring(0, 10),
+          Day: (d.day || '').substring(0, 10),
           'Account name': d.account_name,
           'Campaign name': d.campaign_name,
           'Ad name': d.ad_name,
@@ -249,8 +249,8 @@ export const DataProvider = ({ children }) => {
 
         const googleAdsSupabaseData = googleSupabaseRaw.map(d => ({
           ...d,
-          normDate: d.day,
-          Day: d.day,
+          normDate: (d.day || '').substring(0, 10),
+          Day: (d.day || '').substring(0, 10),
           Campaign: d.campaign_name,
           Cost: d.spend,
           'Impr.': d.impressions,
@@ -265,8 +265,8 @@ export const DataProvider = ({ children }) => {
 
         const tiktokAdsSupabaseData = tiktokSupabaseRaw.map(d => ({
           ...d,
-          normDate: d.day,
-          'By Day': d.day,
+          normDate: (d.day || '').substring(0, 10),
+          'By Day': (d.day || '').substring(0, 10),
           'Campaign name': d.campaign_name,
           'Account name': d.account_name,
           'Ad name': d.ad_name,
@@ -285,8 +285,8 @@ export const DataProvider = ({ children }) => {
         // Map Criteo Supabase data to match expected shape
         const criteoSupabaseData = criteoSupabaseRaw.map(d => ({
           ...d,
-          normDate: d.day,
-          Day: d.day,
+          normDate: (d.day || '').substring(0, 10),
+          Day: (d.day || '').substring(0, 10),
           'Campaign name': d.campaign_name,
           'Ad name': d.ad_name,
           'Amount spent (IDR)': d.spend,

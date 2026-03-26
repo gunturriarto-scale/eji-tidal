@@ -36,8 +36,8 @@ export const getAggregatedByDate = (tiktokAdsData, googleAdsData, metaAdsData, o
 
   // Criteo
   const dailyCriteo = criteoData.filter(d => d.normDate === date);
-  const criSpend = sumBy(dailyCriteo, "Cost");
-  const criImp = sumBy(dailyCriteo, "Displays");
+  const criSpend = sumBy(dailyCriteo, "Amount spent (IDR)");
+  const criImp = sumBy(dailyCriteo, "Impressions");
   const criReach = sumBy(dailyCriteo, "Exposed Users");
   const criClicks = sumBy(dailyCriteo, "Clicks");
 
