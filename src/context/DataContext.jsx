@@ -177,23 +177,28 @@ export const DataProvider = ({ children }) => {
           try {
             let allData = [];
             let from = 0;
-            let to = 999;
+            const pageSize = 1000;
             let hasMore = true;
             
             while (hasMore) {
-              const { data, error } = await supabase.from(table).select('*').range(from, to);
+              const { data, error } = await supabase
+                .from(table)
+                .select('*')
+                .order('day', { ascending: true })
+                .range(from, from + pageSize - 1);
               if (error) {
                 console.warn(`Supabase fetch failed for ${table}:`, error.message);
                 return [];
               }
               if (data && data.length > 0) {
                 allData = [...allData, ...data];
-                from += 1000;
-                to += 1000;
+                from += pageSize;
+                hasMore = data.length === pageSize;
               } else {
                 hasMore = false;
               }
             }
+            console.log(`Fetched ${allData.length} rows from ${table}`);
             return allData;
           } catch (e) {
             console.warn(`Supabase fetch failed (exception) for ${table}:`, e);
@@ -201,7 +206,7 @@ export const DataProvider = ({ children }) => {
           }
         };
 
-        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw] = await Promise.all([
+        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw] = await Promise.all([
           fetchCSV(urls.TIKTOK),
           fetchCSV(urls.META),
           fetchCSV(urls.GOOGLE),
@@ -211,7 +216,8 @@ export const DataProvider = ({ children }) => {
           fetchCSV(urls.DAILY_ORDERS),
           fetchSupabaseAll('meta_ads_performance'),
           fetchSupabaseAll('google_ads_performance'),
-          fetchSupabaseAll('tiktok_ads_performance')
+          fetchSupabaseAll('tiktok_ads_performance'),
+          fetchSupabaseAll('criteo_ads_performance')
         ]);
         const metaAdsSupabaseData = metaSupabaseRaw.map(d => ({
           ...d,
@@ -276,6 +282,26 @@ export const DataProvider = ({ children }) => {
           BRAND: d.brand
         }));
 
+        // Map Criteo Supabase data to match expected shape
+        const criteoSupabaseData = criteoSupabaseRaw.map(d => ({
+          ...d,
+          normDate: d.day,
+          Day: d.day,
+          'Campaign name': d.campaign_name,
+          'Ad name': d.ad_name,
+          'Amount spent (IDR)': d.spend,
+          'Impressions': d.impressions,
+          'Clicks': d.clicks,
+          'Exposed Users': d.exposed_users,
+          'CPC': d.cpc,
+          'CPM': d.cpm,
+          'Viewability': d.viewability,
+          'PRODUCTS': d.product,
+          'Category': d.category,
+          'Category Brand': d.category_group,
+          'BRAND': d.brand
+        }));
+
         setData({
           tiktokAdsData: tiktokAdsSupabaseData.length > 0 ? normalizeAdData(tiktokAdsSupabaseData) : normalizeAdData(tiktokAdsDataRaw),
           metaAdsData: metaAdsSupabaseData.length > 0 ? normalizeAdData(metaAdsSupabaseData) : normalizeAdData(metaAdsDataRaw),
@@ -283,7 +309,7 @@ export const DataProvider = ({ children }) => {
           googleAdsData: googleAdsSupabaseData.length > 0 ? normalizeAdData(googleAdsSupabaseData) : normalizeAdData(googleAdsDataRaw),
           offsiteData: normalizeAdData(offsiteData),
           kolData,
-          criteoData: normalizeAdData(criteoDataRaw),
+          criteoData: criteoSupabaseData.length > 0 ? normalizeAdData(criteoSupabaseData) : normalizeAdData(criteoDataRaw),
           ordersData: parseOrdersData(ordersRaw),
           loading: false,
           error: null
