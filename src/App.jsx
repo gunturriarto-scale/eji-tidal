@@ -158,15 +158,41 @@ function App() {
     loading, error 
   } = useData();
 
-  // Filter State
-  const [dateFilter, setDateFilter] = useState('all');
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
-  
-  const [productFilter, setProductFilter] = useState('all');
-  const [categoryBrandFilter, setCategoryBrandFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [brandFilter, setBrandFilter] = useState('all');
+  // Individual Filter States per View
+  const initialFilters = {
+    dateFilter: 'all',
+    customStart: '',
+    customEnd: '',
+    productFilter: 'all',
+    categoryBrandFilter: 'all',
+    categoryFilter: 'all',
+    brandFilter: 'all'
+  };
+
+  const [viewFilters, setViewFilters] = useState({
+    overview: { ...initialFilters },
+    meta: { ...initialFilters },
+    tiktok: { ...initialFilters },
+    google: { ...initialFilters },
+    criteo: { ...initialFilters },
+    kol: { ...initialFilters, brandFilter: 'Hanasui' }, // KOL default
+    shopee: { ...initialFilters },
+    tiktokShop: { ...initialFilters },
+    lazada: { ...initialFilters },
+    tokopedia: { ...initialFilters }
+  });
+
+  const currentFilters = viewFilters[activeView] || initialFilters;
+
+  const updateFilter = (key, value) => {
+    setViewFilters(prev => ({
+      ...prev,
+      [activeView]: {
+        ...prev[activeView],
+        [key]: value
+      }
+    }));
+  };
 
   // Extract Unique Filter Options
   const filterOptions = useMemo(() => {
@@ -222,6 +248,8 @@ function App() {
   }, [tiktokAdsData, metaAdsData, googleAdsData, kolData, criteoData, offsiteData, loading]);
 
   const dateRange = useMemo(() => {
+    const { dateFilter, customStart, customEnd } = currentFilters;
+
     if (dateFilter === 'all') return { start: '2000-01-01', end: '2099-12-31', compStart: '2000-01-01' };
     if (dateFilter === 'custom') {
       const start = customStart || '2000-01-01';
@@ -260,10 +288,12 @@ function App() {
     else if (dateFilter === 'thisMonth' || dateFilter === 'lastMonth') compS = new Date(start.getFullYear(), start.getMonth() - 1, 1);
 
     return { start: s, end: e, compStart: fmt(compS) };
-  }, [dateFilter, maxDateRaw, customStart, customEnd]);
+  }, [currentFilters, maxDateRaw]);
 
   const matchesAttributes = (d) => {
     if (!d) return false;
+    const { productFilter, categoryBrandFilter, categoryFilter, brandFilter } = currentFilters;
+    
     const equalsCI = (val, target) => {
       if (target === 'all') return true;
       if (!val || val === '-') return false;
@@ -325,8 +355,7 @@ function App() {
     };
   }, [
     tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, 
-    loading, dateRange,
-    productFilter, categoryBrandFilter, categoryFilter, brandFilter
+    loading, dateRange, currentFilters
   ]);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -405,19 +434,23 @@ function App() {
       />
       <main className="main-content">
         <Header 
-          dateFilter={dateFilter} 
-          setDateFilter={setDateFilter}
-          customStart={customStart}
-          setCustomStart={setCustomStart}
-          customEnd={customEnd}
-          setCustomEnd={setCustomEnd}
+          dateFilter={currentFilters.dateFilter} 
+          setDateFilter={(val) => updateFilter('dateFilter', val)}
+          customStart={currentFilters.customStart} 
+          setCustomStart={(val) => updateFilter('customStart', val)}
+          customEnd={currentFilters.customEnd} 
+          setCustomEnd={(val) => updateFilter('customEnd', val)}
           activeViewName={viewNames[activeView]}
           activeView={activeView}
           filterOptions={filterOptions}
-          productFilter={productFilter} setProductFilter={setProductFilter}
-          categoryBrandFilter={categoryBrandFilter} setCategoryBrandFilter={setCategoryBrandFilter}
-          categoryFilter={categoryFilter} setCategoryFilter={setCategoryFilter}
-          brandFilter={brandFilter} setBrandFilter={setBrandFilter}
+          productFilter={currentFilters.productFilter} 
+          setProductFilter={(val) => updateFilter('productFilter', val)}
+          brandFilter={currentFilters.brandFilter} 
+          setBrandFilter={(val) => updateFilter('brandFilter', val)}
+          categoryFilter={currentFilters.categoryFilter} 
+          setCategoryFilter={(val) => updateFilter('categoryFilter', val)}
+          categoryBrandFilter={currentFilters.categoryBrandFilter} 
+          setCategoryBrandFilter={(val) => updateFilter('categoryBrandFilter', val)}
         />
         {renderView()}
       </main>
