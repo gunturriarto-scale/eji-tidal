@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Papa from 'papaparse';
+import { supabase } from '../lib/supabase';
 // import { 
 //   competitorData as mockCompetitorData, 
 //   ourSearchData as mockOurSearchData,
@@ -82,6 +83,7 @@ export const DataProvider = ({ children }) => {
   const [data, setData] = useState({
     tiktokAdsData: [],
     metaAdsData: [],
+    metaAdsSupabaseData: [],
     googleAdsData: [],
     offsiteData: [],
     kolData: [],
@@ -171,20 +173,114 @@ export const DataProvider = ({ children }) => {
             });
         };
 
-        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw] = await Promise.all([
+        const fetchSupabaseAll = async (table) => {
+          try {
+            let allData = [];
+            let from = 0;
+            let to = 999;
+            let hasMore = true;
+            
+            while (hasMore) {
+              const { data, error } = await supabase.from(table).select('*').range(from, to);
+              if (error) {
+                console.warn(`Supabase fetch failed for ${table}:`, error.message);
+                return [];
+              }
+              if (data && data.length > 0) {
+                allData = [...allData, ...data];
+                from += 1000;
+                to += 1000;
+              } else {
+                hasMore = false;
+              }
+            }
+            return allData;
+          } catch (e) {
+            console.warn(`Supabase fetch failed (exception) for ${table}:`, e);
+            return [];
+          }
+        };
+
+        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw] = await Promise.all([
           fetchCSV(urls.TIKTOK),
           fetchCSV(urls.META),
           fetchCSV(urls.GOOGLE),
           fetchCSV(urls.OFFSITE),
           fetchCSV(urls.KOL),
           fetchCSV(urls.CRITEO),
-          fetchCSV(urls.DAILY_ORDERS)
+          fetchCSV(urls.DAILY_ORDERS),
+          fetchSupabaseAll('meta_ads_performance'),
+          fetchSupabaseAll('google_ads_performance'),
+          fetchSupabaseAll('tiktok_ads_performance')
         ]);
+        const metaAdsSupabaseData = metaSupabaseRaw.map(d => ({
+          ...d,
+          normDate: d.day,
+          Day: d.day,
+          'Account name': d.account_name,
+          'Campaign name': d.campaign_name,
+          'Ad name': d.ad_name,
+          'Amount spent (IDR)': d.spend,
+          'Reach': d.reach,
+          'Impressions': d.impressions,
+          'Frequency': d.frequency,
+          'Link clicks': d.link_clicks,
+          'Video plays at 25%': d.video_p25,
+          'Video plays at 50%': d.video_p50,
+          'Video plays at 75%': d.video_p75,
+          'Video plays at 100%': d.video_p100,
+          'Post comments': d.post_comments,
+          'Post engagements': d.post_engagements,
+          'Post reactions': d.post_reactions,
+          'Facebook likes': d.page_likes,
+          'Page engagement': d.page_engagements,
+          'Views': d.views,
+          'PRODUCTS': d.product,
+          'Category': d.category,
+          'Category Brand': d.category_group,
+          'BRAND': d.brand
+        }));
+
+        const googleAdsSupabaseData = googleSupabaseRaw.map(d => ({
+          ...d,
+          normDate: d.day,
+          Day: d.day,
+          Campaign: d.campaign_name,
+          Cost: d.spend,
+          'Impr.': d.impressions,
+          Clicks: d.clicks,
+          'TrueView views': d.video_views,
+          Conversions: d.conversions,
+          'Conv. value': d.conversion_value,
+          'Video played to 50%': d.video_p50,
+          PRODUCTS: d.product,
+          BRAND: d.brand
+        }));
+
+        const tiktokAdsSupabaseData = tiktokSupabaseRaw.map(d => ({
+          ...d,
+          normDate: d.day,
+          'By Day': d.day,
+          'Campaign name': d.campaign_name,
+          'Account name': d.account_name,
+          'Ad name': d.ad_name,
+          'Advertising objective': d.advertising_objective,
+          Cost: d.spend,
+          Reach: d.reach,
+          Impressions: d.impressions,
+          'Clicks (all)': d.clicks,
+          'Video views': d.video_views,
+          '2-second video views': d.video_2s_views,
+          '6-second video views': d.video_6s_views,
+          PRODUCTS: d.product,
+          BRAND: d.brand
+        }));
 
         setData({
-          tiktokAdsData: normalizeAdData(tiktokAdsDataRaw),
-          metaAdsData: normalizeAdData(metaAdsDataRaw),
-          googleAdsData: normalizeAdData(googleAdsDataRaw),
+          tiktokAdsData: tiktokAdsSupabaseData.length > 0 ? normalizeAdData(tiktokAdsSupabaseData) : normalizeAdData(tiktokAdsDataRaw),
+          metaAdsData: metaAdsSupabaseData.length > 0 ? normalizeAdData(metaAdsSupabaseData) : normalizeAdData(metaAdsDataRaw),
+          metaAdsSupabaseData: metaAdsSupabaseData.length > 0 ? normalizeAdData(metaAdsSupabaseData) : normalizeAdData(metaAdsDataRaw),
+          googleAdsData: googleAdsSupabaseData.length > 0 ? normalizeAdData(googleAdsSupabaseData) : normalizeAdData(googleAdsDataRaw),
           offsiteData: normalizeAdData(offsiteData),
           kolData,
           criteoData: normalizeAdData(criteoDataRaw),

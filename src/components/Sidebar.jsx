@@ -49,6 +49,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
 
     { type: 'divider', label: 'Ads Performance' },
     { id: 'overview', name: 'Ads Overview', icon: <LayoutDashboard size={20} /> },
+    { id: 'meta',     name: 'Meta Ads', icon: <Facebook size={20} />, color: '#1877f2' },
     { id: 'tiktok',   name: 'Ads TikTok', icon: <Video size={20} /> },
     { id: 'google',   name: 'Google Ads', icon: <Search size={20} /> },
     { id: 'criteo',   name: 'Ads Criteo', icon: <Activity size={20} /> },

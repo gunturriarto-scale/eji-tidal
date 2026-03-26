@@ -53,46 +53,47 @@ const Header = ({
         {!['creativehub'].includes(activeView) && (
           <div className="filter-deck">
             {/* Date Filter Group */}
-            <div className="filter-group" style={['shopee', 'tiktokShop', 'lazada', 'tokopedia'].includes(activeView) ? { maxWidth: '400px' } : {}}>
+            <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
               <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time Period</label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <select 
-                  value={dateFilter} 
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="glass-select"
-                  style={{ height: '38px', flex: 1 }}
-                >
-                  <option value="all">All Time</option>
-                  <option value="last7">Last 7 Days</option>
-                  <option value="last30">Last 30 Days</option>
-                  <option value="thisMonth">This Month</option>
-                  <option value="lastMonth">Last Month</option>
-                  <option value="custom">Custom Date</option>
-                </select>
-
-                {dateFilter === 'custom' && (
-                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flex: 2 }}>
-                    <input 
-                      type="date" 
-                      value={customStart} 
-                      onChange={e => setCustomStart(e.target.value)}
-                      className="glass-input"
-                      style={{ height: '38px' }}
-                      max={customEnd || undefined}
-                    />
-                    <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>-</span>
-                    <input 
-                      type="date" 
-                      value={customEnd} 
-                      onChange={e => setCustomEnd(e.target.value)}
-                      className="glass-input"
-                      style={{ height: '38px' }}
-                      min={customStart || undefined}
-                    />
-                  </div>
-                )}
-              </div>
+              <select 
+                value={dateFilter} 
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="glass-select"
+                style={{ height: '38px' }}
+              >
+                <option value="all">All Time</option>
+                <option value="last7">Last 7 Days</option>
+                <option value="last30">Last 30 Days</option>
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="custom">Custom Date</option>
+              </select>
             </div>
+
+            {dateFilter === 'custom' && (
+              <div className="filter-group" style={{ flex: 'none', minWidth: '300px' }}>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date Range</label>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  <input 
+                    type="date" 
+                    value={customStart} 
+                    onChange={e => setCustomStart(e.target.value)}
+                    className="glass-input"
+                    style={{ height: '38px', flex: 1 }}
+                    max={customEnd || undefined}
+                  />
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>-</span>
+                  <input 
+                    type="date" 
+                    value={customEnd} 
+                    onChange={e => setCustomEnd(e.target.value)}
+                    className="glass-input"
+                    style={{ height: '38px', flex: 1 }}
+                    min={customStart || undefined}
+                  />
+                </div>
+              </div>
+            )}
 
             {!['shopee', 'tiktokShop', 'lazada', 'tokopedia'].includes(activeView) && (
               <>
@@ -153,7 +154,7 @@ const Header = ({
 function App() {
   const [activeView, setActiveView] = useState('overview');
   const { 
-    tiktokAdsData, metaAdsData, googleAdsData, offsiteData, kolData, criteoData, ordersData,
+    tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, offsiteData, kolData, criteoData, ordersData,
     loading, error 
   } = useData();
 
@@ -193,6 +194,7 @@ function App() {
     addFromArr(tiktokAdsData);
     addFromArr(metaAdsData);
     addFromArr(googleAdsData);
+    addFromArr(metaAdsSupabaseData);
     addFromArr(criteoData);
 
     const sort = (s) => Array.from(s).sort();
@@ -213,6 +215,7 @@ function App() {
     metaAdsData.forEach(d => check(d.normDate));
     googleAdsData.forEach(d => check(d.normDate));
     kolData.forEach(d => check(d.normDate));
+    metaAdsSupabaseData.forEach(d => check(d.normDate));
     criteoData.forEach(d => check(d.normDate));
     offsiteData.forEach(d => check(d.normDate));
     return max !== '2000-01-01' ? max : new Date().toISOString().split('T')[0];
@@ -293,7 +296,7 @@ function App() {
     if (loading) return null;
     return {
       tiktok: tiktokAdsData.filter(d => isMatch(d, false)),
-      meta: metaAdsData.filter(d => isMatch(d, false)),
+      meta: metaAdsSupabaseData.filter(d => isMatch(d, false)),
       google: googleAdsData.filter(d => isMatch(d, false)),
       kol: kolData.filter(d => isMatch(d, true)),
       criteo: criteoData.filter(d => isMatch(d, false)),
@@ -313,6 +316,7 @@ function App() {
         });
         check(tiktokAdsData, false); 
         check(metaAdsData, false); 
+        check(metaAdsSupabaseData, false);
         check(googleAdsData, false); 
         check(offsiteData, false); 
         check(criteoData, false);
@@ -320,7 +324,7 @@ function App() {
       })()
     };
   }, [
-    tiktokAdsData, metaAdsData, googleAdsData, kolData, offsiteData, criteoData, 
+    tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, 
     loading, dateRange,
     productFilter, categoryBrandFilter, categoryFilter, brandFilter
   ]);
@@ -329,7 +333,7 @@ function App() {
 
   const viewNames = {
     overview:   'Ads Overview',
-    meta:       'Meta Ads Analysis',
+    meta:       'Meta Ads',
     tiktok:     'TikTok Ads Analysis',
     google:     'Google Ads Analysis',
     kol:        'KOL Intelligence',
