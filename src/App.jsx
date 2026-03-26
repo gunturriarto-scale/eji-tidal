@@ -38,7 +38,7 @@ const Header = ({
       padding: '0.75rem 0',
       borderBottom: '1px solid var(--border-color)' 
     }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="title-section">
             <h1 className="gradient-text" style={{ fontSize: '1.75rem', margin: 0 }}>{activeViewName}</h1>
@@ -51,58 +51,59 @@ const Header = ({
         </div>
 
         {!['creativehub'].includes(activeView) && (
-          <div className="filter-deck">
-            {/* Date Filter Group */}
-            <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
-              <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time Period</label>
-              <select 
-                value={dateFilter} 
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="glass-select"
-                style={{ height: '38px' }}
-              >
-                <option value="all">All Time</option>
-                <option value="last7">Last 7 Days</option>
-                <option value="last30">Last 30 Days</option>
-                <option value="thisMonth">This Month</option>
-                <option value="lastMonth">Last Month</option>
-                <option value="custom">Custom Date</option>
-              </select>
+          <div className="filter-deck" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
+            <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-end' }}>
+              {/* Date Filter Group */}
+              <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
+                <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time Period</label>
+                <select 
+                  value={dateFilter} 
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="glass-select"
+                  style={{ height: '38px' }}
+                >
+                  <option value="all">All Time</option>
+                  <option value="last7">Last 7 Days</option>
+                  <option value="last30">Last 30 Days</option>
+                  <option value="thisMonth">This Month</option>
+                  <option value="lastMonth">Last Month</option>
+                  <option value="custom">Custom Date</option>
+                </select>
+              </div>
+
+              {dateFilter === 'custom' && (
+                <div className="filter-group fade-in" style={{ flex: 'none', width: '300px' }}>
+                  <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date Range</label>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                    <input 
+                      type="date" 
+                      value={customStart} 
+                      onChange={e => setCustomStart(e.target.value)}
+                      className="glass-input"
+                      style={{ height: '38px', flex: 1 }}
+                      max={customEnd || undefined}
+                    />
+                    <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>-</span>
+                    <input 
+                      type="date" 
+                      value={customEnd} 
+                      onChange={e => setCustomEnd(e.target.value)}
+                      className="glass-input"
+                      style={{ height: '38px', flex: 1 }}
+                      min={customStart || undefined}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {dateFilter === 'custom' && (
-              <div className="filter-group" style={{ flex: 'none', minWidth: '300px' }}>
-                <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Date Range</label>
-                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                  <input 
-                    type="date" 
-                    value={customStart} 
-                    onChange={e => setCustomStart(e.target.value)}
-                    className="glass-input"
-                    style={{ height: '38px', flex: 1 }}
-                    max={customEnd || undefined}
-                  />
-                  <span style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>-</span>
-                  <input 
-                    type="date" 
-                    value={customEnd} 
-                    onChange={e => setCustomEnd(e.target.value)}
-                    className="glass-input"
-                    style={{ height: '38px', flex: 1 }}
-                    min={customStart || undefined}
-                  />
-                </div>
-              </div>
-            )}
-
             {!['shopee', 'tiktokShop', 'lazada', 'tokopedia'].includes(activeView) && (
-              <>
+              <div style={{ display: 'flex', gap: '1.25rem', flex: 1, justifyContent: 'flex-end', alignItems: 'flex-end' }}>
                 {/* Divider */}
                 <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem 8px', flex: 'none' }}></div>
 
-
                 {/* Category Filter */}
-                <div className="filter-group">
+                <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</label>
                   <select 
                     value={categoryFilter} 
@@ -116,7 +117,7 @@ const Header = ({
                 </div>
 
                 {/* Category Brand Filter */}
-                <div className="filter-group">
+                <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category Brand</label>
                   <select 
                     value={categoryBrandFilter} 
@@ -130,7 +131,7 @@ const Header = ({
                 </div>
 
                 {/* PRODUCTS Filter */}
-                <div className="filter-group">
+                <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Products</label>
                   <select 
                     value={productFilter} 
@@ -142,7 +143,7 @@ const Header = ({
                     {filterOptions.products.map(p => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}
