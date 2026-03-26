@@ -416,6 +416,18 @@ export const CommandCenterView = ({ filteredData }) => {
 
     .cc2-pbar-bg { width: 100px; height: 6px; background: #2a2a3a; border-radius: 3px; overflow: hidden; }
     .cc2-pbar-fill { height: 100%; border-radius: 3px; }
+
+    .cc2-pic-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 20px;
+    }
+    @media (max-width: 1200px) {
+      .cc2-pic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .cc2-pic-grid { grid-template-columns: minmax(0, 1fr); }
+    }
   `;
 
   if (!rawData.length) {
@@ -437,8 +449,8 @@ export const CommandCenterView = ({ filteredData }) => {
       <style>{styles}</style>
 
       {/* ── HEADER & FILTERS ── */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #2a2a3a' }}>
-        <div style={{ display: 'flex', gap: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #2a2a3a', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <select value={monthFilter} onChange={e => setMonthFilter(e.target.value)} style={selectStyle}>
             <option value="all">All Months</option>
             {filterOptions.months.map(m => <option key={m} value={m}>{m}</option>)}
@@ -486,7 +498,7 @@ export const CommandCenterView = ({ filteredData }) => {
       </div>
 
       {/* ── MAIN GRID ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '20px', marginBottom: '20px' }}>
         
         {/* Left Col: Platform Efficiency + Trend */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -628,7 +640,7 @@ export const CommandCenterView = ({ filteredData }) => {
           <Users size={20} color="#8b8b9e" />
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
+        <div className="cc2-pic-grid">
           {picCardData.map((pic, idx) => (
             <div key={pic.pic} className="cc2-card" style={{ padding: '24px' }}>
               
