@@ -476,7 +476,7 @@ export const DataProvider = ({ children }) => {
             const num = parseFloat(cleaned);
             return isNaN(num) ? 0 : num;
           };
-          return {
+          const rowBase = {
             month: row['Month'] || '',
             monthNum: parseNum(row['M']),
             year: parseNum(row['Y']),
