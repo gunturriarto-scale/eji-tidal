@@ -111,10 +111,11 @@ export const CommandCenterView = ({ filteredData }) => {
 
   // ── KPI Summaries & Alerts ──
   const kpi = useMemo(() => {
-    const totalBudget = data.reduce((s, d) => s + d.budgetOverall, 0);
-    const totalSpent = data.reduce((s, d) => s + d.spent, 0);
-    const totalRemaining = data.reduce((s, d) => s + d.remainingBudget, 0);
-    const avgPacing = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+    const totalBudget = data.reduce((s, d) => s + (d.budgetOverall || 0), 0);
+    const totalSpent = data.reduce((s, d) => s + (d.spent || 0), 0);
+    const totalImp = data.reduce((s, d) => s + (d.impressions || 0), 0);
+    const totalReach = data.reduce((s, d) => s + (d.reach || 0), 0);
+    const totalRemaining = Math.max(0, totalBudget - totalSpent);
 
     // Calculate Actual Blended CPM - More robust to avoid double counting
     const totalImpressions = data.reduce((s, d) => {
@@ -146,16 +147,16 @@ export const CommandCenterView = ({ filteredData }) => {
   // ── Platform Efficiency Matrix ──
   const platformMatrix = useMemo(() => {
     const platforms = [
-      { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', estImp: 'estImpMeta', color: '#1877F2' },
-      { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', estImp: 'estImpTiktok', color: '#EE1D52' },
-      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'impressions', estImp: 'estImpGoogle', color: '#34A853' },
-      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'impressions', estImp: 'estImpCriteo', color: '#EB6923' },
-      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'impressions', estImp: 'estImpSegumento', color: '#8A2BE2' },
+      { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', color: '#1877F2' },
+      { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', color: '#EE1D52' },
+      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'actualImpGoogle', color: '#34A853' },
+      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'actualImpCriteo', color: '#EB6923' },
+      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'actualImpSegumento', color: '#8A2BE2' },
     ];
     return platforms.map(p => {
       const budget = data.reduce((s, d) => s + (d[p.budget] || 0), 0);
       const spent = data.reduce((s, d) => s + (d[p.spent] || 0), 0);
-      const imp = data.reduce((s, d) => s + (d[p.imp] || d.impressions || 0), 0); // Fallback to overall impressions if specific isn't present
+      const imp = data.reduce((s, d) => s + (d[p.imp] || 0), 0);
       const pacing = budget > 0 ? (spent / budget) * 100 : 0;
       const cpm = imp > 0 ? (spent / imp) * 1000 : 0;
       return { ...p, budget, spent, pacing, cpm, imp };
@@ -228,11 +229,11 @@ export const CommandCenterView = ({ filteredData }) => {
   const picCardData = useMemo(() => {
     const map = {};
     const channelsConfig = [
-      { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', estImp: 'estImpMeta', color: '#1877F2', icon: 'M' },
-      { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', estImp: 'estImpTiktok', color: '#EE1D52', icon: 'T' },
-      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'impressions', estImp: 'estImpGoogle', color: '#34A853', icon: 'G' },
-      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'impressions', estImp: 'estImpCriteo', color: '#EB6923', icon: 'C' },
-      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'impressions', estImp: 'estImpSegumento', color: '#8A2BE2', icon: 'S' },
+      { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', color: '#1877F2' },
+      { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', color: '#EE1D52' },
+      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'actualImpGoogle', color: '#34A853' },
+      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'actualImpCriteo', color: '#EB6923' },
+      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'actualImpSegumento', color: '#8A2BE2' },
     ];
 
     data.forEach(d => {
