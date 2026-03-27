@@ -304,11 +304,11 @@ export const DataProvider = ({ children }) => {
                 week: '-',
                 date: String(vals[1] || ''),
                 normDate,
-                tiktokShop: { target: cleanNum(vals[3]), gmv: cleanNum(vals[4]), runRate: cleanNum(vals[5]), units: cleanNum(vals[6]), asp: cleanNum(vals[7]), orders: cleanNum(vals[8]), abs: cleanNum(vals[9]), visitors: cleanNum(vals[10]), cr: cleanNum(vals[11]) },
-                lazada:     { target: cleanNum(vals[12]), gmv: cleanNum(vals[13]), runRate: cleanNum(vals[14]), units: cleanNum(vals[15]), asp: cleanNum(vals[16]), orders: cleanNum(vals[17]), abs: cleanNum(vals[18]), visitors: cleanNum(vals[19]), cr: cleanNum(vals[20]) },
-                shopee:     { target: cleanNum(vals[21]), gmv: cleanNum(vals[22]), runRate: cleanNum(vals[23]), units: cleanNum(vals[24]), asp: cleanNum(vals[25]), orders: cleanNum(vals[26]), abs: cleanNum(vals[27]), visitors: cleanNum(vals[28]), cr: cleanNum(vals[29]) },
-                tokopedia:  { target: cleanNum(vals[30]), gmv: cleanNum(vals[31]), runRate: cleanNum(vals[32]), units: cleanNum(vals[33]), asp: cleanNum(vals[34]), orders: cleanNum(vals[35]), abs: cleanNum(vals[36]), visitors: cleanNum(vals[37]), cr: cleanNum(vals[38]) },
-                total:      { target: cleanNum(vals[39]), gmv: cleanNum(vals[40]), runRate: cleanNum(vals[41]), units: cleanNum(vals[42]), asp: cleanNum(vals[43]), orders: cleanNum(vals[44]), abs: cleanNum(vals[45]), visitors: cleanNum(vals[46]), cr: cleanNum(vals[47]) },
+                tiktokShop: { target: cleanNum(vals[3]), gmv: cleanNum(vals[4]), runRate: cleanNum(vals[5]), units: cleanNum(vals[6]), asp: cleanNum(vals[7]), orders: cleanNum(vals[8]), abs: cleanNum(vals[9]), visitors: cleanNum(vals[10]), pageViews: cleanNum(vals[10]), cr: cleanNum(vals[11]) },
+                lazada:     { target: cleanNum(vals[12]), gmv: cleanNum(vals[13]), runRate: cleanNum(vals[14]), units: cleanNum(vals[15]), asp: cleanNum(vals[16]), orders: cleanNum(vals[17]), abs: cleanNum(vals[18]), visitors: cleanNum(vals[19]), pageViews: cleanNum(vals[19]), cr: cleanNum(vals[20]) },
+                shopee:     { target: cleanNum(vals[21]), gmv: cleanNum(vals[22]), runRate: cleanNum(vals[23]), units: cleanNum(vals[24]), asp: cleanNum(vals[25]), orders: cleanNum(vals[26]), abs: cleanNum(vals[27]), visitors: cleanNum(vals[28]), pageViews: cleanNum(vals[28]), cr: cleanNum(vals[29]) },
+                tokopedia:  { target: cleanNum(vals[30]), gmv: cleanNum(vals[31]), runRate: cleanNum(vals[32]), units: cleanNum(vals[33]), asp: cleanNum(vals[34]), orders: cleanNum(vals[35]), abs: cleanNum(vals[36]), visitors: cleanNum(vals[37]), pageViews: cleanNum(vals[37]), cr: cleanNum(vals[38]) },
+                total:      { target: cleanNum(vals[39]), gmv: cleanNum(vals[40]), runRate: cleanNum(vals[41]), units: cleanNum(vals[42]), asp: cleanNum(vals[43]), orders: cleanNum(vals[44]), abs: cleanNum(vals[45]), visitors: cleanNum(vals[46]), pageViews: cleanNum(vals[46]), cr: cleanNum(vals[47]) },
               };
             });
         };

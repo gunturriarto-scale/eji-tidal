@@ -63,7 +63,7 @@ export const EcommerceView = ({ ordersData = [], platform, dateRange }) => {
     const totalVisitors= filteredData.reduce((s, r) => s + (r[p]?.visitors || 0), 0);
     const avgASP       = totalUnits > 0 ? totalGMV / totalUnits : 0;
     const avgABS       = totalOrders > 0 ? totalGMV / totalOrders : 0;
-    const avgCR        = totalViews > 0 ? (totalOrders / totalViews) * 100 : 0;
+    const avgCR        = totalViews > 0 ? (totalOrders / totalViews) * 100 : (totalVisitors > 0 ? (totalOrders / totalVisitors) * 100 : 0);
     const totalTarget  = filteredData.reduce((s, r) => s + (r[p]?.target || 0), 0);
     const runRatePct   = totalTarget > 0 ? (totalGMV / totalTarget) * 100 : 0;
     return { totalGMV, totalOrders, totalUnits, totalViews, totalVisitors, avgASP, avgABS, avgCR, totalTarget, runRatePct };
