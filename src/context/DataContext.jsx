@@ -449,33 +449,25 @@ export const DataProvider = ({ children }) => {
           const parseNum = (val) => {
             if (val === undefined || val === null || val === '') return 0;
             if (typeof val === 'number') return val;
-            let s = String(val).replace(/[Rp$\s]/g, '').replace(/%/g, '').trim();
+            let s = String(val).replace(/[Rp$\s%]/g, '').trim();
             if (!s) return 0;
             
-            // Handle cases with both dot and comma (Indonesian/International mixed)
-            if (s.includes(',') && s.includes('.')) {
-              if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
-                // Indonesian style: 1.000,50
-                s = s.replace(/\./g, '').replace(',', '.');
-              } else {
-                // US style: 1,000.50
-                s = s.replace(/,/g, '');
-              }
-            } else if (s.includes(',')) {
-              // Only comma exists. If multiple OR looks like thousands (e.g. 10,000)
-              if ((s.match(/,/g) || []).length > 1 || s.match(/,\d{3}/)) {
-                s = s.replace(/,/g, '');
-              } else {
-                s = s.replace(',', '.');
-              }
-            } else if (s.includes('.')) {
-              // Only dot exists. If multiple OR lacks a 2-decimal look (e.g. 10.000)
-              if ((s.match(/\./g) || []).length > 1 || (s.match(/\.\d{3}/) && !s.match(/\.\d{2}$/))) {
-                s = s.replace(/\./g, '');
-              }
+            const lastDot = s.lastIndexOf('.');
+            const lastComma = s.lastIndexOf(',');
+            const lastSepPos = Math.max(lastDot, lastComma);
+            
+            if (lastSepPos === -1) return parseFloat(s) || 0;
+            
+            const charsAfter = s.length - 1 - lastSepPos;
+            if (charsAfter === 3) {
+              // Thousand separator case: 1.450 or 1,450 or 1.450.865
+              return parseFloat(s.replace(/[.,]/g, '')) || 0;
             }
-            const num = parseFloat(s);
-            return isNaN(num) ? 0 : num;
+            
+            // Decimal separator case: 1.450,50 or 1,450.50
+            const thousands = s.substring(0, lastSepPos).replace(/[.,]/g, '');
+            const decimals = s.substring(lastSepPos + 1).replace(/[.,]/g, '');
+            return parseFloat(thousands + '.' + decimals) || 0;
           };
           const parsePct = (val) => {
             if (val === undefined || val === null || val === '') return 0;
