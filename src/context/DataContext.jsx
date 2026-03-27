@@ -73,59 +73,60 @@ export const DataProvider = ({ children }) => {
     if (typeof val === 'number') return val;
     let s = String(val).replace(/[Rp$\s%]/g, '').trim();
     if (!s) return 0;
-    const lastDot = s.lastIndexOf('.');
-    const lastComma = s.lastIndexOf(',');
-    const lastSepPos = Math.max(lastDot, lastComma);
+    // Handle European vs US style numbers specifically for Spent
+    const lastSepPos = Math.max(s.lastIndexOf('.'), s.lastIndexOf(','));
     if (lastSepPos === -1) return parseFloat(s) || 0;
-    const charsAfter = s.length - 1 - lastSepPos;
-    if (charsAfter === 3) return parseFloat(s.replace(/[.,]/g, '')) || 0;
+    if (s.length - 1 - lastSepPos === 3) return parseFloat(s.replace(/[.,]/g, '')) || 0;
     const thousands = s.substring(0, lastSepPos).replace(/[.,]/g, '');
     const decimals = s.substring(lastSepPos + 1).replace(/[.,]/g, '');
     return parseFloat(thousands + '.' + decimals) || 0;
   };
 
   const mapPositionalData = (rawRows) => {
-    if (!rawRows || rawRows.length < 1) return [];
-    const headers = rawRows[0];
-    const getIdx = (name) => {
-      const target = name.toLowerCase();
-      return headers.findIndex(h => h && h.toLowerCase() === target);
-    };
-
-    const S_CR = getIdx('Spent Criteo'), R_CR = getIdx('Actual Reach Criteo'), I_CR = getIdx('Actual Imp Criteo');
-    const S_GO = getIdx('Spent Google'), R_GO = getIdx('Actual Reach Google'), I_GO = getIdx('Actual Imp Google');
-    const S_ME = getIdx('Spent Meta'), R_ME = getIdx('Actual Reach Meta'), I_ME = getIdx('Actual Imp Meta');
-    const S_TT = getIdx('Spent Tiktok'), R_TT = getIdx('Actual Reach Tiktok'), I_TT = getIdx('Actual Imp Tiktok');
-    const S_SE = getIdx('Spent segumento'), R_SE = getIdx('Actual Reach segumento'), I_SE = getIdx('Actual Imp segumento');
-
+    if (!rawRows || rawRows.length < 2) return [];
+    
+    // POSITIONAL MAPPING V10 (Based on User's A-CX Mapping Table)
+    // IMPORTANT: Column addresses are 1-based in User Table (A=1), so we subtract 1.
     return rawRows.slice(1).map(row => {
-      if (!row || row.length < 5) return null;
       const p = parseNum;
-      const brand = row[getIdx('Brand')] || '';
-      const spentTotal = p(row[getIdx('Spent')]);
-      const budgetOverall = p(row[getIdx('Budget Overall')]);
+      const brand = row[5] || ''; // F=6th column = index 5
+      const spentTotal = p(row[75]); // BX=76th column = index 75
+      const budgetOverall = p(row[9]); // J=10th column = index 9
       if (!brand && !spentTotal && !budgetOverall) return null;
 
+      const spentCriteo = p(row[94]); // CQ=95 = index 94
+      const impCriteo = p(row[96]); // CS=97 = index 96
+      const reachCriteo = p(row[95]); // CR=96 = index 95
+
       return {
-        month: row[getIdx('Month')] || '',
-        monthNum: p(row[getIdx('M')]),
-        year: p(row[getIdx('Y')]),
-        pic: row[getIdx('PIC PERFORMANCE TEAM')] || row[getIdx('PIC PERFORMANCE')] || '',
-        digitalStrat: row[getIdx('DIGITL STRAT')] || '',
+        month: row[0] || '',
+        monthNum: p(row[1]),
+        year: p(row[2]),
+        pic: row[3] || '', // D=4 = index 3
+        digitalStrat: row[4] || '', // E=5 = index 4
         brand: brand,
-        category: row[getIdx('Category')] || '',
-        categoryProduct: row[getIdx('Category Product')] || '',
-        product: row[getIdx('Product')] || '',
+        category: row[6] || '', // G=7 = index 6
+        categoryProduct: row[7] || '', // H=8 = index 7
+        product: row[8] || '', // I=9 = index 8
         budgetOverall: budgetOverall,
         spent: spentTotal,
-        reach: p(row[getIdx('Reach')]),
-        impressions: p(row[getIdx('Imp.')]),
+        reach: p(row[78]), // CA=79 = index 78
+        impressions: p(row[80]), // CC=81 = index 80
+        estImp: p(row[11]), // L=12 = index 11
         
-        spentMeta: S_ME !== -1 ? p(row[S_ME]) : 0, actualReachMeta: R_ME !== -1 ? p(row[R_ME]) : 0, actualImpMeta: Math.max(I_ME !== -1 ? p(row[I_ME]) : 0, R_ME !== -1 ? p(row[R_ME]) : 0),
-        spentTiktok: S_TT !== -1 ? p(row[S_TT]) : 0, actualReachTiktok: R_TT !== -1 ? p(row[R_TT]) : 0, actualImpTiktok: Math.max(I_TT !== -1 ? p(row[I_TT]) : 0, R_TT !== -1 ? p(row[R_TT]) : 0),
-        spentSegumento: S_SE !== -1 ? p(row[S_SE]) : 0, actualReachSegumento: R_SE !== -1 ? p(row[R_SE]) : 0, actualImpSegumento: Math.max(I_SE !== -1 ? p(row[I_SE]) : 0, R_SE !== -1 ? p(row[R_SE]) : 0),
-        spentCriteo: S_CR !== -1 ? p(row[S_CR]) : 0, actualReachCriteo: R_CR !== -1 ? p(row[R_CR]) : 0, actualImpCriteo: Math.max(I_CR !== -1 ? p(row[I_CR]) : 0, R_CR !== -1 ? p(row[R_CR]) : 0),
-        spentGoogle: S_GO !== -1 ? p(row[S_GO]) : 0, actualReachGoogle: R_GO !== -1 ? p(row[R_GO]) : 0, actualImpGoogle: Math.max(I_GO !== -1 ? p(row[I_GO]) : 0, R_GO !== -1 ? p(row[R_GO]) : 0),
+        // INDIVIDUAL BUDGETS (for Efficiency Matrix)
+        budgetMeta: p(row[21]), // V=22 = index 21
+        budgetTiktok: p(row[39]), // AN=40 = index 39
+        budgetSegumento: p(row[60]), // BI=61 = index 60
+        budgetCriteo: p(row[66]), // BO=67 = index 66
+        budgetGoogle: p(row[69]), // BR=70 = index 69
+
+        // PERFORMANCE ACTUALS
+        spentMeta: p(row[82]), actualReachMeta: p(row[84]), actualImpMeta: Math.max(p(row[83]), p(row[84])), // CE/CF/CG
+        spentTiktok: p(row[85]), actualReachTiktok: p(row[87]), actualImpTiktok: Math.max(p(row[86]), p(row[87])), // CH/CI/CJ
+        spentSegumento: p(row[88]), actualReachSegumento: p(row[89]), actualImpSegumento: Math.max(p(row[90]), p(row[89])), // CK/CL/CM
+        spentCriteo, actualReachCriteo: reachCriteo, actualImpCriteo: Math.max(impCriteo, reachCriteo),
+        spentGoogle: p(row[97]), actualReachGoogle: p(row[98]), actualImpGoogle: Math.max(p(row[99]), p(row[98])), // CT/CU/CV
       };
     }).filter(r => r !== null);
   };
@@ -165,9 +166,10 @@ export const DataProvider = ({ children }) => {
         const textCC = await resCC.text();
         const ccRows = Papa.parse(textCC, { header: false }).data;
 
+        // Specialized Orders/NCO Parsers
         const parseDateStr = (s) => {
           if (!s) return null;
-          const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12',January:'01',February:'02',March:'03',April:'04',May:'05',June:'06',July:'07',August:'08',September:'09',October:'10',November:'11',December:'12'};
+          const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
           const parts = s.trim().split('-');
           if (parts.length < 2) return null;
           return `2026-${months[parts[1]] || '01'}-${String(parts[0]).padStart(2,'0')}`;
@@ -177,14 +179,14 @@ export const DataProvider = ({ children }) => {
           const vals = Object.values(r);
           return vals[2] && String(vals[2]).includes('-');
         }).map(r => {
-          const vals = Object.values(r);
+          const v = Object.values(r);
           return {
-            month: vals[0], week: vals[1], date: vals[2], normDate: parseDateStr(vals[2]),
-            tiktokShop: { target: parseNum(vals[4]), gmv: parseNum(vals[5]), runRate: parseNum(vals[6]), units: parseNum(vals[7]), orders: parseNum(vals[9]) },
-            lazada: { target: parseNum(vals[14]), gmv: parseNum(vals[15]), runRate: parseNum(vals[16]), units: parseNum(vals[17]), orders: parseNum(vals[19]) },
-            shopee: { target: parseNum(vals[24]), gmv: parseNum(vals[25]), runRate: parseNum(vals[26]), units: parseNum(vals[27]), orders: parseNum(vals[29]) },
-            tokopedia: { target: parseNum(vals[34]), gmv: parseNum(vals[35]), runRate: parseNum(vals[36]), units: parseNum(vals[37]), orders: parseNum(vals[39]) },
-            total: { target: parseNum(vals[44]), gmv: parseNum(vals[45]), runRate: parseNum(vals[46]), units: parseNum(vals[47]), orders: parseNum(vals[49]), visitors: parseNum(vals[52]), cr: parseNum(vals[53]) },
+            month: v[0], week: v[1], date: v[2], normDate: parseDateStr(v[2]),
+            tiktokShop: { target: parseNum(v[4]), gmv: parseNum(v[5]), runRate: parseNum(v[6]), units: parseNum(v[7]), orders: parseNum(v[9]) },
+            lazada: { target: parseNum(v[14]), gmv: parseNum(v[15]), runRate: parseNum(v[16]), units: parseNum(v[17]), orders: parseNum(v[19]) },
+            shopee: { target: parseNum(v[24]), gmv: parseNum(v[25]), runRate: parseNum(v[26]), units: parseNum(v[27]), orders: parseNum(v[29]) },
+            tokopedia: { target: parseNum(v[34]), gmv: parseNum(v[35]), runRate: parseNum(v[36]), units: parseNum(v[37]), orders: parseNum(v[39]) },
+            total: { target: parseNum(v[44]), gmv: parseNum(v[45]), runRate: parseNum(v[46]), units: parseNum(v[47]), orders: parseNum(v[49]), visitors: parseNum(v[52]), cr: parseNum(v[53]) },
           };
         });
 
@@ -192,23 +194,23 @@ export const DataProvider = ({ children }) => {
           const vals = Object.values(r);
           return vals[1] && String(vals[1]).includes('-');
         }).map(r => {
-          const vals = Object.values(r);
+          const v = Object.values(r);
           return {
-            month: vals[0], date: vals[1], normDate: parseDateStr(vals[1]),
-            tiktokShop: { target: parseNum(vals[3]), gmv: parseNum(vals[4]), orders: parseNum(vals[8]) },
-            lazada: { target: parseNum(vals[12]), gmv: parseNum(vals[13]), orders: parseNum(vals[17]) },
-            shopee: { target: parseNum(vals[21]), gmv: parseNum(vals[22]), orders: parseNum(vals[26]) },
-            tokopedia: { target: parseNum(vals[30]), gmv: parseNum(vals[31]), orders: parseNum(vals[35]) },
-            total: { gmv: parseNum(vals[40]), orders: parseNum(vals[44]) }
+            month: v[0], date: v[1], normDate: parseDateStr(v[1]),
+            tiktokShop: { target: parseNum(v[3]), gmv: parseNum(v[4]), orders: parseNum(v[8]) },
+            lazada: { target: parseNum(v[12]), gmv: parseNum(v[13]), orders: parseNum(v[17]) },
+            shopee: { target: parseNum(v[21]), gmv: parseNum(v[22]), orders: parseNum(v[26]) },
+            tokopedia: { target: parseNum(v[30]), gmv: parseNum(v[31]), orders: parseNum(v[35]) },
+            total: { gmv: parseNum(v[40]), orders: parseNum(v[44]) }
           };
         });
 
-        const normalizeAds = (list) => list.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name || d['Campaign name'], Cost: d.spend || d['Amount spent (IDR)'] || d.Cost, Reach: d.reach || d.Reach, Impressions: d.impressions || d.Impressions || d['Impr.'], BRAND: d.brand }));
+        const normAds = (list) => list.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name || d['Campaign name'], Cost: d.spend || d['Amount spent (IDR)'] || d.Cost, Reach: d.reach || d.Reach, Impressions: d.impressions || d.Impressions || d['Impr.'], BRAND: d.brand }));
 
-        const metaMap = normalizeAds(metaSup);
-        const googleMap = normalizeAds(googleSup);
-        const tiktokMap = normalizeAds(tiktokSup);
-        const criteoMap = normalizeAds(criteoSup);
+        const metaMap = normAds(metaSup);
+        const googleMap = normAds(googleSup);
+        const tiktokMap = normAds(tiktokSup);
+        const criteoMap = normAds(criteoSup);
 
         setData({
           tiktokAdsData: tiktokMap,
@@ -226,6 +228,7 @@ export const DataProvider = ({ children }) => {
           error: null
         });
       } catch (e) {
+        console.error("Fetch Error:", e);
         setData(prev => ({ ...prev, loading: false, error: e.message }));
       }
     };
