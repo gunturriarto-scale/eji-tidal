@@ -22,6 +22,7 @@ const urls = {
   KOL: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=KOL`,
   CRITEO: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=CRITEO`,
   DAILY_ORDERS: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=Daily%20Performance%20Orders`,
+  NCO_ORDERS: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&gid=1823027242`,
   COMMAND_CENTER: `https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`
 };
 
@@ -91,6 +92,7 @@ export const DataProvider = ({ children }) => {
     kolData: [],
     criteoData: [],
     ordersData: [],
+    ncoOrdersData: [],
     commandCenterData: [],
     lastSync: null,
     loading: true,
@@ -274,6 +276,43 @@ export const DataProvider = ({ children }) => {
             });
         };
 
+        const parseNcoOrdersData = (rawRows) => {
+          const cleanNum = (v) => {
+            if (!v && v !== 0) return 0;
+            const n = parseFloat(String(v).replace(/[Rp\s%,]/g, ''));
+            return isNaN(n) ? 0 : n;
+          };
+          const parseDateStr = (s) => {
+            if (!s) return null;
+            const months = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+            const [d, m] = s.trim().split('-');
+            if (!d || !m) return null;
+            const year = 2026;
+            return `${year}-${months[m]}-${String(d).padStart(2,'0')}`;
+          };
+          return rawRows
+            .filter(row => {
+              const keys = Object.keys(row);
+              const dateVal = row[keys[1]]; // NCO format has Date at index 1
+              return dateVal && String(dateVal).includes('-');
+            })
+            .map(row => {
+              const vals = Object.values(row);
+              const normDate = parseDateStr(String(vals[1] || ''));
+              return {
+                month: String(vals[0] || ''),
+                week: '-',
+                date: String(vals[1] || ''),
+                normDate,
+                tiktokShop: { target: cleanNum(vals[3]), gmv: cleanNum(vals[4]), runRate: cleanNum(vals[5]), units: cleanNum(vals[6]), asp: cleanNum(vals[7]), orders: cleanNum(vals[8]), abs: cleanNum(vals[9]), visitors: cleanNum(vals[10]), cr: cleanNum(vals[11]) },
+                lazada:     { target: cleanNum(vals[12]), gmv: cleanNum(vals[13]), runRate: cleanNum(vals[14]), units: cleanNum(vals[15]), asp: cleanNum(vals[16]), orders: cleanNum(vals[17]), abs: cleanNum(vals[18]), visitors: cleanNum(vals[19]), cr: cleanNum(vals[20]) },
+                shopee:     { target: cleanNum(vals[21]), gmv: cleanNum(vals[22]), runRate: cleanNum(vals[23]), units: cleanNum(vals[24]), asp: cleanNum(vals[25]), orders: cleanNum(vals[26]), abs: cleanNum(vals[27]), visitors: cleanNum(vals[28]), cr: cleanNum(vals[29]) },
+                tokopedia:  { target: cleanNum(vals[30]), gmv: cleanNum(vals[31]), runRate: cleanNum(vals[32]), units: cleanNum(vals[33]), asp: cleanNum(vals[34]), orders: cleanNum(vals[35]), abs: cleanNum(vals[36]), visitors: cleanNum(vals[37]), cr: cleanNum(vals[38]) },
+                total:      { target: cleanNum(vals[39]), gmv: cleanNum(vals[40]), runRate: cleanNum(vals[41]), units: cleanNum(vals[42]), asp: cleanNum(vals[43]), orders: cleanNum(vals[44]), abs: cleanNum(vals[45]), visitors: cleanNum(vals[46]), cr: cleanNum(vals[47]) },
+              };
+            });
+        };
+
         const fetchSupabaseAll = async (table) => {
           try {
             let allData = [];
@@ -307,7 +346,7 @@ export const DataProvider = ({ children }) => {
           }
         };
 
-        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw, commandCenterRaw] = await Promise.all([
+        const [tiktokAdsDataRaw, metaAdsDataRaw, googleAdsDataRaw, offsiteData, kolData, criteoDataRaw, ordersRaw, ncoOrdersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw, commandCenterRaw] = await Promise.all([
           fetchCSV(urls.TIKTOK),
           fetchCSV(urls.META),
           fetchCSV(urls.GOOGLE),
@@ -315,6 +354,7 @@ export const DataProvider = ({ children }) => {
           fetchCSV(urls.KOL),
           fetchCSV(urls.CRITEO),
           fetchCSV(urls.DAILY_ORDERS),
+          fetchCSV(urls.NCO_ORDERS),
           fetchSupabaseAll('meta_ads_performance'),
           fetchSupabaseAll('google_ads_performance'),
           fetchSupabaseAll('tiktok_ads_performance'),
@@ -474,6 +514,7 @@ export const DataProvider = ({ children }) => {
           kolData,
           criteoData: criteoSupabaseData.length > 0 ? normalizeAdData(criteoSupabaseData) : normalizeAdData(criteoDataRaw),
           ordersData: parseOrdersData(ordersRaw),
+          ncoOrdersData: parseNcoOrdersData(ncoOrdersRaw),
           commandCenterData,
           lastSync: getFormattedDate(),
           loading: false,

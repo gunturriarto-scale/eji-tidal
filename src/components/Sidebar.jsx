@@ -50,6 +50,12 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { id: 'lazada',    name: 'Lazada',       icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
     { id: 'tokopedia', name: 'Tokopedia',    icon: <TokopediaIcon size={20} />, color: '#059669' },
 
+    { type: 'divider', label: 'E-Commerce NCO' },
+    { id: 'shopeeNco',     name: 'Shopee NCO',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
+    { id: 'tiktokShopNco', name: 'TikTok Shop NCO', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
+    { id: 'lazadaNco',     name: 'Lazada NCO',      icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
+    { id: 'tokopediaNco',  name: 'Tokopedia NCO',   icon: <TokopediaIcon size={20} />, color: '#059669' },
+
     { type: 'divider', label: 'Ads Performance' },
     { id: 'overview', name: 'Ads Overview', icon: <LayoutDashboard size={20} /> },
     { id: 'meta',     name: 'Meta Ads', icon: <Facebook size={20} />, color: '#1877f2' },
