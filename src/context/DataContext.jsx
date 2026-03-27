@@ -92,9 +92,107 @@ export const DataProvider = ({ children }) => {
     criteoData: [],
     ordersData: [],
     commandCenterData: [],
+    lastSync: null,
     loading: true,
     error: null
   });
+
+  const getFormattedDate = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    let hours = today.getHours();
+    const minutes = String(today.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+  };
+
+  const refreshCommandCenter = async () => {
+    setData(prev => ({ ...prev, isRefreshing: true }));
+    try {
+      const res = await fetch(urls.COMMAND_CENTER);
+      const text = await res.text();
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+      
+      const parseNum = (val) => {
+        if (val === undefined || val === null || val === '') return 0;
+        if (typeof val === 'number') return val;
+        const cleaned = String(val).replace(/[,%]/g, '').trim();
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : num;
+      };
+      
+      const parsePct = (val) => {
+        if (val === undefined || val === null || val === '') return 0;
+        if (typeof val === 'number') return val;
+        let cleaned = String(val).replace(/,/g, '').trim();
+        let num = parseFloat(cleaned);
+        if (cleaned.includes('%')) {
+           return isNaN(num) ? 0 : num;
+        } else {
+           return isNaN(num) ? 0 : num * 100;
+        }
+      };
+
+      const newData = parsed.data.map(row => {
+        return {
+          month: row['Month'] || '',
+          monthNum: parseNum(row['M']),
+          year: parseNum(row['Y']),
+          pic: row['PIC PERFORMANCE TEAM'] || row['PIC PERFORMANCE'] || '',
+          digitalStrat: row['DIGITL STRAT'] || '',
+          brand: row['Brand'] || '',
+          category: row['Category'] || '',
+          categoryProduct: row['Category Product'] || row['category product'] || row['category proposal'] || '',
+          product: row['Product'] || '',
+          budgetOverall: parseNum(row['Budget Overall']),
+          estReach: parseNum(row['Est. Reach']),
+          estImp: parseNum(row['Est. Imp']),
+          estCPM: parseNum(row['Est CPM']),
+          budgetMeta: parseNum(row['Budget Meta']),
+          estReachMeta: parseNum(row['Est. Reach Meta']),
+          estImpMeta: parseNum(row['Est. Imp Meta']),
+          budgetTiktok: parseNum(row['Budget Tiktok']),
+          estReachTiktok: parseNum(row['Est. Reach Tiktok']),
+          estImpTiktok: parseNum(row['Est. Imp Tiktok']),
+          budgetSegumento: parseNum(row['Budget Segumento']),
+          budgetDisplay: parseNum(row['Budget Display']),
+          budgetCriteo: parseNum(row['Budget Criteo']),
+          budgetGoogle: parseNum(row['Budget Google']),
+          budgetPinterest: parseNum(row['Budget pinterest']),
+          spent: parseNum(row['Spent']),
+          remainingBudget: parseNum(row['Remaining Budget']),
+          pacing: parsePct(row['% Pacing']),
+          reach: parseNum(row['Reach']),
+          reachPct: parsePct(row['% Reach']),
+          impressions: parseNum(row['Imp.']),
+          impPct: parsePct(row['% Imp.']),
+          spentMeta: parseNum(row['Spent Meta']),
+          actualImpMeta: parseNum(row['Actual Imp Meta']),
+          actualReachMeta: parseNum(row['Actual Reach Meta']),
+          spentTiktok: parseNum(row['Spent Tiktok']),
+          actualImpTiktok: parseNum(row['Actual Imp Tiktok']),
+          actualReachTiktok: parseNum(row['Actual Reach Tiktok']),
+          spentSegumento: parseNum(row['Spent segumento']),
+          spentCriteo: parseNum(row['Spent Criteo']),
+          spentGoogle: parseNum(row['Spent Google']),
+        };
+      }).filter(r => r.budgetOverall > 0 || r.spent > 0);
+      
+      setData(prev => ({
+        ...prev,
+        commandCenterData: newData,
+        lastSync: getFormattedDate(),
+        isRefreshing: false
+      }));
+    } catch (err) {
+      console.error('Failed to sync Command Center:', err);
+      setData(prev => ({ ...prev, isRefreshing: false }));
+    }
+  };
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -377,6 +475,7 @@ export const DataProvider = ({ children }) => {
           criteoData: criteoSupabaseData.length > 0 ? normalizeAdData(criteoSupabaseData) : normalizeAdData(criteoDataRaw),
           ordersData: parseOrdersData(ordersRaw),
           commandCenterData,
+          lastSync: getFormattedDate(),
           loading: false,
           error: null
         });
@@ -390,7 +489,7 @@ export const DataProvider = ({ children }) => {
   }, []);
 
   return (
-    <DataContext.Provider value={data}>
+    <DataContext.Provider value={{ ...data, refreshCommandCenter }}>
       {children}
     </DataContext.Provider>
   );

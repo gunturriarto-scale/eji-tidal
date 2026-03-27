@@ -28,6 +28,8 @@ const Header = ({
   categoryFilter, setCategoryFilter,
   brandFilter, setBrandFilter
 }) => {
+  const { lastSync, isRefreshing, refreshCommandCenter } = useData();
+
   return (
     <div className="header fade-in" style={{ 
       marginBottom: '2rem', 
@@ -45,9 +47,36 @@ const Header = ({
             <h1 className="gradient-text" style={{ fontSize: '1.75rem', margin: 0 }}>{activeViewName}</h1>
             <p style={{ margin: 0, opacity: 0.6 }}>Real-time performance distribution & analysis</p>
           </div>
-          <div className="status-indicator" style={{ background: 'rgba(16, 185, 129, 0.03)', padding: '0.4rem 0.75rem', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.08)' }}>
-            <div className="status-dot"></div>
-            <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Sync: Live Data</span>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            {activeView === 'commandCenter' && (
+              <button 
+                onClick={refreshCommandCenter}
+                disabled={isRefreshing}
+                style={{
+                  background: 'rgba(55, 66, 250, 0.1)',
+                  color: '#3742fa',
+                  border: '1px solid rgba(55, 66, 250, 0.2)',
+                  padding: '6px 12px',
+                  borderRadius: '16px',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  cursor: isRefreshing ? 'wait' : 'pointer',
+                  opacity: isRefreshing ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {isRefreshing ? 'Refreshing...' : '🔄 Pull Data'}
+              </button>
+            )}
+            <div className="status-indicator" style={{ background: 'rgba(16, 185, 129, 0.03)', padding: '0.5rem 0.85rem', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.08)' }}>
+              <div className="status-dot"></div>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>
+                {activeView === 'commandCenter' && lastSync ? `Last Sync: ${lastSync}` : 'Sync: Live Data'}
+              </span>
+            </div>
           </div>
         </div>
 
