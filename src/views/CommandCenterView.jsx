@@ -3,7 +3,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   ComposedChart, Legend
 } from 'recharts';
-import { Search, Download, AlertCircle, Users, BarChart2, Briefcase, Activity } from 'lucide-react';
+import { Search, Download, AlertCircle, Users, BarChart2, Briefcase, Activity, Facebook, Video, Layout, MessageSquare, Target } from 'lucide-react';
 
 const formatCurrency = (val) => {
   if (!val && val !== 0) return 'Rp 0';
@@ -368,9 +368,36 @@ export const CommandCenterView = ({ filteredData }) => {
       categories: Object.entries(p.categories).map(([catName, catData]) => ({
         name: catName,
         labelType: catData.labelType,
-        products: catData.products.sort((a, b) => b.budget - a.budget)
+      products: catData.products.sort((a, b) => b.budget - a.budget)
       })).sort((a,b) => a.name.localeCompare(b.name))
     })).sort((a, b) => a.pic.localeCompare(b.pic));
+  }, [data]);
+
+  // ── Performance by Channel (Global Aggregation) ──
+  const channelPerformance = useMemo(() => {
+    const platformsConfigs = [
+      { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', color: '#1877F2', icon: <Facebook size={20} /> },
+      { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', color: '#EE1D52', icon: <Video size={20} /> },
+      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'impressions', color: '#34A853', icon: <Search size={20} /> },
+      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'impressions', color: '#EB6923', icon: <Activity size={20} /> },
+      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'impressions', color: '#8A2BE2', icon: <BarChart2 size={20} /> },
+    ];
+
+    return platformsConfigs.map(p => {
+      let b = 0, s = 0, i = 0;
+      data.forEach(d => {
+        const rowB = d[p.budget] || 0;
+        const rowS = d[p.spent] || 0;
+        if (rowB > 0 || rowS > 0) {
+          b += rowB;
+          s += rowS;
+          i += (p.id === 'meta' ? d.actualImpMeta : p.id === 'tiktok' ? d.actualImpTiktok : d.impressions) || 0;
+        }
+      });
+      const cpm = i > 0 ? (s / i) * 1000 : 0;
+      const pacing = b > 0 ? (s / b) * 100 : 0;
+      return { ...p, budget: b, spent: s, imp: i, cpm, pacing };
+    }).filter(p => p.budget > 0 || p.spent > 0);
   }, [data]);
 
   // ── Custom Styles ──
@@ -646,7 +673,62 @@ export const CommandCenterView = ({ filteredData }) => {
             ))}
           </div>
         </div>
+      </div>
+      {/* ── PERFORMANCE BY CHANNEL ── */}
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <span style={{ fontSize: '16px', fontWeight: 600 }}>Performance by Channel</span>
+          <Target size={20} color="#8b8b9e" />
+        </div>
+        <div className="cc2-pic-grid">
+          {channelPerformance.map((ch) => (
+            <div key={ch.id} className="cc2-card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ 
+                  width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                  background: ch.color, backgroundOpacity: 0.1, border: `1px solid ${ch.color}`
+                }}>
+                  {ch.icon}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '16px' }}>{ch.name} Advertising</div>
+                  <div style={{ fontSize: '12px', color: '#8b8b9e', marginTop: '2px' }}>Digital Channel Performance</div>
+                </div>
+              </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: '#1a1a25', borderRadius: '8px', padding: '12px' }}>
+                  <div style={{ fontSize: '11px', color: '#8b8b9e', marginBottom: '4px' }}>Total Spent</div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px' }}>{formatCurrency(ch.spent)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: ch.pacing > 100 ? '#ef4444' : '#10b981' }}>
+                      {ch.pacing.toFixed(1)}%
+                    </span>
+                    <div className="cc2-pbar-bg" style={{ width: '40px', height: '4px' }}>
+                      <div className="cc2-pbar-fill" style={{ 
+                        width: `${Math.min(ch.pacing, 100)}%`, 
+                        background: ch.pacing > 100 ? '#ef4444' : '#10b981' 
+                      }}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ background: '#1a1a25', borderRadius: '8px', padding: '12px' }}>
+                  <div style={{ fontSize: '11px', color: '#8b8b9e', marginBottom: '4px' }}>Average CPM</div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px' }}>{formatCPM(ch.cpm)}</div>
+                  <div style={{ fontSize: '10px', color: '#8b8b9e' }}>Efficiency Index</div>
+                </div>
+
+                <div style={{ background: '#1a1a25', borderRadius: '8px', padding: '12px', gridColumn: 'span 2' }}>
+                  <div style={{ fontSize: '11px', color: '#8b8b9e', marginBottom: '4px' }}>Actual Impressions</div>
+                  <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px' }}>{formatNumber(ch.imp)}</div>
+                  <Sparkline data={generateSparkline(ch.imp, 0.2)} color={ch.color} width={200} height={20} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── PERFORMANCE BY PIC (NEW CARDS) ── */}
