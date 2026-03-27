@@ -680,9 +680,9 @@ export const CommandCenterView = ({ filteredData }) => {
           <span style={{ fontSize: '16px', fontWeight: 600 }}>Performance by Channel</span>
           <Target size={20} color="#8b8b9e" />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {channelPerformance.map((ch) => (
-            <div key={ch.id} className="cc2-card" style={{ padding: '24px' }}>
+            <div key={ch.id} className="cc2-card" style={{ minWidth: '320px', flex: '0 0 auto', padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
                 <div style={{ 
                   width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0,
