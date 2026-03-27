@@ -109,23 +109,18 @@ export const CommandCenterView = ({ filteredData }) => {
     });
   }, [rawData, monthFilter, brandFilter, searchQuery]);
 
-  // ── KPI Summaries & Alerts ──
   const kpi = useMemo(() => {
     const totalBudget = data.reduce((s, d) => s + (d.budgetOverall || 0), 0);
     const totalSpent = data.reduce((s, d) => s + (d.spent || 0), 0);
-    const totalImp = data.reduce((s, d) => s + (d.impressions || 0), 0);
-    const totalReach = data.reduce((s, d) => s + (d.reach || 0), 0);
     const totalRemaining = Math.max(0, totalBudget - totalSpent);
+    const avgPacing = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-    // Calculate Actual Blended CPM - More robust to avoid double counting
     const totalImpressions = data.reduce((s, d) => {
-      // Logic: Prefer individual platform actuals if available, otherwise fallback to the total Imp block
-      const hasPlatImp = (d.actualImpMeta || 0) + (d.actualImpTiktok || 0);
+      const hasPlatImp = (d.actualImpMeta || 0) + (d.actualImpTiktok || 0) + (d.actualImpCriteo || 0) + (d.actualImpGoogle || 0);
       return s + (hasPlatImp > 0 ? hasPlatImp : (d.impressions || 0));
     }, 0);
     const actualCPM = totalImpressions > 0 ? (totalSpent / totalImpressions) * 1000 : 0;
     
-    // Find alerts
     const overspending = data.filter(d => d.budgetOverall > 0 && (d.spent / d.budgetOverall) > 1.1);
     const underperforming = data.filter(d => d.budgetOverall > 0 && d.estReach > 0 && (d.reach / d.estReach) < 0.5);
 
@@ -229,11 +224,11 @@ export const CommandCenterView = ({ filteredData }) => {
   const picCardData = useMemo(() => {
     const map = {};
     const channelsConfig = [
-      { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', color: '#1877F2' },
-      { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', color: '#EE1D52' },
-      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'actualImpGoogle', color: '#34A853' },
-      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'actualImpCriteo', color: '#EB6923' },
-      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'actualImpSegumento', color: '#8A2BE2' },
+      { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', color: '#1877F2', icon: 'M' },
+      { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', color: '#EE1D52', icon: 'T' },
+      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'actualImpGoogle', color: '#34A853', icon: 'G' },
+      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'actualImpCriteo', color: '#EB6923', icon: 'C' },
+      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'actualImpSegumento', color: '#8A2BE2', icon: 'S' },
     ];
 
     data.forEach(d => {
