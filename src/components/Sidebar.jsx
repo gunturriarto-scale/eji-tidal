@@ -109,7 +109,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
         {menuItems.map((item, idx) => {
           if (item.type === 'divider') {
             return (
-              <div key={`div-${idx}`} style={{ padding: isCollapsed ? '0.5rem 0' : '0.75rem 1rem 0.25rem', color: 'var(--text-tertiary)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '0.5rem' }}>
+              <div key={`div-${idx}`} className="nav-divider" style={{ padding: isCollapsed ? '0.5rem 0' : '0.75rem 1rem 0.25rem', color: 'var(--text-tertiary)', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '0.5rem' }}>
                 {!isCollapsed && item.label}
               </div>
             );
