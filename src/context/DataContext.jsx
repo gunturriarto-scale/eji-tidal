@@ -499,8 +499,11 @@ export const DataProvider = ({ children }) => {
             actualImpTiktok: parseNum(row['Actual Imp Tiktok']),
             actualReachTiktok: parseNum(row['Actual Reach Tiktok']),
             spentSegumento: parseNum(row['Spent segumento']),
+            actualImpSegumento: parseNum(row['Actual Imp segumento']),
             spentCriteo: parseNum(row['Spent Criteo']),
+            actualImpCriteo: parseNum(row['Actual Imp Criteo']),
             spentGoogle: parseNum(row['Spent Google']),
+            actualImpGoogle: parseNum(row['Actual Imp Google']),
           };
         }).filter(r => r.budgetOverall > 0 || r.spent > 0);
         console.log(`Parsed ${commandCenterData.length} command center rows`);

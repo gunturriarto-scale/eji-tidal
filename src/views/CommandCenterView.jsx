@@ -378,9 +378,9 @@ export const CommandCenterView = ({ filteredData }) => {
     const platformsConfigs = [
       { id: 'meta', name: 'Meta', budget: 'budgetMeta', spent: 'spentMeta', imp: 'actualImpMeta', color: '#1877F2', icon: <Facebook size={20} /> },
       { id: 'tiktok', name: 'TikTok', budget: 'budgetTiktok', spent: 'spentTiktok', imp: 'actualImpTiktok', color: '#EE1D52', icon: <Video size={20} /> },
-      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'impressions', color: '#34A853', icon: <Search size={20} /> },
-      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'impressions', color: '#EB6923', icon: <Activity size={20} /> },
-      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'impressions', color: '#8A2BE2', icon: <BarChart2 size={20} /> },
+      { id: 'google', name: 'Google', budget: 'budgetGoogle', spent: 'spentGoogle', imp: 'actualImpGoogle', color: '#34A853', icon: <Search size={20} /> },
+      { id: 'criteo', name: 'Criteo', budget: 'budgetCriteo', spent: 'spentCriteo', imp: 'actualImpCriteo', color: '#EB6923', icon: <Activity size={20} /> },
+      { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'actualImpSegumento', color: '#8A2BE2', icon: <BarChart2 size={20} /> },
     ];
 
     return platformsConfigs.map(p => {
@@ -391,7 +391,7 @@ export const CommandCenterView = ({ filteredData }) => {
         if (rowB > 0 || rowS > 0) {
           b += rowB;
           s += rowS;
-          i += (p.id === 'meta' ? d.actualImpMeta : p.id === 'tiktok' ? d.actualImpTiktok : d.impressions) || 0;
+          i += (d[p.imp] || 0);
         }
       });
       const cpm = i > 0 ? (s / i) * 1000 : 0;
@@ -680,7 +680,7 @@ export const CommandCenterView = ({ filteredData }) => {
           <span style={{ fontSize: '16px', fontWeight: 600 }}>Performance by Channel</span>
           <Target size={20} color="#8b8b9e" />
         </div>
-        <div className="cc2-pic-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
           {channelPerformance.map((ch) => (
             <div key={ch.id} className="cc2-card" style={{ padding: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
