@@ -67,11 +67,7 @@ export const DataProvider = ({ children }) => {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
     let hours = today.getHours();
-    const minutes = String(today.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+    return `${day}/${month}/${year} ${hours}:${String(today.getMinutes()).padStart(2, '0')}`;
   };
 
   const parseNum = (val) => {
@@ -84,77 +80,67 @@ export const DataProvider = ({ children }) => {
     const lastSepPos = Math.max(lastDot, lastComma);
     if (lastSepPos === -1) return parseFloat(s) || 0;
     const charsAfter = s.length - 1 - lastSepPos;
-    // Heuristic: if exactly 3 digits after the separator, it's thousands (European style 1.000 or 1,000)
     if (charsAfter === 3) return parseFloat(s.replace(/[.,]/g, '')) || 0;
-    // Otherwise, treat as decimal
     const thousands = s.substring(0, lastSepPos).replace(/[.,]/g, '');
     const decimals = s.substring(lastSepPos + 1).replace(/[.,]/g, '');
     return parseFloat(thousands + '.' + decimals) || 0;
   };
 
   const mapPositionalData = (rawRows) => {
-    if (!rawRows || rawRows.length < 2) return [];
+    if (!rawRows || rawRows.length < 1) return [];
     const headers = rawRows[0];
     const getIdx = (name) => {
-        const i = headers.indexOf(name);
-        return i === -1 ? headers.lastIndexOf(name) : i; // fallback to last instance for dupes
+      const i = headers.indexOf(name);
+      return i === -1 ? headers.lastIndexOf(name) : i;
     };
 
-    // Correcting indices based on manual check if possible, or using labels
-    const M_IDX = getIdx('Month'), BRAND_IDX = getIdx('Brand'), SPENT_VAL = getIdx('Spent');
-    const S_META = getIdx('Spent Meta'), I_META = getIdx('Actual Imp Meta'), R_META = getIdx('Actual Reach Meta');
-    const S_TT = getIdx('Spent Tiktok'), I_TT = getIdx('Actual Imp Tiktok'), R_TT = getIdx('Actual Reach Tiktok');
-    const S_SE = getIdx('Spent segumento'), I_SE = getIdx('Actual Imp segumento'), R_SE = getIdx('Actual Reach segumento');
-    const S_CR = getIdx('Spent Criteo'), I_CR = getIdx('Actual Imp Criteo'), R_CR = getIdx('Actual Reach Criteo');
-    const S_GO = getIdx('Spent Google'), I_GO = getIdx('Actual Imp Google'), R_GO = getIdx('Actual Reach Google');
+    const S_CR = getIdx('Spent Criteo'), R_CR = getIdx('Actual Reach Criteo'), I_CR = getIdx('Actual Imp Criteo');
+    const S_GO = getIdx('Spent Google'), R_GO = getIdx('Actual Reach Google'), I_GO = getIdx('Actual Imp Google');
+    const S_ME = getIdx('Spent Meta'), R_ME = getIdx('Actual Reach Meta'), I_ME = getIdx('Actual Imp Meta');
+    const S_TT = getIdx('Spent Tiktok'), R_TT = getIdx('Actual Reach Tiktok'), I_TT = getIdx('Actual Imp Tiktok');
+    const S_SE = getIdx('Spent segumento'), R_SE = getIdx('Actual Reach segumento'), I_SE = getIdx('Actual Imp segumento');
 
     return rawRows.slice(1).map(row => {
+      if (!row || row.length < 5) return null;
       const p = parseNum;
-      const spent = p(row[SPENT_VAL]);
-      const brand = row[BRAND_IDX] || '';
-      if (!brand && !spent) return null;
+      const brand = row[getIdx('Brand')] || '';
+      const spentTotal = p(row[getIdx('Spent')]);
+      const budgetOverall = p(row[getIdx('Budget Overall')]);
+      
+      if (!brand && !spentTotal && !budgetOverall) return null;
 
-      const spentCriteo = p(row[S_CR]);
-      const reachCriteo = p(row[R_CR]);
-      const impCriteo = p(row[I_CR]);
-
-      const spentGoogle = p(row[S_GO]);
-      const reachGoogle = p(row[R_GO]);
-      const impGoogle = p(row[I_GO]);
-
-      const spentMeta = p(row[S_META]);
-      const reachMeta = p(row[R_META]);
-      const impMeta = p(row[I_META]);
+      const spentCriteo = S_CR !== -1 ? p(row[S_CR]) : 0;
+      const reachCriteo = R_CR !== -1 ? p(row[R_CR]) : 0;
+      const impCriteo = I_CR !== -1 ? p(row[I_CR]) : 0;
 
       return {
-        month: row[M_IDX] || '',
+        month: row[getIdx('Month')] || '',
         brand: brand,
         pic: row[getIdx('PIC PERFORMANCE TEAM')] || '',
         category: row[getIdx('Category')] || '',
+        categoryProduct: row[getIdx('Category Product')] || '',
         product: row[getIdx('Product')] || '',
-        budgetOverall: p(row[getIdx('Budget Overall')]),
-        spent: spent,
+        budgetOverall: budgetOverall,
+        spent: spentTotal,
         reach: p(row[getIdx('Reach')]),
         impressions: p(row[getIdx('Imp.')]),
         
-        spentMeta, actualReachMeta: reachMeta, actualImpMeta: Math.max(impMeta, reachMeta),
-        spentTiktok: p(row[S_TT]), actualReachTiktok: p(row[R_TT]), actualImpTiktok: Math.max(p(row[I_TT]), p(row[R_TT])),
-        spentSegumento: p(row[S_SE]), actualReachSegumento: p(row[R_SE]), actualImpSegumento: Math.max(p(row[I_SE]), p(row[R_SE])),
+        spentMeta: S_ME !== -1 ? p(row[S_ME]) : 0, actualReachMeta: R_ME !== -1 ? p(row[R_ME]) : 0, actualImpMeta: Math.max(I_ME !== -1 ? p(row[I_ME]) : 0, R_ME !== -1 ? p(row[R_ME]) : 0),
+        spentTiktok: S_TT !== -1 ? p(row[S_TT]) : 0, actualReachTiktok: R_TT !== -1 ? p(row[R_TT]) : 0, actualImpTiktok: Math.max(I_TT !== -1 ? p(row[I_TT]) : 0, R_TT !== -1 ? p(row[R_TT]) : 0),
+        spentSegumento: S_SE !== -1 ? p(row[S_SE]) : 0, actualReachSegumento: R_SE !== -1 ? p(row[R_SE]) : 0, actualImpSegumento: Math.max(I_SE !== -1 ? p(row[I_SE]) : 0, R_SE !== -1 ? p(row[R_SE]) : 0),
         spentCriteo, actualReachCriteo: reachCriteo, actualImpCriteo: Math.max(impCriteo, reachCriteo),
-        spentGoogle, actualReachGoogle: reachGoogle, actualImpGoogle: Math.max(impGoogle, reachGoogle),
+        spentGoogle: S_GO !== -1 ? p(row[S_GO]) : 0, actualReachGoogle: R_GO !== -1 ? p(row[R_GO]) : 0, actualImpGoogle: Math.max(I_GO !== -1 ? p(row[I_GO]) : 0, R_GO !== -1 ? p(row[R_GO]) : 0),
       };
-    }).filter(r => r !== null && (r.spent > 0 || r.budgetOverall > 0));
+    }).filter(r => r !== null);
   };
 
   const refreshCommandCenter = async () => {
     setData(prev => ({ ...prev, isRefreshing: true }));
     try {
-      const url = `https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`;
-      const res = await fetch(url);
+      const res = await fetch(`https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`);
       const text = await res.text();
       const raw = Papa.parse(text, { header: false }).data;
-      const newData = mapPositionalData(raw);
-      setData(prev => ({ ...prev, commandCenterData: newData, lastSync: getFormattedDate(), isRefreshing: false }));
+      setData(prev => ({ ...prev, commandCenterData: mapPositionalData(raw), lastSync: getFormattedDate(), isRefreshing: false }));
     } catch (err) {
       setData(prev => ({ ...prev, isRefreshing: false }));
     }
@@ -165,61 +151,47 @@ export const DataProvider = ({ children }) => {
       try {
         const fetchCSV = async (url) => {
           const res = await fetch(url);
-          if (!res.ok) throw new Error(`Failed to fetch ${url}`);
-          const text = await res.text();
-          return Papa.parse(text, { header: true, skipEmptyLines: true }).data.map(cleanNumbers);
+          const t = await res.text();
+          return Papa.parse(t, { header: true, skipEmptyLines: true }).data.map(cleanNumbers);
         };
-
         const fetchSupabaseAll = async (table) => {
-          let allData = [];
-          let from = 0;
-          const pageSize = 1000;
-          let hasMore = true;
-          while (hasMore) {
-            const { data, error } = await supabase.from(table).select('*').order('day', { ascending: true }).range(from, from + pageSize - 1);
-            if (error) return [];
-            if (data && data.length > 0) {
-              allData = [...allData, ...data];
-              from += pageSize;
-              hasMore = data.length === pageSize;
-            } else hasMore = false;
-          }
-          return allData;
+          let { data, error } = await supabase.from(table).select('*').limit(3000);
+          return error ? [] : data;
         };
 
-        const [offsiteRaw, kolRaw, ordersRaw, ncoOrdersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw] = await Promise.all([
-          fetchCSV(urls.OFFSITE),
-          fetchCSV(urls.KOL),
-          fetchCSV(urls.DAILY_ORDERS),
-          fetchCSV(urls.NCO_ORDERS),
-          fetchSupabaseAll('meta_ads_performance'),
-          fetchSupabaseAll('google_ads_performance'),
-          fetchSupabaseAll('tiktok_ads_performance'),
-          fetchSupabaseAll('criteo_ads_performance'),
+        const [offsite, kol, orders, nco, metaSupVal, googleSupVal, tiktokSupVal, criteoSupVal] = await Promise.all([
+          fetchCSV(urls.OFFSITE), fetchCSV(urls.KOL), fetchCSV(urls.DAILY_ORDERS), fetchCSV(urls.NCO_ORDERS),
+          fetchSupabaseAll('meta_ads_performance'), fetchSupabaseAll('google_ads_performance'),
+          fetchSupabaseAll('tiktok_ads_performance'), fetchSupabaseAll('criteo_ads_performance')
         ]);
 
-        const url = `https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`;
-        const resCC = await fetch(url);
+        const resCC = await fetch(`https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`);
         const textCC = await resCC.text();
-        const commandCenterRawArray = Papa.parse(textCC, { header: false }).data;
+        const ccRows = Papa.parse(textCC, { header: false }).data;
+
+        const metaMap = metaSupVal.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, 'Amount spent (IDR)': d.spend, 'Reach': d.reach, 'Impressions': d.impressions, BRAND: d.brand }));
+        const googleMap = googleSupVal.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, Cost: d.spend, 'Impr.': d.impressions, BRAND: d.brand }));
+        const tiktokMap = tiktokSupVal.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), 'By Day': (d.day || '').substring(0, 10), 'Campaign name': d.campaign_name, Cost: d.spend, Impressions: d.impressions, BRAND: d.brand }));
+        const criteoMap = criteoSupVal.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), 'Amount spent (IDR)': d.spend, 'Impressions': d.impressions, BRAND: d.brand }));
 
         setData({
-          metaAdsData: metaSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, 'Amount spent (IDR)': d.spend, 'Reach': d.reach, 'Impressions': d.impressions, BRAND: d.brand })),
-          googleAdsData: googleSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, Cost: d.spend, 'Impr.': d.impressions, BRAND: d.brand })),
-          tiktokAdsData: tiktokSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), 'By Day': (d.day || '').substring(0, 10), 'Campaign name': d.campaign_name, Cost: d.spend, BRAND: d.brand })),
-          criteoData: criteoSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), 'Amount spent (IDR)': d.spend, BRAND: d.brand })),
-          offsiteData: offsiteRaw,
-          kolData: kolRaw,
-          ordersData: ordersRaw.map(r => ({ ...r, orderDate: r.Date || r['By Day'] || r['Day'] || '', grandTotal: parseNum(r['Grand Total']), totalOrders: parseNum(r['Total Orders']) })),
-          ncoOrdersData: ncoOrdersRaw.map(r => ({ ...r, orderDate: r.Day || r.Date || '', grandTotal: parseNum(r['Total Grand']), totalOrders: parseNum(r['Total Orders']) })),
-          commandCenterData: mapPositionalData(commandCenterRawArray),
+          tiktokAdsData: tiktokMap,
+          metaAdsData: metaMap,
+          metaAdsSupabaseData: metaMap,
+          googleAdsData: googleMap,
+          offsiteData: offsite,
+          kolData: kol,
+          criteoData: criteoMap,
+          ordersData: orders.map(r => ({ ...r, orderDate: r.Date || r['By Day'] || '', grandTotal: parseNum(r['Grand Total']), totalOrders: parseNum(r['Total Orders']) })),
+          ncoOrdersData: nco.map(r => ({ ...r, orderDate: r.Day || '', grandTotal: parseNum(r['Total Grand']), totalOrders: parseNum(r['Total Orders']) })),
+          commandCenterData: mapPositionalData(ccRows),
           lastSync: getFormattedDate(),
           loading: false,
           error: null
         });
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setData(prev => ({ ...prev, loading: false, error: error.message }));
+      } catch (e) {
+        console.error("Fetch Error:", e);
+        setData(prev => ({ ...prev, loading: false, error: e.message }));
       }
     };
     fetchAllData();
