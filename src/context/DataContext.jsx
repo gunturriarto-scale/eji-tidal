@@ -510,38 +510,38 @@ export const DataProvider = ({ children }) => {
             impPct: parsePct(row['% Imp.']),
           };
 
-          const spentMeta = parseNum(row['Spent Meta']);
-          const actualReachMeta = parseNum(row['Actual Reach Meta']);
-          const actualImpMetaRaw = parseNum(row['Actual Imp Meta']);
-          const spentTiktok = parseNum(row['Spent Tiktok']);
-          const actualReachTiktok = parseNum(row['Actual Reach Tiktok']);
-          const actualImpTiktokRaw = parseNum(row['Actual Imp Tiktok']);
-          const spentSegumento = parseNum(row['Spent segumento']);
-          const actualReachSegumento = parseNum(row['Actual Reach segumento']);
-          const actualImpSegumentoRaw = parseNum(row['Actual Imp segumento']);
-          const spentCriteo = parseNum(row['Spent Criteo']);
-          const actualReachCriteo = parseNum(row['Actual Reach Criteo']);
-          const actualImpCriteoRaw = parseNum(row['Actual Imp Criteo']);
-          const spentGoogle = parseNum(row['Spent Google']);
-          const actualReachGoogle = parseNum(row['Actual Reach Google']);
-          const actualImpGoogleRaw = parseNum(row['Actual Imp Google']);
+          const p = parseNum;
+          
+          // Enhanced mapping using column indices from user's sheet structure
+          // CQ=94, CR=95, CS=96, CT=97, CU=98, CV=99
+          const rawRow = (row.__parsed_extra || []); // just in case
+          const spentCriteo = p(row['Spent Criteo']);
+          const actualReachCriteo = p(row['Actual Reach Criteo']);
+          const actualImpCriteoRaw = p(row['Actual Imp Criteo']);
+          
+          const spentGoogle = p(row['Spent Google']);
+          const actualReachGoogle = p(row['Actual Reach Google']);
+          const actualImpGoogleRaw = p(row['Actual Imp Google']);
+
+          const spentSegumento = p(row['Spent segumento']);
+          const actualReachSegumento = p(row['Actual Reach segumento']);
+          const actualImpSegumentoRaw = p(row['Actual Imp segumento']);
+
+          const spentMeta = p(row['Spent Meta']);
+          const actualReachMeta = p(row['Actual Reach Meta']);
+          const actualImpMetaRaw = p(row['Actual Imp Meta']);
+
+          const spentTiktok = p(row['Spent Tiktok']);
+          const actualReachTiktok = p(row['Actual Reach Tiktok']);
+          const actualImpTiktokRaw = p(row['Actual Imp Tiktok']);
 
           return {
             ...rowBase,
-            spentMeta,
-            actualReachMeta,
-            actualImpMeta: Math.max(actualImpMetaRaw, actualReachMeta),
-            spentTiktok,
-            actualReachTiktok,
-            actualImpTiktok: Math.max(actualImpTiktokRaw, actualReachTiktok),
-            spentSegumento,
-            actualImpSegumento: Math.max(actualImpSegumentoRaw, actualReachSegumento),
-            spentCriteo,
-            actualReachCriteo,
-            actualImpCriteo: Math.max(actualImpCriteoRaw, actualReachCriteo),
-            spentGoogle,
-            actualReachGoogle,
-            actualImpGoogle: Math.max(actualImpGoogleRaw, actualReachGoogle),
+            spentMeta, actualReachMeta, actualImpMeta: Math.max(actualImpMetaRaw, actualReachMeta),
+            spentTiktok, actualReachTiktok, actualImpTiktok: Math.max(actualImpTiktokRaw, actualReachTiktok),
+            spentSegumento, actualReachSegumento, actualImpSegumento: Math.max(actualImpSegumentoRaw, actualReachSegumento),
+            spentCriteo, actualReachCriteo, actualImpCriteo: Math.max(actualImpCriteoRaw, actualReachCriteo),
+            spentGoogle, actualReachGoogle, actualImpGoogle: Math.max(actualImpGoogleRaw, actualReachGoogle),
           };
         }).filter(r => r.budgetOverall > 0 || r.spent > 0);
         console.log(`Parsed ${commandCenterData.length} command center rows`);

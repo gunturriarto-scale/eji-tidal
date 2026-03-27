@@ -677,7 +677,7 @@ export const CommandCenterView = ({ filteredData }) => {
       {/* ── PERFORMANCE BY CHANNEL ── */}
       <div style={{ marginBottom: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <span style={{ fontSize: '16px', fontWeight: 600 }}>Performance by Channel</span>
+          <span style={{ fontSize: '16px', fontWeight: 600 }}>Performance by Channel <small style={{ color: '#ef4444', fontSize: '10px' }}>(ENGINE V4 ACTIVE)</small></span>
           <Target size={20} color="#8b8b9e" />
         </div>
         <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '12px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
