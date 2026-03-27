@@ -208,10 +208,10 @@ function App() {
     google: { ...initialFilters },
     criteo: { ...initialFilters },
     kol: { ...initialFilters, brandFilter: 'Hanasui' }, // KOL default
-    shopee: { ...initialFilters },
-    tiktokShop: { ...initialFilters },
-    lazada: { ...initialFilters },
-    tokopedia: { ...initialFilters },
+    shopee: { ...initialFilters, dateFilter: 'thisMonth' },
+    tiktokShop: { ...initialFilters, dateFilter: 'thisMonth' },
+    lazada: { ...initialFilters, dateFilter: 'thisMonth' },
+    tokopedia: { ...initialFilters, dateFilter: 'thisMonth' },
     commandCenter: { ...initialFilters }
   });
 

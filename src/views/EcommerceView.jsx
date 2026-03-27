@@ -105,20 +105,52 @@ export const EcommerceView = ({ ordersData = [], platform, dateRange }) => {
       {/* KPI Cards */}
       <div className="kpi-grid">
         {[
-          { label: 'Total GMV', value: formatCompactCurrency(kpis?.totalGMV || 0), icon: <TrendingUp size={18} />, sub: `Target: ${formatCompactCurrency(kpis?.totalTarget || 0)}` },
-          { label: 'Run Rate', value: `${(kpis?.runRatePct || 0).toFixed(1)}%`, icon: <Target size={18} />, sub: kpis?.runRatePct >= 100 ? '✅ Hit Target' : '⚠️ Below Target', positive: kpis?.runRatePct >= 100 },
-          { label: 'Total Orders', value: formatNumber(kpis?.totalOrders || 0), icon: <ShoppingBag size={18} />, sub: `${formatNumber(kpis?.totalUnits || 0)} units sold` },
-          { label: 'Avg. ASP', value: formatCurrency(kpis?.avgASP || 0), icon: <BarChart3 size={18} />, sub: 'Avg Selling Price (GMV / Units)' },
-          { label: 'Avg. ABS', value: formatCurrency(kpis?.avgABS || 0), icon: <ShoppingCart size={18} />, sub: 'Avg Basket Size (GMV / Orders)' },
-          { label: 'Avg. CR', value: `${(kpis?.avgCR || 0).toFixed(2)}%`, icon: <Percent size={18} />, sub: 'Orders / Product Views' },
+          { label: 'TOTAL GMV', value: formatCompactCurrency(kpis?.totalGMV || 0), color: '#3B82F6', dataKey: 'gmv', badge: kpis?.runRatePct >= 100 ? '+0%' : `${(kpis?.runRatePct - 100).toFixed(0)}%`, good: kpis?.runRatePct >= 100 },
+          { label: 'RUN RATE', value: `${(kpis?.runRatePct || 0).toFixed(1)}%`, color: '#F59E0B', dataKey: 'runRate', badge: kpis?.runRatePct >= 100 ? 'On Track' : 'Below', good: kpis?.runRatePct >= 100 },
+          { label: 'TOTAL ORDERS', value: formatNumber(kpis?.totalOrders || 0), color: '#10B981', dataKey: 'orders' },
+          { label: 'AVG. ASP', value: formatCurrency(kpis?.avgASP || 0), color: '#8B5CF6', dataKey: 'asp' },
+          { label: 'AVG. ABS', value: formatCurrency(kpis?.avgABS || 0), color: '#EC4899', dataKey: 'abs' },
+          { label: 'AVG. CR', value: `${(kpis?.avgCR || 0).toFixed(2)}%`, color: '#06B6D4', dataKey: 'cr' },
         ].map((kpi, i) => (
-          <div key={i} className="glass-panel kpi-card">
-            <div className="kpi-header">
-              <span>{kpi.label}</span>
-              <div className="kpi-icon" style={{ color: mainColor }}>{kpi.icon}</div>
+          <div key={i} className="glass-panel" style={{ 
+            position: 'relative', 
+            padding: '1.25rem',
+            borderTop: `3px solid ${kpi.color}`,
+            borderRadius: '12px',
+            overflow: 'hidden',
+            minHeight: '130px',
+            background: 'var(--bg-card)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', position: 'relative', zIndex: 2 }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>{kpi.label}</span>
+              {kpi.badge && (
+                <span style={{ 
+                  background: kpi.good ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)', 
+                  color: kpi.good ? '#10b981' : '#f43f5e', 
+                  padding: '2px 8px', 
+                  borderRadius: '12px', 
+                  fontSize: '0.65rem', 
+                  fontWeight: 600 
+                }}>
+                  {kpi.badge}
+                </span>
+              )}
             </div>
-            <div className="kpi-value" style={{ fontSize: '1.4rem' }}>{kpi.value}</div>
-            <div style={{ fontSize: '0.75rem', color: kpi.positive === true ? '#10b981' : kpi.positive === false ? '#f43f5e' : 'var(--text-tertiary)', marginTop: '0.25rem' }}>{kpi.sub}</div>
+            <div style={{ fontSize: '1.4rem', fontWeight: 700, position: 'relative', zIndex: 2 }}>{kpi.value}</div>
+            
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '40px', zIndex: 1, opacity: 0.8 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dailyData}>
+                  <defs>
+                    <linearGradient id={`spark-${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={kpi.color} stopOpacity={0.6}/>
+                      <stop offset="100%" stopColor={kpi.color} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey={kpi.dataKey} stroke={kpi.color} fill={`url(#spark-${i})`} strokeWidth={2} isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         ))}
       </div>
