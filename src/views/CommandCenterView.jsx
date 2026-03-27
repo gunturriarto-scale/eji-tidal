@@ -110,12 +110,19 @@ export const CommandCenterView = ({ filteredData }) => {
     const totalSpent = data.reduce((s, d) => s + d.spent, 0);
     const totalRemaining = data.reduce((s, d) => s + d.remainingBudget, 0);
     const avgPacing = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+
+    // Calculate Actual Blended CPM
+    const totalImpressions = data.reduce((s, d) => {
+      const imp = (d.actualImpMeta || 0) + (d.actualImpTiktok || 0) + (d.impressions || 0);
+      return s + imp;
+    }, 0);
+    const actualCPM = totalImpressions > 0 ? (totalSpent / totalImpressions) * 1000 : 0;
     
     // Find alerts
     const overspending = data.filter(d => d.budgetOverall > 0 && (d.spent / d.budgetOverall) > 1.1);
     const underperforming = data.filter(d => d.budgetOverall > 0 && d.estReach > 0 && (d.reach / d.estReach) < 0.5);
 
-    return { totalBudget, totalSpent, totalRemaining, avgPacing, overspending, underperforming };
+    return { totalBudget, totalSpent, totalRemaining, avgPacing, actualCPM, overspending, underperforming };
   }, [data]);
 
   // Generate fake historical sparkline data based on current metric for visual pop
@@ -126,8 +133,9 @@ export const CommandCenterView = ({ filteredData }) => {
     budget: generateSparkline(kpi.totalBudget, 0.2),
     spent: generateSparkline(kpi.totalSpent, 0.3),
     remaining: generateSparkline(kpi.totalRemaining, 0.4),
-    pacing: generateSparkline(kpi.avgPacing, 0.1)
-  }), [kpi.totalBudget]);
+    pacing: generateSparkline(kpi.avgPacing, 0.1),
+    cpm: generateSparkline(kpi.actualCPM, 0.15)
+  }), [kpi.totalBudget, kpi.actualCPM]);
 
   // ── Platform Efficiency Matrix ──
   const platformMatrix = useMemo(() => {
@@ -385,6 +393,7 @@ export const CommandCenterView = ({ filteredData }) => {
     .cc2-kpi-spent::before { background: linear-gradient(135deg, #ff9500, #ff4757); }
     .cc2-kpi-rem::before { background: linear-gradient(135deg, #00d084, #00b894); }
     .cc2-kpi-pacing::before { background: linear-gradient(135deg, #7c3aed, #a29bfe); }
+    .cc2-kpi-cpm::before { background: linear-gradient(135deg, #059669, #34d399); }
     
     .cc2-trend {
       font-size: 11px; padding: 4px 8px; border-radius: 12px; font-weight: 600;
@@ -485,6 +494,7 @@ export const CommandCenterView = ({ filteredData }) => {
           { label: 'Total Spent', val: kpi.totalSpent, fmt: formatCurrency, trend: '+18%', type: 'up', line: sparklines.spent, cls: 'cc2-kpi-spent', color: '#f59e0b' },
           { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: formatCurrency, trend: '-8%', type: 'down', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
           { label: 'Overall Pacing', val: kpi.avgPacing, fmt: v => `${v.toFixed(1)}%`, trend: kpi.avgPacing > 100 ? '+Alert' : 'On Track', type: kpi.avgPacing > 100 ? 'down' : 'up', line: sparklines.pacing, cls: 'cc2-kpi-pacing', color: '#7c3aed' },
+          { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCurrency, trend: 'Optimal', type: 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
         ].map((card, i) => (
           <div key={i} className={`cc2-card cc2-kpi ${card.cls}`}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
