@@ -117,24 +117,21 @@ export const DataProvider = ({ children }) => {
   const mapPositionalData = (rawRows) => {
     return rawRows.slice(2).map(row => {
       const p = parseNum;
-      // Index Mapping: A=0, B=1, ... CQ=94, CR=95, CS=96, CT=97, CU=98, CV=99
-      const rowBase = {
+      return {
         month: row[0] || '',
         monthNum: p(row[1]),
         year: p(row[2]),
         pic: row[3] || '',
         digitalStrat: row[4] || '',
         brand: row[5] || '',
+        category: row[6] || '',
+        categoryProduct: row[7] || row[8] || '', // category product or proposal
+        product: row[9] || '',
         budgetOverall: p(row[12]),
         spent: p(row[92]),
         impressions: p(row[90]),
         reach: p(row[88]),
-      };
-
-      // Platform pairs: Spent, Reach, Imp
-      // Meta: 69, 70, 71 | Tiktok: 75, 76, 77 | Segu: 81, 82, 83 | Criteo: 94, 95, 96 | Google: 100, 101, 102
-      return {
-        ...rowBase,
+        // PLATFORMS: Meta=69/70/71, Tiktok=75/76/77, Segu=81/82/83, Criteo=94/95/96, Google=100/101/102
         spentMeta: p(row[69]), actualReachMeta: p(row[70]), actualImpMeta: Math.max(p(row[71]), p(row[70])),
         spentTiktok: p(row[75]), actualReachTiktok: p(row[76]), actualImpTiktok: Math.max(p(row[77]), p(row[76])),
         spentSegumento: p(row[81]), actualReachSegumento: p(row[82]), actualImpSegumento: Math.max(p(row[83]), p(row[82])),
@@ -148,8 +145,7 @@ export const DataProvider = ({ children }) => {
     setData(prev => ({ ...prev, isRefreshing: true }));
     try {
       const rawData = await getRawSheetData(0); 
-      const newData = mapPositionalData(rawData);
-      setData(prev => ({ ...prev, commandCenterData: newData, lastSync: getFormattedDate(), isRefreshing: false }));
+      setData(prev => ({ ...prev, commandCenterData: mapPositionalData(rawData), lastSync: getFormattedDate(), isRefreshing: false }));
     } catch (err) {
       console.error('Failed to sync Command Center:', err);
       setData(prev => ({ ...prev, isRefreshing: false }));
@@ -183,7 +179,20 @@ export const DataProvider = ({ children }) => {
           return allData;
         };
 
-        const [ordersRaw, ncoOrdersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw, commandCenterRaw] = await Promise.all([
+        const normalizeAdData = (data) => data.map(cleaned => {
+          let brand = cleaned.BRAND || cleaned.brand || '-';
+          return {
+            ...cleaned,
+            PRODUCTS: cleaned.PRODUCTS || cleaned.products || '-',
+            ['Category Brand']: cleaned['Category Brand'] || cleaned['category brand'] || '-',
+            Category: cleaned.Category || cleaned.category || '-',
+            BRAND: brand
+          };
+        });
+
+        const [offsiteRaw, kolRaw, ordersRaw, ncoOrdersRaw, metaSupabaseRaw, googleSupabaseRaw, tiktokSupabaseRaw, criteoSupabaseRaw, commandCenterRaw] = await Promise.all([
+          fetchCSV(urls.OFFSITE),
+          fetchCSV(urls.KOL),
           fetchCSV(urls.DAILY_ORDERS),
           fetchCSV(urls.NCO_ORDERS),
           fetchSupabaseAll('meta_ads_performance'),
@@ -196,11 +205,19 @@ export const DataProvider = ({ children }) => {
         const parseOrdersData = (raw) => raw.map(r => ({ ...r, orderDate: r.Date || r['By Day'] || r['Day'] || '', grandTotal: parseNum(r['Grand Total']), totalOrders: parseNum(r['Total Orders']), brand: r.Brand || '-' }));
         const parseNcoOrdersData = (raw) => raw.map(r => ({ ...r, orderDate: r.Day || r.Date || '', brand: 'NCO', grandTotal: parseNum(r['Total Grand']), totalOrders: parseNum(r['Total Orders']) }));
 
+        const metaAdsSupabaseData = metaSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, 'Amount spent (IDR)': d.spend, 'Reach': d.reach, 'Impressions': d.impressions, 'Frequency': d.frequency, 'Link clicks': d.link_clicks, 'PRODUCTS': d.product, 'Category': d.category, 'Category Brand': d.category_group, 'BRAND': d.brand }));
+        const googleAdsSupabaseData = googleSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, Cost: d.spend, 'Impr.': d.impressions, Clicks: d.clicks, Conversions: d.conversions, 'Conv. value': d.conversion_value, PRODUCTS: d.product, BRAND: d.brand }));
+        const tiktokAdsSupabaseData = tiktokSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), 'By Day': (d.day || '').substring(0, 10), 'Campaign name': d.campaign_name, Cost: d.spend, Reach: d.reach, Impressions: d.impressions, 'Clicks (all)': d.clicks, PRODUCTS: d.product, BRAND: d.brand }));
+        const criteoSupabaseData = criteoSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), 'Campaign name': d.campaign_name, 'Amount spent (IDR)': d.spend, 'Impressions': d.impressions, 'Clicks': d.clicks, 'BRAND': d.brand }));
+
         setData({
-          metaAdsData: metaSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, 'Amount spent (IDR)': d.spend, 'Reach': d.reach, 'Impressions': d.impressions, 'Frequency': d.frequency, 'Link clicks': d.link_clicks, 'PRODUCTS': d.product, 'Category': d.category, 'Category Brand': d.category_group, 'BRAND': d.brand })),
-          googleAdsData: googleSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name, Cost: d.spend, 'Impr.': d.impressions, Clicks: d.clicks, Conversions: d.conversions, 'Conv. value': d.conversion_value, PRODUCTS: d.product, BRAND: d.brand })),
-          tiktokAdsData: tiktokSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), 'By Day': (d.day || '').substring(0, 10), 'Campaign name': d.campaign_name, Cost: d.spend, Reach: d.reach, Impressions: d.impressions, 'Clicks (all)': d.clicks, PRODUCTS: d.product, BRAND: d.brand })),
-          criteoData: criteoSupabaseRaw.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), 'Campaign name': d.campaign_name, 'Amount spent (IDR)': d.spend, 'Impressions': d.impressions, 'Clicks': d.clicks, 'BRAND': d.brand })),
+          tiktokAdsData: tiktokAdsSupabaseData,
+          metaAdsData: metaAdsSupabaseData,
+          metaAdsSupabaseData: metaAdsSupabaseData,
+          googleAdsData: googleAdsSupabaseData,
+          offsiteData: normalizeAdData(offsiteRaw),
+          kolData: kolRaw,
+          criteoData: criteoSupabaseData,
           ordersData: parseOrdersData(ordersRaw),
           ncoOrdersData: parseNcoOrdersData(ncoOrdersRaw),
           commandCenterData: mapPositionalData(commandCenterRaw),
