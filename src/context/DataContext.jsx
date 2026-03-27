@@ -449,7 +449,7 @@ export const DataProvider = ({ children }) => {
           const parseNum = (val) => {
             if (val === undefined || val === null || val === '') return 0;
             if (typeof val === 'number') return val;
-            const cleaned = String(val).replace(/[,%]/g, '').trim();
+            const cleaned = String(val).replace(/[Rp$\s,]/g, '').replace(/%/g, '').trim();
             const num = parseFloat(cleaned);
             return isNaN(num) ? 0 : num;
           };

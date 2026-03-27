@@ -14,6 +14,11 @@ const formatCurrency = (val) => {
   return `Rp ${val.toLocaleString('id-ID')}`;
 };
 
+const formatCPM = (val) => {
+  if (!val && val !== 0) return 'Rp 0';
+  return `Rp ${Math.round(val).toLocaleString('id-ID')}`;
+};
+
 const formatNumber = (val) => {
   if (!val && val !== 0) return '0';
   if (Math.abs(val) >= 1e9) return `${(val / 1e9).toFixed(2)}B`;
@@ -111,10 +116,11 @@ export const CommandCenterView = ({ filteredData }) => {
     const totalRemaining = data.reduce((s, d) => s + d.remainingBudget, 0);
     const avgPacing = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-    // Calculate Actual Blended CPM
+    // Calculate Actual Blended CPM - More robust to avoid double counting
     const totalImpressions = data.reduce((s, d) => {
-      const imp = (d.actualImpMeta || 0) + (d.actualImpTiktok || 0) + (d.impressions || 0);
-      return s + imp;
+      // Logic: Prefer individual platform actuals if available, otherwise fallback to the total Imp block
+      const hasPlatImp = (d.actualImpMeta || 0) + (d.actualImpTiktok || 0);
+      return s + (hasPlatImp > 0 ? hasPlatImp : (d.impressions || 0));
     }, 0);
     const actualCPM = totalImpressions > 0 ? (totalSpent / totalImpressions) * 1000 : 0;
     
@@ -494,7 +500,7 @@ export const CommandCenterView = ({ filteredData }) => {
           { label: 'Total Spent', val: kpi.totalSpent, fmt: formatCurrency, trend: '+18%', type: 'up', line: sparklines.spent, cls: 'cc2-kpi-spent', color: '#f59e0b' },
           { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: formatCurrency, trend: '-8%', type: 'down', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
           { label: 'Overall Pacing', val: kpi.avgPacing, fmt: v => `${v.toFixed(1)}%`, trend: kpi.avgPacing > 100 ? '+Alert' : 'On Track', type: kpi.avgPacing > 100 ? 'down' : 'up', line: sparklines.pacing, cls: 'cc2-kpi-pacing', color: '#7c3aed' },
-          { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCurrency, trend: 'Optimal', type: 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
+          { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCPM, trend: 'Optimal', type: 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
         ].map((card, i) => (
           <div key={i} className={`cc2-card cc2-kpi ${card.cls}`}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
