@@ -109,28 +109,54 @@ export const CommandCenterView = ({ filteredData }) => {
     });
   }, [rawData, monthFilter, brandFilter, searchQuery]);
 
-  const kpi = useMemo(() => {
+  const { kpi, prevKpi } = useMemo(() => {
     const totalBudget = data.reduce((s, d) => s + (d.budgetOverall || 0), 0);
     const totalSpent = data.reduce((s, d) => s + (d.spent || 0), 0);
     const totalRemaining = Math.max(0, totalBudget - totalSpent);
     const avgPacing = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
-
     const totalActualImp = data.reduce((s, d) => s + (d.impressions || 0), 0);
     const actualCPM = totalActualImp > 0 ? (totalSpent / totalActualImp) * 1000 : 0;
-    
     const totalTargetImp = data.reduce((s, d) => s + (d.estImp || 0), 0);
     const pacingImp = totalTargetImp > 0 ? (totalActualImp / totalTargetImp) * 100 : 0;
 
+    // PREVIOUS MONTH COMPARISON
+    const MONTHS_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const curMonthIdx = MONTHS_ORDER.findIndex(m => monthFilter.startsWith(m));
+    const prevMonthIdx = curMonthIdx > 0 ? curMonthIdx - 1 : (curMonthIdx === 0 ? 11 : -1);
     
-    const overspending = data.filter(d => d.budgetOverall > 0 && (d.spent / d.budgetOverall) > 1.1);
-    const underperforming = data.filter(d => d.budgetOverall > 0 && d.estReach > 0 && (d.reach / d.estReach) < 0.5);
+    let pk = null;
+    if (prevMonthIdx !== -1 && monthFilter !== 'all') {
+      const pmLabel = MONTHS_ORDER[prevMonthIdx];
+      const pmData = rawData.filter(d => {
+        if (!d.month.startsWith(pmLabel)) return false;
+        if (brandFilter !== 'all' && d.brand !== brandFilter) return false;
+        return true;
+      });
+      
+      const ps = pmData.reduce((s, d) => s + (d.spent || 0), 0);
+      const pi = pmData.reduce((s, d) => s + (d.impressions || 0), 0);
+      pk = { spent: ps, imp: pi, cpm: pi > 0 ? (ps / pi) * 1000 : 0 };
+    }
 
     return { 
-      totalBudget, totalSpent, totalRemaining, avgPacing, actualCPM, 
-      totalTargetImp, totalActualImp, pacingImp,
-      overspending, underperforming 
+      kpi: { 
+        totalBudget, totalSpent, totalRemaining, avgPacing, actualCPM, 
+        totalTargetImp, totalActualImp, pacingImp,
+        overspending: data.filter(d => d.budgetOverall > 0 && (d.spent / d.budgetOverall) > 1.1),
+        underperforming: data.filter(d => d.budgetOverall > 0 && d.estReach > 0 && (d.reach / d.estReach) < 0.5)
+      },
+      prevKpi: pk
     };
-  }, [data]);
+  }, [data, rawData, monthFilter, brandFilter]);
+
+  const getTrend = (cur, prev) => {
+    if (!prev || prev === 0) return { val: '0%', type: 'neutral' };
+    const diff = ((cur - prev) / prev) * 100;
+    return { 
+      val: (diff > 0 ? '+' : '') + diff.toFixed(1) + '%', 
+      type: diff >= 0 ? 'up' : 'down' 
+    };
+  };
 
   // Generate fake historical sparkline data based on current metric for visual pop
   const generateSparkline = (baseVal, volatility) => {
@@ -460,6 +486,7 @@ export const CommandCenterView = ({ filteredData }) => {
     }
     .cc2-trend-up { background: rgba(0, 208, 132, 0.15); color: #00d084; }
     .cc2-trend-down { background: rgba(255, 71, 87, 0.15); color: #ff4757; }
+    .cc2-trend-neutral { background: rgba(139, 139, 158, 0.15); color: #8b8b9e; }
     
     .cc2-platform-card {
       background: #1a1a25; border-radius: 10px; padding: 16px; text-align: center;
@@ -550,19 +577,25 @@ export const CommandCenterView = ({ filteredData }) => {
       {/* ── KPI CARDS with SPARKLINES ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Budget', val: kpi.totalBudget, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: '+12%', type: 'up', line: sparklines.budget, cls: 'cc2-kpi-budget', color: '#1877F2' },
-          { label: 'Total Spent', val: kpi.totalSpent, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: '+18%', type: 'up', line: sparklines.spent, cls: 'cc2-kpi-spent', color: '#f59e0b' },
-          { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: '-8%', type: 'down', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
+          { label: 'Total Budget', val: kpi.totalBudget, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: 'Monthly Plan', type: 'up', line: sparklines.budget, cls: 'cc2-kpi-budget', color: '#1877F2' },
+          { label: 'Total Spent', val: kpi.totalSpent, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: getTrend(kpi.totalSpent, prevKpi?.spent).val, type: getTrend(kpi.totalSpent, prevKpi?.spent).type, line: sparklines.spent, cls: 'cc2-kpi-spent', color: '#f59e0b' },
+          { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: 'Balance', type: 'neutral', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
           { label: 'Overall Pacing', val: kpi.avgPacing, fmt: v => `${v.toFixed(1)}%`, trend: kpi.avgPacing > 100 ? '+Alert' : 'On Track', type: kpi.avgPacing > 100 ? 'down' : 'up', line: sparklines.pacing, cls: 'cc2-kpi-pacing', color: '#7c3aed' },
-          { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCPM, trend: 'Optimal', type: 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
+          { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCPM, trend: getTrend(kpi.actualCPM, prevKpi?.cpm).val, type: getTrend(kpi.actualCPM, prevKpi?.cpm).type === 'up' ? 'down' : 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
           { label: 'Target Impression', val: kpi.totalTargetImp, fmt: v => v.toLocaleString('id-ID'), trend: 'Monthly Goal', type: 'up', line: sparklines.targetImp, cls: 'cc2-kpi-budget', color: '#1877F2' },
-          { label: 'Actual Impression', val: kpi.totalActualImp, fmt: v => v.toLocaleString('id-ID'), trend: 'Current', type: 'up', line: sparklines.actualImp, cls: 'cc2-kpi-rem', color: '#10b981' },
+          { label: 'Actual Impression', val: kpi.totalActualImp, fmt: v => v.toLocaleString('id-ID'), trend: getTrend(kpi.totalActualImp, prevKpi?.imp).val, type: getTrend(kpi.totalActualImp, prevKpi?.imp).type, line: sparklines.actualImp, cls: 'cc2-kpi-rem', color: '#10b981' },
           { label: 'Pacing Impression %', val: kpi.pacingImp, fmt: v => `${v.toFixed(1)}%`, trend: kpi.pacingImp > 85 ? 'Healthy' : 'Behind', type: kpi.pacingImp > 85 ? 'up' : 'down', line: sparklines.pacingImp, cls: 'cc2-kpi-pacing', color: '#f59e0b' },
         ].map((card, i) => (
           <div key={i} className={`cc2-card cc2-kpi ${card.cls}`}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
               <span style={{ color: '#8b8b9e', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{card.label}</span>
-              <span className={`cc2-trend ${card.type === 'up' ? 'cc2-trend-up' : 'cc2-trend-down'}`}>{card.trend}</span>
+              <span className={`cc2-trend ${
+                card.type === 'up' ? 'cc2-trend-up' : 
+                card.type === 'down' ? 'cc2-trend-down' : 
+                'cc2-trend-neutral'
+              }`}>
+                {card.type === 'up' && '▲ '}{card.type === 'down' && '▼ '}{card.trend}
+              </span>
             </div>
             <div style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px' }}>{card.fmt(card.val)}</div>
             <Sparkline data={card.line} color={card.color} width={200} height={40} />
