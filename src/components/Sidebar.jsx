@@ -56,20 +56,8 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { id: 'lazadaNco',     name: 'Lazada NCO',      icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
     { id: 'tokopediaNco',  name: 'Tokopedia NCO',   icon: <TokopediaIcon size={20} />, color: '#059669' },
 
-    { type: 'divider', label: 'Ads Performance' },
-    { id: 'overview', name: 'Ads Overview', icon: <LayoutDashboard size={20} /> },
-    { id: 'meta',     name: 'Meta Ads', icon: <Facebook size={20} />, color: '#1877f2' },
-    { id: 'tiktok',   name: 'Ads TikTok', icon: <Video size={20} /> },
-    { id: 'google',   name: 'Google Ads', icon: <Search size={20} /> },
-    { id: 'criteo',   name: 'Ads Criteo', icon: <Activity size={20} /> },
-
-    { type: 'divider', label: 'KOL Section' },
-    { id: 'kol',      name: 'KOL Track', icon: <Users2 size={20} /> },
-
-    { type: 'divider', label: 'AI Creative' },
-    { id: 'creativehub', name: 'Creative Hub', icon: <Zap size={20} />, color: '#14B8A6' },
-
   ];
+
 
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>

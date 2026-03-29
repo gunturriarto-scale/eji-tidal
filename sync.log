@@ -2,6 +2,6 @@ Fetching Criteo Access Token...
 
 --- Fetching Criteo Ad-Level Data for Advertiser 120387 ---
 API Response Status: 200
-Fetched 3610 rows from Criteo.
-Upserting 3610 records to Supabase...
-Supabase Error: Could not find the 'impressions' column of 'criteo_ads_performance' in the schema cache
+Fetched 3689 rows from Criteo.
+Upserting 3689 records to Supabase...
+Successfully updated Criteo data in Supabase.

@@ -1,19 +1,13 @@
 import React, { useState, useMemo } from 'react'
-import { Overview } from './views/Overview'
-import { MetaRaw } from './views/MetaRaw'
-import { TikTokRaw } from './views/TikTokRaw'
-import { GoogleRaw } from './views/GoogleRaw'
-import { CriteoRaw } from './views/CriteoRaw'
-import { KOLView } from './views/KOLView'
-// import CompetitorAnalysis from './views/CompetitorAnalysis'
-// import XMonitoring from './views/XMonitoring'
 import { ShopeeView } from './views/ShopeeView'
+
 import { TikTokShopView } from './views/TikTokShopView'
 import { LazadaView } from './views/LazadaView'
 import { TokopediaView } from './views/TokopediaView'
 import { EcommerceView } from './views/EcommerceView'
 import { Sidebar } from './components/Sidebar'
-import { CreativeHubView } from './views/CreativeHubView'
+import { Sidebar } from './components/Sidebar'
+
 import { CommandCenterView } from './views/CommandCenterView'
 import { useData } from './context/DataContext'
 
@@ -203,13 +197,8 @@ function App() {
   };
 
   const [viewFilters, setViewFilters] = useState({
-    overview: { ...initialFilters },
-    meta: { ...initialFilters },
-    tiktok: { ...initialFilters },
-    google: { ...initialFilters },
-    criteo: { ...initialFilters },
-    kol: { ...initialFilters, brandFilter: 'Hanasui' }, // KOL default
     shopee: { ...initialFilters, dateFilter: 'thisMonth' },
+
     tiktokShop: { ...initialFilters, dateFilter: 'thisMonth' },
     lazada: { ...initialFilters, dateFilter: 'thisMonth' },
     tokopedia: { ...initialFilters, dateFilter: 'thisMonth' },
@@ -400,13 +389,8 @@ function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const viewNames = {
-    overview:   'Ads Overview',
-    meta:       'Meta Ads',
-    tiktok:     'TikTok Ads Analysis',
-    google:     'Google Ads Analysis',
-    kol:        'KOL Intelligence',
-    criteo:     'Criteo Awareness Intelligence',
     shopee:     '🛒 Shopee Performance',
+
     tiktokShop: '🎵 TikTok Shop Performance',
     lazada:     '🛍️ Lazada Performance',
     tokopedia:  '🟢 Tokopedia Performance',
@@ -414,8 +398,8 @@ function App() {
     tiktokShopNco: '🎵 TikTok Shop NCO Performance',
     lazadaNco:     '🛍️ Lazada NCO Performance',
     tokopediaNco:  '🟢 Tokopedia NCO Performance',
-    creativehub: '✨ AI Creative Hub',
     commandCenter: '🎯 Performance Marketing Command Center',
+
   };
 
   const renderView = () => {
@@ -423,12 +407,6 @@ function App() {
     const commonProps = { filteredData, dateRange };
     
     switch (activeView) {
-      case 'overview': return <Overview {...commonProps} />;
-      case 'meta': return <MetaRaw {...commonProps} />;
-      case 'tiktok': return <TikTokRaw {...commonProps} />;
-      case 'google': return <GoogleRaw {...commonProps} />;
-      case 'kol': return <KOLView {...commonProps} />; 
-      case 'criteo': return <CriteoRaw {...commonProps} />;
       case 'shopee':     return <ShopeeView {...commonProps} />;
       case 'tiktokShop': return <TikTokShopView {...commonProps} />;
       case 'lazada':    return <LazadaView {...commonProps} />;
@@ -437,11 +415,11 @@ function App() {
       case 'tiktokShopNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="tiktokShop" dateRange={dateRange} />;
       case 'lazadaNco':    return <EcommerceView ordersData={filteredData.ncoOrders} platform="lazada" dateRange={dateRange} />;
       case 'tokopediaNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="tokopedia" dateRange={dateRange} />;
-      case 'creativehub': return <CreativeHubView {...commonProps} />;
       case 'commandCenter': return <CommandCenterView {...commonProps} />;
-      default: return <Overview {...commonProps} />;
+      default: return <CommandCenterView {...commonProps} />;
     }
   };
+
 
   if (loading) {
     return (

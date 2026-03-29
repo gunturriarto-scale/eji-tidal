@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Marketing Command Center - Enhanced</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-hover: #1a1a25;
+            --border: #2a2a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #8b8b9e;
+            --accent-green: #00d084;
+            --accent-red: #ff4757;
+            --accent-blue: #3742fa;
+            --accent-purple: #7c3aed;
+            --accent-orange: #ff9500;
+            --accent-cyan: #00d4ff;
+            --gradient-meta: linear-gradient(135deg, #1877f2, #42b72a);
+            --gradient-tiktok: linear-gradient(135deg, #ff0050, #00f2ea);
+            --gradient-google: linear-gradient(135deg, #4285f4, #ea4335);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #8b8b9e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+        }
+
+        .filter-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--bg-hover);
+            border-color: var(--accent-blue);
+        }
+
+        /* KPI Cards with Sparklines */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-meta);
+        }
+
+        .kpi-card.warning::before { background: var(--accent-orange); }
+        .kpi-card.danger::before { background: var(--accent-red); }
+        .kpi-card.success::before { background: var(--accent-green); }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .kpi-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-trend {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .kpi-trend.up {
+            background: rgba(0, 208, 132, 0.15);
+            color: var(--accent-green);
+        }
+
+        .kpi-trend.down {
+            background: rgba(255, 71, 87, 0.15);
+            color: var(--accent-red);
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .kpi-sparkline {
+            height: 40px;
+            margin-top: 8px;
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: linear-gradient(90deg, rgba(255, 71, 87, 0.1), rgba(255, 149, 0, 0.1));
+            border: 1px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .alert-content h3 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .alert-content p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: var(--bg-hover);
+            border: none;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        /* Platform Efficiency Matrix */
+        .platform-matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .platform-card {
+            background: var(--bg-hover);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .platform-card:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .platform-card.meta { border-top: 3px solid #1877f2; }
+        .platform-card.tiktok { border-top: 3px solid #ff0050; }
+        .platform-card.google { border-top: 3px solid #4285f4; }
+
+        .platform-name {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .platform-budget {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .platform-cpm {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .platform-pacing {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .pacing-bar {
+            width: 60px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .pacing-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .pacing-fill.good { background: var(--accent-green); }
+        .pacing-fill.warning { background: var(--accent-orange); }
+        .pacing-fill.danger { background: var(--accent-red); }
+
+        /* Budget Pacing by Brand */
+        .brand-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .brand-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .brand-budget {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .bullet-chart {
+            position: relative;
+            height: 24px;
+            background: var(--bg-hover);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .bullet-target {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--text-secondary);
+            transform: translateX(-100%);
+        }
+
+        .bullet-target::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -3px;
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 6px solid var(--text-secondary);
+        }
+
+        .bullet-actual {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .bullet-actual.good { background: var(--accent-green); }
+        .bullet-actual.warning { background: var(--accent-orange); }
+        .bullet-actual.danger { background: var(--accent-red); }
+
+        .bullet-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Full Width Sections */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .trend-chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Performance Matrix */
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .heatmap-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-top: 16px;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        /* Product Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover td {
+            background: var(--bg-hover);
+        }
+
+        .product-name {
+            font-weight: 600;
+        }
+
+        .product-category {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(0, 208, 132, 0.15);
+            color: var(--accent-green);
+        }
+
+        .badge-warning {
+            background: rgba(255, 149, 0, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .badge-danger {
+            background: rgba(255, 71, 87, 0.15);
+            color: var(--accent-red);
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        /* Team Performance */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .team-card {
+            background: var(--bg-hover);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .team-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--gradient-meta);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin: 0 auto 12px;
+        }
+
+        .team-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .team-role {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .team-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .team-stat {
+            background: var(--bg-card);
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .team-stat-value {
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .team-stat-label {
+            color: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .main-grid { grid-template-columns: 1fr; }
+            .matrix-grid { grid-template-columns: 1fr; }
+            .team-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .platform-matrix { grid-template-columns: 1fr; }
+            .team-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: slideIn 0.5s ease forwards;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header animate-in">
+        <div>
+            <h1>🎯 Performance Marketing Command Center</h1>
+            <div class="subtitle">Real-time performance distribution & analysis • Updated: Mar 26, 2026 22:08</div>
+        </div>
+        <div class="filters">
+            <button class="filter-btn active">All Brands</button>
+            <button class="filter-btn">HANASUI</button>
+            <button class="filter-btn">NCO</button>
+            <button class="filter-btn">Fyne</button>
+            <button class="filter-btn">Eomma</button>
+        </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert-banner animate-in" style="animation-delay: 0.1s">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-content">
+            <h3>Budget Alert: 3 Products Overspending</h3>
+            <p>Fyne Face wash (223.4%), HANASUI Blush & Go (188.1%), and HANASUI Lipcream Matte (242.0%) have exceeded monthly budget. Immediate action required.</p>
+        </div>
+    </div>
+
+    <!-- KPI Cards with Sparklines -->
+    <div class="kpi-grid">
+        <div class="kpi-card animate-in" style="animation-delay: 0.2s">
+            <div class="kpi-header">
+                <span class="kpi-label">Total Budget</span>
+                <span class="kpi-trend up">+12% vs LM</span>
+            </div>
+            <div class="kpi-value">Rp 4.78B</div>
+            <canvas id="spark1" class="kpi-sparkline"></canvas>
+        </div>
+
+        <div class="kpi-card warning animate-in" style="animation-delay: 0.3s">
+            <div class="kpi-header">
+                <span class="kpi-label">Total Spent</span>
+                <span class="kpi-trend up">+18% vs LM</span>
+            </div>
+            <div class="kpi-value">Rp 3.52B</div>
+            <canvas id="spark2" class="kpi-sparkline"></canvas>
+        </div>
+
+        <div class="kpi-card success animate-in" style="animation-delay: 0.4s">
+            <div class="kpi-header">
+                <span class="kpi-label">Remaining Budget</span>
+                <span class="kpi-trend down">-8% vs LM</span>
+            </div>
+            <div class="kpi-value">Rp 1.27B</div>
+            <canvas id="spark3" class="kpi-sparkline"></canvas>
+        </div>
+
+        <div class="kpi-card animate-in" style="animation-delay: 0.5s">
+            <div class="kpi-header">
+                <span class="kpi-label">Overall Pacing</span>
+                <span class="kpi-trend up">+5.2%</span>
+            </div>
+            <div class="kpi-value">73.5%</div>
+            <canvas id="spark4" class="kpi-sparkline"></canvas>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+        <!-- Platform Efficiency Matrix -->
+        <div class="card animate-in" style="animation-delay: 0.6s">
+            <div class="card-header">
+                <span class="card-title">Platform Efficiency Matrix</span>
+                <div class="card-actions">
+                    <button class="icon-btn">📊</button>
+                    <button class="icon-btn">⚙️</button>
+                </div>
+            </div>
+            <div class="platform-matrix">
+                <div class="platform-card meta">
+                    <div class="platform-name">Meta</div>
+                    <div class="platform-budget">Rp 1.47B</div>
+                    <div class="platform-cpm">CPM: Rp 3,245</div>
+                    <div class="platform-pacing">
+                        <span>85%</span>
+                        <div class="pacing-bar">
+                            <div class="pacing-fill good" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="platform-card tiktok">
+                    <div class="platform-name">TikTok</div>
+                    <div class="platform-budget">Rp 2.26B</div>
+                    <div class="platform-cpm">CPM: Rp 2,890</div>
+                    <div class="platform-pacing">
+                        <span>92%</span>
+                        <div class="pacing-bar">
+                            <div class="pacing-fill warning" style="width: 92%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="platform-card google">
+                    <div class="platform-name">Google</div>
+                    <div class="platform-budget">Rp 470.8M</div>
+                    <div class="platform-cpm">CPM: Rp 4,120</div>
+                    <div class="platform-pacing">
+                        <span>78%</span>
+                        <div class="pacing-bar">
+                            <div class="pacing-fill good" style="width: 78%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trend Chart -->
+            <div class="trend-chart-container" style="margin-top: 24px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Budget Pacing by Brand -->
+        <div class="card animate-in" style="animation-delay: 0.7s">
+            <div class="card-header">
+                <span class="card-title">Budget Pacing by Brand</span>
+                <div class="card-actions">
+                    <button class="icon-btn">📋</button>
+                </div>
+            </div>
+            <div class="brand-list">
+                <div class="brand-item">
+                    <div class="brand-header">
+                        <span class="brand-name">HANASUI</span>
+                        <span class="brand-budget">Rp 2.72B / Rp 3.40B</span>
+                    </div>
+                    <div class="bullet-chart">
+                        <div class="bullet-actual good" style="width: 74.9%"></div>
+                        <div class="bullet-target" style="left: 85%"></div>
+                    </div>
+                    <div class="bullet-labels">
+                        <span>74.9% spent</span>
+                        <span>Target: 85%</span>
+                    </div>
+                </div>
+
+                <div class="brand-item">
+                    <div class="brand-header">
+                        <span class="brand-name">NCO</span>
+                        <span class="brand-budget">Rp 220M / Rp 914M</span>
+                    </div>
+                    <div class="bullet-chart">
+                        <div class="bullet-actual good" style="width: 25.1%"></div>
+                        <div class="bullet-target" style="left: 85%"></div>
+                    </div>
+                    <div class="bullet-labels">
+                        <span>25.1% spent</span>
+                        <span>Underpacing</span>
+                    </div>
+                </div>
+
+                <div class="brand-item">
+                    <div class="brand-header">
+                        <span class="brand-name">Fyne</span>
+                        <span class="brand-budget">Rp 502M / Rp 1.07B</span>
+                    </div>
+                    <div class="bullet-chart">
+                        <div class="bullet-actual danger" style="width: 100%"></div>
+                        <div class="bullet-target" style="left: 85%"></div>
+                    </div>
+                    <div class="bullet-labels">
+                        <span class="pulse" style="color: var(--accent-red)">⚠️ 471.4% OVERSPEND</span>
+                        <span>Critical</span>
+                    </div>
+                </div>
+
+                <div class="brand-item">
+                    <div class="brand-header">
+                        <span class="brand-name">Eomma</span>
+                        <span class="brand-budget">Rp 83M / Rp 110M</span>
+                    </div>
+                    <div class="bullet-chart">
+                        <div class="bullet-actual good" style="width: 74.8%"></div>
+                        <div class="bullet-target" style="left: 85%"></div>
+                    </div>
+                    <div class="bullet-labels">
+                        <span>74.8% spent</span>
+                        <span>On track</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Matrix -->
+    <div class="matrix-grid">
+        <!-- Category Heatmap -->
+        <div class="card animate-in" style="animation-delay: 0.8s">
+            <div class="card-header">
+                <span class="card-title">Category Performance Heatmap</span>
+                <span style="color: var(--text-secondary); font-size: 12px;">Darker = Higher Efficiency</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">
+                <span>Decorative</span>
+                <span>Skincare</span>
+                <span>Bodycare</span>
+                <span>Fyne</span>
+                <span>NCO</span>
+                <span>Eomma</span>
+            </div>
+            <div class="heatmap-container" id="heatmap">
+                <!-- Generated by JS -->
+            </div>
+            <div style="display: flex; gap: 16px; margin-top: 16px; font-size: 12px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 12px; height: 12px; background: var(--accent-green); border-radius: 2px;"></div>
+                    <span style="color: var(--text-secondary);">High Performer</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 12px; height: 12px; background: var(--accent-orange); border-radius: 2px;"></div>
+                    <span style="color: var(--text-secondary);">Monitor</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="width: 12px; height: 12px; background: var(--accent-red); border-radius: 2px;"></div>
+                    <span style="color: var(--text-secondary);">Critical</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Performance -->
+        <div class="card animate-in" style="animation-delay: 0.9s">
+            <div class="card-header">
+                <span class="card-title">Performance by PIC</span>
+                <button class="icon-btn">👥</button>
+            </div>
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-avatar">MO</div>
+                    <div class="team-name">Mona</div>
+                    <div class="team-role">Decorative Lead</div>
+                    <div class="team-stats">
+                        <div class="team-stat">
+                            <div class="team-stat-value">Rp 2.1B</div>
+                            <div class="team-stat-label">Budget</div>
+                        </div>
+                        <div class="team-stat">
+                            <div class="team-stat-value">74%</div>
+                            <div class="team-stat-label">Pacing</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar" style="background: var(--gradient-tiktok)">SA</div>
+                    <div class="team-name">Sabda</div>
+                    <div class="team-role">Skincare Lead</div>
+                    <div class="team-stats">
+                        <div class="team-stat">
+                            <div class="team-stat-value">Rp 1.8B</div>
+                            <div class="team-stat-label">Budget</div>
+                        </div>
+                        <div class="team-stat">
+                            <div class="team-stat-value">68%</div>
+                            <div class="team-stat-label">Pacing</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar" style="background: linear-gradient(135deg, #ff9500, #ff4757)">WI</div>
+                    <div class="team-name">Wilda</div>
+                    <div class="team-role">Fyne Lead</div>
+                    <div class="team-stats">
+                        <div class="team-stat">
+                            <div class="team-stat-value" style="color: var(--accent-red)">Rp 1.07B</div>
+                            <div class="team-stat-label">Budget</div>
+                        </div>
+                        <div class="team-stat">
+                            <div class="team-stat-value" style="color: var(--accent-red)">471%</div>
+                            <div class="team-stat-label">Pacing ⚠️</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar" style="background: linear-gradient(135deg, #7c3aed, #3742fa)">IL</div>
+                    <div class="team-name">Ilham</div>
+                    <div class="team-role">Bodycare Lead</div>
+                    <div class="team-stats">
+                        <div class="team-stat">
+                            <div class="team-stat-value">Rp 914M</div>
+                            <div class="team-stat-label">Budget</div>
+                        </div>
+                        <div class="team-stat">
+                            <div class="team-stat-value">25%</div>
+                            <div class="team-stat-label">Pacing</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Performance Detail -->
+    <div class="card animate-in" style="animation-delay: 1s">
+        <div class="card-header">
+            <span class="card-title">Product Performance Detail</span>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <input type="text" placeholder="Search product..." style="background: var(--bg-hover); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px; border-radius: 6px; font-size: 13px;">
+                <button class="filter-btn">Export CSV</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th>Product</th>
+                        <th>PIC</th>
+                        <th>Budget</th>
+                        <th>Spent</th>
+                        <th>Pacing %</th>
+                        <th>Est. Reach</th>
+                        <th>Act. Reach</th>
+                        <th>Reach %</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="product-name">HANASUI</div>
+                            <div class="product-category">Decorative</div>
+                        </td>
+                        <td>Decorative</td>
+                        <td>Blush & Go</td>
+                        <td>Hualia</td>
+                        <td>Rp 340M</td>
+                        <td>Rp 639M</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--accent-red); font-weight: 600;">188.1%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%; background: var(--accent-red);"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>31.7M</td>
+                        <td>37.3M</td>
+                        <td style="color: var(--accent-green);">117%</td>
+                        <td><span class="badge badge-danger">🔴 Overspend</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="product-name">Fyne</div>
+                            <div class="product-category">Fyne</div>
+                        </td>
+                        <td>Fyne</td>
+                        <td>Face wash</td>
+                        <td>Ilham</td>
+                        <td>Rp 40M</td>
+                        <td>Rp 89.4M</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--accent-red); font-weight: 600;">223.4%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%; background: var(--accent-red);"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>3.2M</td>
+                        <td>22.6M</td>
+                        <td style="color: var(--accent-green);">713%</td>
+                        <td><span class="badge badge-danger">🔴 Critical</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="product-name">HANASUI</div>
+                            <div class="product-category">Decorative</div>
+                        </td>
+                        <td>Decorative</td>
+                        <td>Lipcream Matte</td>
+                        <td>Hualia</td>
+                        <td>Rp 112.2M</td>
+                        <td>Rp 271.7M</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--accent-red); font-weight: 600;">242.0%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%; background: var(--accent-red);"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>11.2M</td>
+                        <td>27.0M</td>
+                        <td style="color: var(--accent-green);">241%</td>
+                        <td><span class="badge badge-danger">🔴 Overspend</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="product-name">HANASUI</div>
+                            <div class="product-category">Decorative</div>
+                        </td>
+                        <td>Decorative</td>
+                        <td>Airy Velvet Cushion</td>
+                        <td>Fara</td>
+                        <td>Rp 252M</td>
+                        <td>Rp 236.3M</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--accent-orange); font-weight: 600;">93.8%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 93.8%; background: var(--accent-orange);"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>25.1M</td>
+                        <td>86.0M</td>
+                        <td style="color: var(--accent-green);">343%</td>
+                        <td><span class="badge badge-warning">⚠️ Monitor</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="product-name">HANASUI</div>
+                            <div class="product-category">Skincare</div>
+                        </td>
+                        <td>Skincare</td>
+                        <td>Sunscreen</td>
+                        <td>Niken</td>
+                        <td>Rp 785M</td>
+                        <td>Rp 671.7M</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--accent-green); font-weight: 600;">85.6%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 85.6%; background: var(--accent-green);"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>70.0M</td>
+                        <td>101.8M</td>
+                        <td style="color: var(--accent-green);">145%</td>
+                        <td><span class="badge badge-success">✓ On Track</span></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="product-name">NCO</div>
+                            <div class="product-category">NCO</div>
+                        </td>
+                        <td>NCO</td>
+                        <td>Extrait</td>
+                        <td>Ilham</td>
+                        <td>Rp 365.7M</td>
+                        <td>Rp 96.4M</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: var(--accent-green); font-weight: 600;">26.4%</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 26.4%; background: var(--accent-green);"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>29.0M</td>
+                        <td>15.4M</td>
+                        <td style="color: var(--accent-red);">53%</td>
+                        <td><span class="badge badge-warning">⚠️ Underpacing</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Sparkline Charts
+        function createSparkline(canvasId, data, color) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1', '2', '3', '4', '5', '6', '7'],
+                    datasets: [{
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '20',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false, min: Math.min(...data) * 0.9, max: Math.max(...data) * 1.1 }
+                    }
+                }
+            });
+        }
+
+        createSparkline('spark1', [4.2, 4.3, 4.5, 4.6, 4.7, 4.75, 4.78], '#00d084');
+        createSparkline('spark2', [2.8, 2.9, 3.1, 3.2, 3.35, 3.45, 3.52], '#ff9500');
+        createSparkline('spark3', [1.8, 1.7, 1.6, 1.5, 1.4, 1.35, 1.27], '#00d084');
+        createSparkline('spark4', [65, 68, 70, 71, 72, 73, 73.5], '#3742fa');
+
+        // Trend Chart
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Budget',
+                    data: [4.2, 4.5, 4.6, 4.78, 5.0, 5.2],
+                    backgroundColor: '#3742fa40',
+                    borderColor: '#3742fa',
+                    borderWidth: 1,
+                    order: 2
+                }, {
+                    label: 'Actual Spend',
+                    data: [3.1, 3.8, 3.52, 2.1, 1.8, 2.4],
+                    backgroundColor: '#00d08440',
+                    borderColor: '#00d084',
+                    borderWidth: 2,
+                    type: 'line',
+                    tension: 0.4,
+                    order: 1
+                }, {
+                    label: 'Pacing %',
+                    data: [74, 84, 77, 44, 36, 46],
+                    borderColor: '#ff9500',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    type: 'line',
+                    yAxisID: 'y1',
+                    order: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { 
+                        position: 'top',
+                        labels: { color: '#8b8b9e', usePointStyle: true }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2a3a' },
+                        ticks: { color: '#8b8b9e' }
+                    },
+                    y: {
+                        grid: { color: '#2a2a3a' },
+                        ticks: { color: '#8b8b9e', callback: v => 'Rp ' + v + 'B' }
+                    },
+                    y1: {
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { color: '#ff9500', callback: v => v + '%' }
+                    }
+                }
+            }
+        });
+
+        // Heatmap Generation
+        const heatmapData = [
+            { v: 85, c: 'var(--accent-green)' }, { v: 92, c: 'var(--accent-orange)' }, { v: 78, c: 'var(--accent-green)' },
+            { v: 45, c: '#ff475760' }, { v: 25, c: '#ff475740' }, { v: 74, c: 'var(--accent-green)' }, { v: 65, c: 'var(--accent-green)' },
+            { v: 188, c: 'var(--accent-red)' }, { v: 223, c: 'var(--accent-red)' }, { v: 242, c: 'var(--accent-red)' },
+            { v: 94, c: 'var(--accent-green)' }, { v: 85, c: 'var(--accent-green)' }, { v: 77, c: 'var(--accent-green)' }, { v: 68, c: 'var(--accent-green)' }
+        ];
+
+        const heatmapContainer = document.getElementById('heatmap');
+        heatmapData.forEach((item, i) => {
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell';
+            cell.style.background = item.c;
+            cell.style.color = item.v > 100 ? '#fff' : '#000';
+            cell.textContent = item.v + '%';
+            cell.title = `Performance ${i+1}: ${item.v}%`;
+            heatmapContainer.appendChild(cell);
+        });
+
+        // Filter buttons interaction
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
