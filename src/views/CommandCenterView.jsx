@@ -350,7 +350,11 @@ export const CommandCenterView = ({ filteredData }) => {
       }
       
       if (!map[d.pic].categories[catName]) {
-         map[d.pic].categories[catName] = { labelType, products: [] };
+         map[d.pic].categories[catName] = { 
+           labelType, 
+           products: [],
+           summary: { budget: 0, spent: 0, estImp: 0, imp: 0 }
+         };
       }
       
       const budget = d.budgetOverall || 0;
@@ -358,7 +362,13 @@ export const CommandCenterView = ({ filteredData }) => {
       const estImp = d.estImp || 0;
       const imp = d.impressions || d.imp || 0;
 
-      map[d.pic].categories[catName].products.push({
+      const catObj = map[d.pic].categories[catName];
+      catObj.summary.budget += budget;
+      catObj.summary.spent += spent;
+      catObj.summary.estImp += estImp;
+      catObj.summary.imp += imp;
+
+      catObj.products.push({
         product: d.product,
         budget, spent, estImp, imp,
         estCpm: estImp > 0 ? (budget / estImp) * 1000 : 0,
@@ -369,13 +379,26 @@ export const CommandCenterView = ({ filteredData }) => {
 
     return Object.values(map).map(p => ({
       pic: p.pic,
-      categories: Object.entries(p.categories).map(([catName, catData]) => ({
-        name: catName,
-        labelType: catData.labelType,
-      products: catData.products.sort((a, b) => b.budget - a.budget)
-      })).sort((a,b) => a.name.localeCompare(b.name))
+      categories: Object.entries(p.categories).map(([catName, catData]) => {
+        const { budget, spent, estImp, imp } = catData.summary;
+        return {
+          name: catName,
+          labelType: catData.labelType,
+          summary: {
+            budget,
+            spent,
+            estImp,
+            imp,
+            pacingBudget: budget > 0 ? (spent / budget) * 100 : 0,
+            pacingImp: estImp > 0 ? (imp / estImp) * 100 : 0,
+            avgCpm: imp > 0 ? (spent / imp) * 1000 : 0
+          },
+          products: catData.products.sort((a, b) => b.budget - a.budget)
+        };
+      }).sort((a,b) => a.name.localeCompare(b.name))
     })).sort((a, b) => a.pic.localeCompare(b.pic));
   }, [data]);
+
 
   // ── Performance by Channel (Global Aggregation) ──
   const channelPerformance = useMemo(() => {
@@ -878,10 +901,35 @@ export const CommandCenterView = ({ filteredData }) => {
 
             {picGroup.categories.map(cat => (
               <div key={cat.name} style={{ marginBottom: '24px' }}>
-                <h4 style={{ fontSize: '13px', color: '#8b8b9e', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #2a2a3a', paddingBottom: '8px' }}>
+                <h4 style={{ fontSize: '13px', color: '#8b8b9e', textTransform: 'uppercase', marginBottom: '16px', borderBottom: '1px solid #2a2a3a', paddingBottom: '8px' }}>
                   {cat.labelType}: <span style={{ color: '#fff' }}>{cat.name}</span>
                 </h4>
+
+                {/* Category Summary Scorecards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+                   {[
+                     { label: 'Budget', value: cat.summary.budget, format: 'currency' },
+                     { label: 'Act. Spent', value: cat.summary.spent, format: 'currency' },
+                     { label: 'Pacing Budget %', value: cat.summary.pacingBudget, format: 'percentage' },
+                     { label: 'Est. Imp', value: cat.summary.estImp, format: 'number' },
+                     { label: 'Act. Imp', value: cat.summary.imp, format: 'number' },
+                     { label: 'Pacing Imp %', value: cat.summary.pacingImp, format: 'percentage' },
+                     { label: 'Avg. CPM', value: cat.summary.avgCpm, format: 'cpm' }
+                   ].map((s, idx) => (
+                     <div key={idx} style={{ background: '#1a1a25', padding: '12px', borderRadius: '8px', border: '1px solid #2a2a3a' }}>
+                        <div style={{ fontSize: '10px', color: '#8b8b9e', textTransform: 'uppercase', marginBottom: '4px' }}>{s.label}</div>
+                        <div style={{ fontSize: '14px', fontWeight: 700 }}>
+                           {s.format === 'currency' ? formatCurrency(s.value) :
+                            s.format === 'percentage' ? `${s.value.toFixed(1)}%` :
+                            s.format === 'cpm' ? formatCPM(s.value) :
+                            formatNumber(s.value)}
+                        </div>
+                     </div>
+                   ))}
+                </div>
+
                 <div style={{ overflowX: 'auto' }}>
+
                   <table className="cc2-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
                     <thead>
                       <tr>
