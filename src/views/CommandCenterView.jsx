@@ -535,8 +535,8 @@ export const CommandCenterView = ({ filteredData }) => {
           { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: formatCurrency, trend: '-8%', type: 'down', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
           { label: 'Overall Pacing', val: kpi.avgPacing, fmt: v => `${v.toFixed(1)}%`, trend: kpi.avgPacing > 100 ? '+Alert' : 'On Track', type: kpi.avgPacing > 100 ? 'down' : 'up', line: sparklines.pacing, cls: 'cc2-kpi-pacing', color: '#7c3aed' },
           { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCPM, trend: 'Optimal', type: 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
-          { label: 'Target Impression', val: kpi.totalTargetImp, fmt: formatNumber, trend: 'Monthly Goal', type: 'up', line: sparklines.targetImp, cls: 'cc2-kpi-budget', color: '#1877F2' },
-          { label: 'Actual Impression', val: kpi.totalActualImp, fmt: formatNumber, trend: 'Current', type: 'up', line: sparklines.actualImp, cls: 'cc2-kpi-rem', color: '#10b981' },
+          { label: 'Target Impression', val: kpi.totalTargetImp, fmt: v => v.toLocaleString('id-ID'), trend: 'Monthly Goal', type: 'up', line: sparklines.targetImp, cls: 'cc2-kpi-budget', color: '#1877F2' },
+          { label: 'Actual Impression', val: kpi.totalActualImp, fmt: v => v.toLocaleString('id-ID'), trend: 'Current', type: 'up', line: sparklines.actualImp, cls: 'cc2-kpi-rem', color: '#10b981' },
           { label: 'Pacing Impression %', val: kpi.pacingImp, fmt: v => `${v.toFixed(1)}%`, trend: kpi.pacingImp > 85 ? 'Healthy' : 'Behind', type: kpi.pacingImp > 85 ? 'up' : 'down', line: sparklines.pacingImp, cls: 'cc2-kpi-pacing', color: '#f59e0b' },
         ].map((card, i) => (
           <div key={i} className={`cc2-card cc2-kpi ${card.cls}`}>
