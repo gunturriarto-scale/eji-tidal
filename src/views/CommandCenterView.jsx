@@ -115,15 +115,12 @@ export const CommandCenterView = ({ filteredData }) => {
     const totalRemaining = Math.max(0, totalBudget - totalSpent);
     const avgPacing = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
-    const totalImpressions = data.reduce((s, d) => {
-      const hasPlatImp = (d.actualImpMeta || 0) + (d.actualImpTiktok || 0) + (d.actualImpCriteo || 0) + (d.actualImpGoogle || 0);
-      return s + (hasPlatImp > 0 ? hasPlatImp : (d.impressions || 0));
-    }, 0);
-    const actualCPM = totalImpressions > 0 ? (totalSpent / totalImpressions) * 1000 : 0;
+    const totalActualImp = data.reduce((s, d) => s + (d.impressions || 0), 0);
+    const actualCPM = totalActualImp > 0 ? (totalSpent / totalActualImp) * 1000 : 0;
     
     const totalTargetImp = data.reduce((s, d) => s + (d.estImp || 0), 0);
-    const totalActualImp = data.reduce((s, d) => s + (d.impressions || 0), 0);
     const pacingImp = totalTargetImp > 0 ? (totalActualImp / totalTargetImp) * 100 : 0;
+
     
     const overspending = data.filter(d => d.budgetOverall > 0 && (d.spent / d.budgetOverall) > 1.1);
     const underperforming = data.filter(d => d.budgetOverall > 0 && d.estReach > 0 && (d.reach / d.estReach) < 0.5);
