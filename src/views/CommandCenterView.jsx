@@ -530,9 +530,9 @@ export const CommandCenterView = ({ filteredData }) => {
       {/* ── KPI CARDS with SPARKLINES ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Budget', val: kpi.totalBudget, fmt: formatCurrency, trend: '+12%', type: 'up', line: sparklines.budget, cls: 'cc2-kpi-budget', color: '#1877F2' },
-          { label: 'Total Spent', val: kpi.totalSpent, fmt: formatCurrency, trend: '+18%', type: 'up', line: sparklines.spent, cls: 'cc2-kpi-spent', color: '#f59e0b' },
-          { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: formatCurrency, trend: '-8%', type: 'down', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
+          { label: 'Total Budget', val: kpi.totalBudget, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: '+12%', type: 'up', line: sparklines.budget, cls: 'cc2-kpi-budget', color: '#1877F2' },
+          { label: 'Total Spent', val: kpi.totalSpent, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: '+18%', type: 'up', line: sparklines.spent, cls: 'cc2-kpi-spent', color: '#f59e0b' },
+          { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: '-8%', type: 'down', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
           { label: 'Overall Pacing', val: kpi.avgPacing, fmt: v => `${v.toFixed(1)}%`, trend: kpi.avgPacing > 100 ? '+Alert' : 'On Track', type: kpi.avgPacing > 100 ? 'down' : 'up', line: sparklines.pacing, cls: 'cc2-kpi-pacing', color: '#7c3aed' },
           { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCPM, trend: 'Optimal', type: 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
           { label: 'Target Impression', val: kpi.totalTargetImp, fmt: v => v.toLocaleString('id-ID'), trend: 'Monthly Goal', type: 'up', line: sparklines.targetImp, cls: 'cc2-kpi-budget', color: '#1877F2' },
