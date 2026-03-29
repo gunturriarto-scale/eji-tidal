@@ -6,9 +6,9 @@ import { LazadaView } from './views/LazadaView'
 import { TokopediaView } from './views/TokopediaView'
 import { EcommerceView } from './views/EcommerceView'
 import { Sidebar } from './components/Sidebar'
-import { Sidebar } from './components/Sidebar'
 
 import { CommandCenterView } from './views/CommandCenterView'
+
 import { useData } from './context/DataContext'
 
 const Header = ({ 
