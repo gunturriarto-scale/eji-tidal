@@ -35,8 +35,14 @@ export const AuthProvider = ({ children }) => {
 
         checkSession();
 
+        // 3. Safety timeout: Ensure loading is never stuck
+        const timeout = setTimeout(() => {
+            setLoading(false);
+        }, 3000);
+
         // 2. Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            clearTimeout(timeout);
             if (session?.user) {
                 if (session.user.email.endsWith('@eji.co.id')) {
                     setUser(session.user);

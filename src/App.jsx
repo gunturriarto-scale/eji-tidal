@@ -77,7 +77,6 @@ const Header = ({
         {!['creativehub', 'commandCenter'].includes(activeView) && (
           <div className="filter-deck" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
             <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-end' }}>
-              {/* Date Filter Group */}
               <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
                 <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time Period</label>
                 <select 
@@ -123,10 +122,7 @@ const Header = ({
 
             {!['shopee', 'tiktokShop', 'lazada', 'tokopedia'].includes(activeView) && (
               <div style={{ display: 'flex', gap: '1.25rem', flex: 1, justifyContent: 'flex-end', alignItems: 'flex-end' }}>
-                {/* Divider */}
                 <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.5rem 8px', flex: 'none' }}></div>
-
-                {/* Category Filter */}
                 <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category</label>
                   <select 
@@ -139,8 +135,6 @@ const Header = ({
                     {filterOptions.categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-
-                {/* Category Brand Filter */}
                 <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category Brand</label>
                   <select 
@@ -153,8 +147,6 @@ const Header = ({
                     {filterOptions.categoryBrands.map(cb => <option key={cb} value={cb}>{cb}</option>)}
                   </select>
                 </div>
-
-                {/* PRODUCTS Filter */}
                 <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
                   <label style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Products</label>
                   <select 
@@ -179,21 +171,16 @@ const Header = ({
 function App() {
   const { user, loading: authLoading } = useAuth();
   const [activeView, setActiveView] = useState('commandCenter');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
   const { 
     tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, offsiteData, kolData, criteoData, ordersData, ncoOrdersData,
     commandCenterData,
     loading, error 
   } = useData();
 
-  // Individual Filter States per View
   const initialFilters = {
-    dateFilter: 'all',
-    customStart: '',
-    customEnd: '',
-    productFilter: 'all',
-    categoryBrandFilter: 'all',
-    categoryFilter: 'all',
-    brandFilter: 'all'
+    dateFilter: 'all', customStart: '', customEnd: '', productFilter: 'all', categoryBrandFilter: 'all', categoryFilter: 'all', brandFilter: 'all'
   };
 
   const [viewFilters, setViewFilters] = useState({
@@ -212,53 +199,25 @@ function App() {
 
   const updateFilter = (key, value) => {
     setViewFilters(prev => ({
-      ...prev,
-      [activeView]: {
-        ...prev[activeView],
-        [key]: value
-      }
+      ...prev, [activeView]: { ...prev[activeView], [key]: value }
     }));
   };
 
-  // Extract Unique Filter Options
   const filterOptions = useMemo(() => {
     if (loading) return { products: [], categoryBrands: [], categories: [], brands: [] };
-    
-    const products = new Set();
-    const categoryBrands = new Set();
-    const categories = new Set();
-    const brands = new Set();
-
-    const toTitleCase = (str) => {
-      if (!str || str === '-') return '-';
-      return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-    };
-
-    const addFromArr = (arr) => {
-      arr?.forEach(d => {
-        if (d.PRODUCTS && d.PRODUCTS !== '-') products.add(toTitleCase(d.PRODUCTS));
-        if (d['Category Brand'] && d['Category Brand'] !== '-') categoryBrands.add(toTitleCase(d['Category Brand']));
-        if (d.Category && d.Category !== '-') categories.add(toTitleCase(d.Category));
-        if (d.BRAND && d.BRAND !== '-') brands.add(toTitleCase(d.BRAND));
-      });
-    };
-
-    addFromArr(tiktokAdsData);
-    addFromArr(metaAdsData);
-    addFromArr(googleAdsData);
-    addFromArr(metaAdsSupabaseData);
-    addFromArr(criteoData);
-
+    const products = new Set(); const categoryBrands = new Set(); const categories = new Set(); const brands = new Set();
+    const toTitleCase = (str) => (!str || str === '-') ? '-' : str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    const addFromArr = (arr) => arr?.forEach(d => {
+      if (d.PRODUCTS && d.PRODUCTS !== '-') products.add(toTitleCase(d.PRODUCTS));
+      if (d['Category Brand'] && d['Category Brand'] !== '-') categoryBrands.add(toTitleCase(d['Category Brand']));
+      if (d.Category && d.Category !== '-') categories.add(toTitleCase(d.Category));
+      if (d.BRAND && d.BRAND !== '-') brands.add(toTitleCase(d.BRAND));
+    });
+    addFromArr(tiktokAdsData); addFromArr(metaAdsData); addFromArr(googleAdsData); addFromArr(metaAdsSupabaseData); addFromArr(criteoData);
     const sort = (s) => Array.from(s).sort();
-    return {
-      products: sort(products),
-      categoryBrands: sort(categoryBrands),
-      categories: sort(categories),
-      brands: sort(brands)
-    };
+    return { products: sort(products), categoryBrands: sort(categoryBrands), categories: sort(categories), brands: sort(brands) };
   }, [tiktokAdsData, metaAdsData, googleAdsData, criteoData, loading]);
 
-  // Calculate max date from all data to act as our "today" anchor
   const maxDateRaw = useMemo(() => {
     if (loading || !tiktokAdsData) return new Date().toISOString().split('T')[0];
     let max = '2000-01-01';
@@ -275,221 +234,108 @@ function App() {
 
   const dateRange = useMemo(() => {
     const { dateFilter, customStart, customEnd } = currentFilters;
-
     if (dateFilter === 'all') return { start: '2000-01-01', end: '2099-12-31', compStart: '2000-01-01' };
     if (dateFilter === 'custom') {
-      const start = customStart || '2000-01-01';
-      const end = customEnd || '2099-12-31';
-      const s = new Date(start);
-      const e = new Date(end);
-      const diff = e.getTime() - s.getTime();
+      const start = customStart || '2000-01-01'; const end = customEnd || '2099-12-31';
+      const s = new Date(start); const e = new Date(end); const diff = e.getTime() - s.getTime();
       const compS = new Date(s.getTime() - diff - 86400000);
-      const fmt = (d) => d.toISOString().split('T')[0];
-      return { start, end, compStart: fmt(compS) };
+      return { start, end, compStart: compS.toISOString().split('T')[0] };
     }
-    
-    const today = new Date(maxDateRaw);
-    let start = new Date(today);
-    let end = new Date(today);
-
-    if (dateFilter === 'last7') {
-      start.setDate(today.getDate() - 6);
-    } else if (dateFilter === 'last30') {
-      start.setDate(today.getDate() - 29);
-    } else if (dateFilter === 'thisMonth') {
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    } else if (dateFilter === 'lastMonth') {
-      start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      end = new Date(today.getFullYear(), today.getMonth(), 0);
-    }
-    
+    const today = new Date(maxDateRaw); let start = new Date(today); let end = new Date(today);
+    if (dateFilter === 'last7') start.setDate(today.getDate() - 6);
+    else if (dateFilter === 'last30') start.setDate(today.getDate() - 29);
+    else if (dateFilter === 'thisMonth') { start = new Date(today.getFullYear(), today.getMonth(), 1); end = new Date(today.getFullYear(), today.getMonth() + 1, 0); }
+    else if (dateFilter === 'lastMonth') { start = new Date(today.getFullYear(), today.getMonth() - 1, 1); end = new Date(today.getFullYear(), today.getMonth(), 0); }
     const fmt = (d) => d.toISOString().split('T')[0];
-    const s = fmt(start);
-    const e = fmt(end);
-    
     let compS = new Date(start);
     if (dateFilter === 'last7') compS.setDate(start.getDate() - 7);
     else if (dateFilter === 'last30') compS.setDate(start.getDate() - 30);
     else if (dateFilter === 'thisMonth' || dateFilter === 'lastMonth') compS = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-
-    return { start: s, end: e, compStart: fmt(compS) };
+    return { start: fmt(start), end: fmt(end), compStart: fmt(compS) };
   }, [currentFilters, maxDateRaw]);
 
   const matchesAttributes = (d) => {
     if (!d) return false;
     const { productFilter, categoryBrandFilter, categoryFilter, brandFilter } = currentFilters;
-    
     const equalsCI = (val, target) => {
       if (target === 'all') return true;
       if (!val || val === '-') return false;
       return val.trim().toLowerCase() === target.trim().toLowerCase();
     };
-
-    return equalsCI(d.PRODUCTS, productFilter) &&
-           equalsCI(d['Category Brand'], categoryBrandFilter) &&
-           equalsCI(d.Category, categoryFilter) &&
-           equalsCI(d.BRAND, brandFilter);
+    return equalsCI(d.PRODUCTS, productFilter) && equalsCI(d['Category Brand'], categoryBrandFilter) && equalsCI(d.Category, categoryFilter) && equalsCI(d.BRAND, brandFilter);
   };
 
-  // Global Filter Function
   const isMatch = (d, isKOL = false) => {
     if (!d) return false;
-    
-    // Date filter
     const dateMatch = !d.normDate || (d.normDate >= dateRange.start && d.normDate <= dateRange.end);
     if (!dateMatch) return false;
-
-    // Attribute filters - Skip for KOL
-    if (!isKOL) {
-      if (!matchesAttributes(d)) return false;
-    }
-
+    if (!isKOL && !matchesAttributes(d)) return false;
     return true;
   };
 
   const filteredData = useMemo(() => {
     if (loading) return null;
     return {
-      tiktok: tiktokAdsData.filter(d => isMatch(d, false)),
-      meta: metaAdsSupabaseData.filter(d => isMatch(d, false)),
-      google: googleAdsData.filter(d => isMatch(d, false)),
-      kol: kolData.filter(d => isMatch(d, true)),
-      criteo: criteoData.filter(d => isMatch(d, false)),
-      offsite: offsiteData.filter(d => isMatch(d, false)),
+      tiktok: tiktokAdsData.filter(d => isMatch(d, false)), meta: metaAdsSupabaseData.filter(d => isMatch(d, false)),
+      google: googleAdsData.filter(d => isMatch(d, false)), kol: kolData.filter(d => isMatch(d, true)),
+      criteo: criteoData.filter(d => isMatch(d, false)), offsite: offsiteData.filter(d => isMatch(d, false)),
       orders: ordersData.filter(row => !row.normDate || (row.normDate >= dateRange.start && row.normDate <= dateRange.end)),
       ncoOrders: ncoOrdersData.filter(row => !row.normDate || (row.normDate >= dateRange.start && row.normDate <= dateRange.end)),
       commandCenter: commandCenterData,
-      
       kpiDates: (() => {
         const all = new Set();
-        const check = (arr, isKOL = false) => arr?.forEach(d => { 
-          // For KPI dates, we need to respect filters but include the comparison period
-          if (isKOL || matchesAttributes(d)) {
-            if (d.normDate >= dateRange.compStart && d.normDate <= dateRange.end) {
-              all.add(d.normDate); 
-            }
-          }
-        });
-        check(tiktokAdsData, false); 
-        check(metaAdsData, false); 
-        check(metaAdsSupabaseData, false);
-        check(googleAdsData, false); 
-        check(offsiteData, false); 
-        check(criteoData, false);
+        const check = (arr, isKOL = false) => arr?.forEach(d => { if (isKOL || matchesAttributes(d)) { if (d.normDate >= dateRange.compStart && d.normDate <= dateRange.end) all.add(d.normDate); } });
+        check(tiktokAdsData, false); check(metaAdsData, false); check(metaAdsSupabaseData, false); check(googleAdsData, false); check(offsiteData, false); check(criteoData, false);
         return Array.from(all).sort((a,b) => new Date(a) - new Date(b));
       })()
     };
-  }, [
-    tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData,
-    loading, dateRange, currentFilters
-  ]);
-
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  }, [tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData, loading, dateRange, currentFilters]);
 
   const viewNames = {
-    shopee:     '🛒 Shopee Performance',
-    tiktokShop: '🎵 TikTok Shop Performance',
-    lazada:     '🛍️ Lazada Performance',
-    tokopedia:  '🟢 Tokopedia Performance',
-    shopeeNco:     '🛒 Shopee NCO Performance',
-    tiktokShopNco: '🎵 TikTok Shop NCO Performance',
-    lazadaNco:     '🛍️ Lazada NCO Performance',
-    tokopediaNco:  '🟢 Tokopedia NCO Performance',
-    commandCenter: '🎯 Performance Marketing Command Center',
+    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Performance Marketing Command Center',
   };
 
   const renderView = () => {
-    if (!filteredData) return null;
-    const commonProps = { filteredData, dateRange };
-    
+    if (!filteredData) return null; const commonProps = { filteredData, dateRange };
     switch (activeView) {
-      case 'shopee':     return <ShopeeView {...commonProps} />;
+      case 'shopee': return <ShopeeView {...commonProps} />;
       case 'tiktokShop': return <TikTokShopView {...commonProps} />;
-      case 'lazada':    return <LazadaView {...commonProps} />;
+      case 'lazada': return <LazadaView {...commonProps} />;
       case 'tokopedia': return <TokopediaView {...commonProps} />;
-      case 'shopeeNco':     return <EcommerceView ordersData={filteredData.ncoOrders} platform="shopee" dateRange={dateRange} />;
+      case 'shopeeNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="shopee" dateRange={dateRange} />;
       case 'tiktokShopNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="tiktokShop" dateRange={dateRange} />;
-      case 'lazadaNco':    return <EcommerceView ordersData={filteredData.ncoOrders} platform="lazada" dateRange={dateRange} />;
+      case 'lazadaNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="lazada" dateRange={dateRange} />;
       case 'tokopediaNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="tokopedia" dateRange={dateRange} />;
       case 'commandCenter': return <CommandCenterView {...commonProps} />;
       default: return <CommandCenterView {...commonProps} />;
     }
   };
 
-  // 1. Auth Loading State
+  // AUTH LOADING
   if (authLoading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000', color: 'white' }}>
-        <p>Initializing Secure Session...</p>
-      </div>
-    );
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000', color: 'white' }}>Initializing...</div>;
   }
 
-  // 2. Redirect to Login if not authenticated
+  // LOGIN REDIRECT
   if (!user) {
     return <LoginView />;
   }
 
-  // 3. Data Loading State
+  // DATA LOADING
   if (loading) {
     return (
-      <div className="app-container" style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh', 
-        flexDirection: 'column', 
-        gap: '2rem',
-        textAlign: 'center',
-        padding: '2rem'
-      }}>
-        <img src="/loading_lotr.png" alt="Gandalf in Mordor" style={{ width: '200px', borderRadius: '12px', boxShadow: '0 0 40px rgba(79, 70, 229, 0.2)' }} className="fade-in" />
-        <h2 style={{ maxWidth: '600px', fontSize: '1.25rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.6 }}>
-          "Consulting the archives of Minas Morgul (we moved the library, long story)... <br/>
-          <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>one does not simply CTRL+C & CTRL+V into the database 🧙‍♂️💀</span>"
-        </h2>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-        <h2 style={{ color: 'var(--warning)' }}>Error Loading Data</h2>
-        <p>{error}</p>
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column', gap: '2rem', textAlign: 'center', padding: '2rem' }}>
+        <img src="/loading_lotr.png" alt="Loading" style={{ width: '200px', borderRadius: '12px' }} />
+        <h2 style={{ maxWidth: '600px', fontSize: '1.25rem', color: 'var(--text-secondary)' }}>Loading project archives...</h2>
       </div>
     );
   }
 
   return (
     <div className={`app-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      <Sidebar 
-        activeView={activeView} 
-        setActiveView={setActiveView} 
-        isCollapsed={isSidebarCollapsed} 
-        setIsCollapsed={setIsSidebarCollapsed} 
-      />
+      <Sidebar activeView={activeView} setActiveView={setActiveView} isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       <main className="main-content">
-        <Header 
-          dateFilter={currentFilters.dateFilter} 
-          setDateFilter={(val) => updateFilter('dateFilter', val)}
-          customStart={currentFilters.customStart} 
-          setCustomStart={(val) => updateFilter('customStart', val)}
-          customEnd={currentFilters.customEnd} 
-          setCustomEnd={(val) => updateFilter('customEnd', val)}
-          activeViewName={viewNames[activeView]}
-          activeView={activeView}
-          filterOptions={filterOptions}
-          productFilter={currentFilters.productFilter} 
-          setProductFilter={(val) => updateFilter('productFilter', val)}
-          brandFilter={currentFilters.brandFilter} 
-          setBrandFilter={(val) => updateFilter('brandFilter', val)}
-          categoryFilter={currentFilters.categoryFilter} 
-          setCategoryFilter={(val) => updateFilter('categoryFilter', val)}
-          categoryBrandFilter={currentFilters.categoryBrandFilter} 
-          setCategoryBrandFilter={(val) => updateFilter('categoryBrandFilter', val)}
-        />
+        <Header dateFilter={currentFilters.dateFilter} setDateFilter={(val) => updateFilter('dateFilter', val)} customStart={currentFilters.customStart} setCustomStart={(val) => updateFilter('customStart', val)} customEnd={currentFilters.customEnd} setCustomEnd={(val) => updateFilter('customEnd', val)} activeViewName={viewNames[activeView]} activeView={activeView} filterOptions={filterOptions} productFilter={currentFilters.productFilter} setProductFilter={(val) => updateFilter('productFilter', val)} brandFilter={currentFilters.brandFilter} setBrandFilter={(val) => updateFilter('brandFilter', val)} categoryFilter={currentFilters.categoryFilter} setCategoryFilter={(val) => updateFilter('categoryFilter', val)} categoryBrandFilter={currentFilters.categoryBrandFilter} setCategoryBrandFilter={(val) => updateFilter('categoryBrandFilter', val)} />
         {renderView()}
       </main>
     </div>
