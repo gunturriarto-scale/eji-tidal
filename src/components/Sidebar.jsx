@@ -1,19 +1,11 @@
+import React from 'react';
 import { 
-  LayoutDashboard, 
-  Facebook, 
-  Video, 
-  Search,
-  Database,
-  Users2,
-  Activity,
   Target,
-  Hash,
-  Menu,
   ChevronLeft,
   ChevronRight,
-  ShoppingCart,
-  Zap
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const ShopeeIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -40,24 +32,24 @@ const TokopediaIcon = ({ size = 20 }) => (
 );
 
 export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed }) => {
+  const { user, logout } = useAuth();
+  
   const menuItems = [
     { type: 'divider', label: 'Command Center' },
     { id: 'commandCenter', name: 'Perf. Marketing', icon: <Target size={20} />, color: '#F59E0B' },
 
     { type: 'divider', label: 'E-Commerce Hanasui' },
     { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
-    { id: 'tiktokShop',name: 'TikTok Shop', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
-    { id: 'lazada',    name: 'Lazada',       icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
-    { id: 'tokopedia', name: 'Tokopedia',    icon: <TokopediaIcon size={20} />, color: '#059669' },
+    { id: 'tiktokShop', name: 'TikTok Shop', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
+    { id: 'lazada',     name: 'Lazada',       icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
+    { id: 'tokopedia',  name: 'Tokopedia',    icon: <TokopediaIcon size={20} />, color: '#059669' },
 
     { type: 'divider', label: 'E-Commerce NCO' },
     { id: 'shopeeNco',     name: 'Shopee NCO',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
     { id: 'tiktokShopNco', name: 'TikTok Shop NCO', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
     { id: 'lazadaNco',     name: 'Lazada NCO',      icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
     { id: 'tokopediaNco',  name: 'Tokopedia NCO',   icon: <TokopediaIcon size={20} />, color: '#059669' },
-
   ];
-
 
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
@@ -74,7 +66,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
           style={{ 
             width: isCollapsed ? '32px' : '120px',
             height: 'auto',
-            filter: 'invert(1)', // Making it white for dark theme
+            filter: 'invert(1)',
             transition: 'all 0.3s ease'
           }} 
         />
@@ -123,11 +115,36 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
         })}
       </nav>
 
-      <div className="sidebar-footer">
-        <div className="status-indicator">
-          <div className="status-dot"></div>
-          {!isCollapsed && <span>System Live: Real Data</span>}
-        </div>
+      <div className="sidebar-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '1rem' }}>
+        {user && !isCollapsed && (
+          <div style={{ marginBottom: '1rem', padding: '0 0.5rem' }}>
+            <p style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginBottom: '0.25rem', textTransform: 'uppercase' }}>Logged in as</p>
+            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
+          </div>
+        )}
+        
+        <button 
+          onClick={logout}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '8px 12px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            color: '#ef4444',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            transition: 'all 0.2s'
+          }}
+          className="logout-btn"
+        >
+          <LogOut size={16} />
+          {!isCollapsed && <span>Sign Out</span>}
+        </button>
       </div>
     </aside>
   );

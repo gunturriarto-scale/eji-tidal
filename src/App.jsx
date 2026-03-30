@@ -1,15 +1,14 @@
 import React, { useState, useMemo } from 'react'
 import { ShopeeView } from './views/ShopeeView'
-
 import { TikTokShopView } from './views/TikTokShopView'
 import { LazadaView } from './views/LazadaView'
 import { TokopediaView } from './views/TokopediaView'
 import { EcommerceView } from './views/EcommerceView'
 import { Sidebar } from './components/Sidebar'
-
 import { CommandCenterView } from './views/CommandCenterView'
-
 import { useData } from './context/DataContext'
+import { useAuth } from './context/AuthContext'
+import { LoginView } from './views/LoginView'
 
 const Header = ({ 
   dateFilter, setDateFilter, 
@@ -178,6 +177,7 @@ const Header = ({
 };
 
 function App() {
+  const { user, loading: authLoading } = useAuth();
   const [activeView, setActiveView] = useState('commandCenter');
   const { 
     tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, offsiteData, kolData, criteoData, ordersData, ncoOrdersData,
@@ -198,7 +198,6 @@ function App() {
 
   const [viewFilters, setViewFilters] = useState({
     shopee: { ...initialFilters, dateFilter: 'thisMonth' },
-
     tiktokShop: { ...initialFilters, dateFilter: 'thisMonth' },
     lazada: { ...initialFilters, dateFilter: 'thisMonth' },
     tokopedia: { ...initialFilters, dateFilter: 'thisMonth' },
@@ -390,7 +389,6 @@ function App() {
 
   const viewNames = {
     shopee:     '🛒 Shopee Performance',
-
     tiktokShop: '🎵 TikTok Shop Performance',
     lazada:     '🛍️ Lazada Performance',
     tokopedia:  '🟢 Tokopedia Performance',
@@ -399,7 +397,6 @@ function App() {
     lazadaNco:     '🛍️ Lazada NCO Performance',
     tokopediaNco:  '🟢 Tokopedia NCO Performance',
     commandCenter: '🎯 Performance Marketing Command Center',
-
   };
 
   const renderView = () => {
@@ -420,7 +417,21 @@ function App() {
     }
   };
 
+  // 1. Auth Loading State
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000', color: 'white' }}>
+        <p>Initializing Secure Session...</p>
+      </div>
+    );
+  }
 
+  // 2. Redirect to Login if not authenticated
+  if (!user) {
+    return <LoginView />;
+  }
+
+  // 3. Data Loading State
   if (loading) {
     return (
       <div className="app-container" style={{ 
