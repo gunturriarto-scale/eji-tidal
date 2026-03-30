@@ -123,8 +123,29 @@ export const MetaRaw = ({ filteredData }) => {
     return list.slice(0, 5);
   }, [adPerformance, stats]);
 
-  const paginatedAds = adPerformance.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-  const totalPages = Math.ceil(adPerformance.length / rowsPerPage);
+  // Discovery Championship Logic
+  const discoveryChamps = useMemo(() => {
+    if (!adPerformance.length) return [];
+    
+    // 1. By Spend
+    const bySpend = [...adPerformance].sort((a,b) => b.spend - a.spend)[0];
+    
+    // 2. By Impression
+    const byImp = [...adPerformance].sort((a,b) => b.impressions - a.impressions)[0];
+    
+    // 3. By CPM (Filter min 1k imp to avoid noise)
+    const byCPM = [...adPerformance].filter(a => a.impressions > 1000).sort((a,b) => {
+        const c1 = a.impressions > 0 ? a.spend / a.impressions : 9999999;
+        const c2 = b.impressions > 0 ? b.spend / b.impressions : 9999999;
+        return c1 - c2;
+    })[0];
+    
+    return [
+       { ...bySpend, champLabel: '💸 Spending Champ', champColor: '#ef4444' },
+       { ...byImp, champLabel: '👁️ Impression Champ', champColor: '#3b82f6' },
+       { ...byCPM, champLabel: '🚀 CPM Efficiency Champ', champColor: '#10b981' }
+    ].filter(a => a && a.id);
+  }, [adPerformance]);
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -153,8 +174,14 @@ export const MetaRaw = ({ filteredData }) => {
             margin-bottom: 1rem; 
             align-items: stretch;
             transition: all 0.3s ease;
+            position: relative;
         }
         .ad-card:hover { border-color: #3b82f6; }
+        
+        .champ-badge { 
+            position: absolute; top: -12px; left: 24px; padding: 4px 12px; border-radius: 20px; 
+            font-size: 11px; font-weight: 700; color: #fff; z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.5); 
+        }
         
         .ad-thumb-container { width: 140px; flex-shrink: 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; }
         .ad-info-container { flex: 2; display: flex; flex-direction: column; justify-content: center; min-width: 200px; }
@@ -285,35 +312,25 @@ export const MetaRaw = ({ filteredData }) => {
 
         {/* Ad Performance Grid */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Discovery Performance Grid</h3>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button 
-                        onClick={() => setViewMode('campaign')} 
-                        style={{ 
-                            padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500, border: 'none', cursor: 'pointer',
-                            background: viewMode === 'campaign' ? '#2563eb' : 'rgba(255,255,255,0.05)',
-                            color: viewMode === 'campaign' ? '#fff' : '#94a3b8'
-                        }}>Campaigns</button>
-                    <button 
-                        onClick={() => setViewMode('ad')} 
-                        style={{ 
-                            padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500, border: 'none', cursor: 'pointer',
-                            background: viewMode === 'ad' ? '#2563eb' : 'rgba(255,255,255,0.05)',
-                            color: viewMode === 'ad' ? '#fff' : '#94a3b8'
-                        }}>Ads</button>
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Discovery Top Performance Grid</h3>
+                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0, fontStyle: 'italic' }}>Real-time performance distribution & analysis</p>
             </div>
 
             <div style={{ marginTop: '1rem' }}>
-            {paginatedAds.map((ad) => {
+            {discoveryChamps.map((ad, idx) => {
                 const hookRate = ad.impressions > 0 ? (ad.views / ad.impressions) * 100 : 0;
                 const retention = ad.views > 0 ? (ad.p50 / ad.views) * 100 : 0;
                 const cpm = ad.impressions > 0 ? (ad.spend / ad.impressions) * 1000 : 0;
                 const freq = ad.reach > 0 ? ad.impressions / ad.reach : 0;
 
                 return (
-                <div key={ad.id} className="glass-panel ad-card">
+                <div key={`${ad.id}-${idx}`} className="glass-panel ad-card">
+                    {/* Champion Badge */}
+                    <div className="champ-badge" style={{ background: ad.champColor }}>
+                        {ad.champLabel}
+                    </div>
+
                     {/* Thumbnail / Status */}
                     <div className="ad-thumb-container">
                         {ad.thumbnail ? (
@@ -403,7 +420,7 @@ export const MetaRaw = ({ filteredData }) => {
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button style={{ 
                                 flex: 1, padding: '0.75rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer',
-                                background: 'rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                                background: 'rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', justifySelf: 'center', gap: '0.5rem'
                             }}>
                                 <Activity size={14} /> Details
                             </button>
@@ -419,21 +436,6 @@ export const MetaRaw = ({ filteredData }) => {
                 </div>
                 );
             })}
-            </div>
-
-            {/* Pagination */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
-                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>Showing page {page} of {totalPages}</p>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button 
-                        onClick={() => setPage(p => Math.max(1, p - 1))} 
-                        disabled={page === 1}
-                        style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: '#fff', opacity: page === 1 ? 0.3 : 1 }}>&lt;</button>
-                    <button 
-                        onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
-                        disabled={page === totalPages}
-                        style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: '#fff', opacity: page === totalPages ? 0.3 : 1 }}>&gt;</button>
-                </div>
             </div>
         </div>
       </div>
