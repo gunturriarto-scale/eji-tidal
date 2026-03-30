@@ -134,244 +134,307 @@ export const MetaRaw = ({ filteredData }) => {
   );
 
   return (
-    <div className="fade-in space-y-8 pb-12">
-      {/* Header Summary */}
-      <PlatformSummary title="Meta Awareness Command Center" stats={stats} />
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-panel p-6 rounded-2xl">
-          <div className="flex items-center justify-between mb-6">
-             <h3 className="text-lg font-bold flex items-center gap-2">
-               <TrendingUp size={18} className="text-blue-500" />
-               Reach & Discovery Trend
-             </h3>
-          </div>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailyData}>
-                <defs>
-                  <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" tick={{fontSize: 10}} tickFormatter={(val) => {
-                  if(!val || typeof val !== 'string') return '';
-                  return val.split('-').slice(1).join('/');
-                }} />
-                <YAxis yAxisId="left" tick={{fontSize: 10}} />
-                <YAxis yAxisId="right" orientation="right" tick={{fontSize: 10}} tickFormatter={(val) => `${val.toFixed(1)}%`} />
-                <Tooltip 
-                  contentStyle={{ background: 'rgba(10, 10, 15, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                />
-                <Area yAxisId="left" type="monotone" dataKey="reach" name="Reach" stroke="#3B82F6" fill="url(#colorReach)" />
-                <Line yAxisId="right" type="monotone" dataKey="hookRate" name="Hook Rate" stroke="#F59E0B" dot={false} strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="glass-panel p-6 rounded-2xl">
-          <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
-             <Eye size={18} className="text-green-500" />
-             Efficiency Matrix (CPM vs Retention)
-          </h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={dailyData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" tick={{fontSize: 10}} />
-                <YAxis yAxisId="left" tick={{fontSize: 10}} tickFormatter={(val) => `Rp${val/1000}K`} />
-                <YAxis yAxisId="right" orientation="right" tick={{fontSize: 10}} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
-                <Tooltip 
-                   contentStyle={{ background: 'rgba(10, 10, 15, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                />
-                <Bar yAxisId="right" dataKey="impressions" name="Impressions" fill="#3B82F6" opacity={0.15} barSize={20} />
-                <Line yAxisId="left" type="monotone" dataKey="cpm" name="CPM" stroke="#6366F1" strokeWidth={3} dot={{r: 4, fill: '#6366F1'}} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Alerts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
-          <h4 className="text-red-500 font-bold mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
-            <AlertCircle size={16} /> Discovery Blockers
-          </h4>
-          <div className="space-y-3">
-            {alerts.filter(a => a.type === 'critical').map((a, i) => (
-              <div key={i} className="text-xs text-red-400 flex gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1 shrink-0"></span>
-                {a.msg}
-              </div>
-            ))}
-            {alerts.filter(a => a.type === 'critical').length === 0 && <p className="text-xs text-gray-500">No critical issues detected.</p>}
-          </div>
-        </div>
+    <div className="fade-in pb-12">
+      <style>{`
+        .meta-dashboard-container { display: flex; flex-direction: column; gap: 2rem; }
+        .section-header { margin-bottom: 1.5rem; }
+        .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .alerts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         
-        <div className="p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
-          <h4 className="text-yellow-500 font-bold mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
-            <Info size={16} /> Saturation Alerts
-          </h4>
-          <div className="space-y-3">
-            {alerts.filter(a => a.type === 'warning').map((a, i) => (
-              <div key={i} className="text-xs text-yellow-400 flex gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1 shrink-0"></span>
-                {a.msg}
-              </div>
-            ))}
-             {alerts.filter(a => a.type === 'warning').length === 0 && <p className="text-xs text-gray-500">Normal saturation levels.</p>}
-          </div>
-        </div>
+        .alert-card { padding: 1.25rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .alert-critical { background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2); }
+        .alert-warning { background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2); }
+        .alert-opportunity { background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
+        
+        .ad-card { 
+            display: flex; 
+            gap: 1.5rem; 
+            padding: 1.5rem; 
+            margin-bottom: 1rem; 
+            align-items: stretch;
+            transition: all 0.3s ease;
+        }
+        .ad-card:hover { border-color: #3b82f6; }
+        
+        .ad-thumb-container { width: 140px; flex-shrink: 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; }
+        .ad-info-container { flex: 2; display: flex; flex-direction: column; justify-content: center; min-width: 200px; }
+        .ad-metrics-container { flex: 1.5; padding: 0 1rem; border-right: 1px solid rgba(255,255,255,0.05); border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: center; }
+        .ad-actions-container { flex: 1; padding-left: 1rem; display: flex; flex-direction: column; justify-content: space-between; }
+        
+        .metric-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.8rem; }
+        .progress-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 10px; }
+        
+        @media (max-width: 1024px) {
+            .ad-card { flex-direction: column; }
+            .ad-thumb-container { width: 100%; aspect-ratio: 16/9; }
+            .ad-metrics-container { border: none; padding: 1.5rem 0; }
+            .ad-actions-container { padding: 0; }
+        }
+      `}</style>
 
-        <div className="p-4 rounded-xl border border-green-500/20 bg-green-500/5">
-          <h4 className="text-green-500 font-bold mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
-            <CheckCircle size={16} /> Scale-up Opportunities
-          </h4>
-          <div className="space-y-3">
-            {alerts.filter(a => a.type === 'opportunity').map((a, i) => (
-              <div key={i} className="text-xs text-green-400 flex gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1 shrink-0"></span>
-                {a.msg}
-              </div>
-            ))}
-             {alerts.filter(a => a.type === 'opportunity').length === 0 && <p className="text-xs text-gray-500">No pending opportunities.</p>}
-          </div>
-        </div>
-      </div>
+      <div className="meta-dashboard-container">
+        {/* Header Summary */}
+        <PlatformSummary title="Meta Awareness Command Center" stats={stats} />
 
-      {/* Ad Performance Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold">Discovery Performance Grid</h3>
-          <div className="flex gap-2">
-             <button onClick={() => setViewMode('campaign')} className={`px-4 py-2 rounded-lg text-sm font-medium transition ${viewMode === 'campaign' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>Campaigns</button>
-             <button onClick={() => setViewMode('ad')} className={`px-4 py-2 rounded-lg text-sm font-medium transition ${viewMode === 'ad' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>Ads</button>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {paginatedAds.map((ad) => {
-            const hookRate = ad.impressions > 0 ? (ad.views / ad.impressions) * 100 : 0;
-            const retention = ad.views > 0 ? (ad.p50 / ad.views) * 100 : 0;
-            const cpm = ad.impressions > 0 ? (ad.spend / ad.impressions) * 1000 : 0;
-            const freq = ad.reach > 0 ? ad.impressions / ad.reach : 0;
-
-            return (
-              <div key={ad.id} className="glass-panel p-5 rounded-2xl hover:border-blue-500/50 transition-all group">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                  {/* Thumbnail / Status */}
-                  <div className="lg:col-span-2 relative flex flex-col items-center gap-3">
-                    <div className="relative group w-full aspect-[9/12] bg-black/40 rounded-xl overflow-hidden flex items-center justify-center">
-                      {ad.thumbnail ? (
-                        <img src={ad.thumbnail} alt={ad.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
-                      ) : (
-                        <Play size={32} className="text-white/20" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-                      <div className="absolute bottom-2 left-2 flex flex-col gap-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ad.status === 'ACTIVE' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-black'}`}>
-                          {ad.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Core Info */}
-                  <div className="lg:col-span-4 flex flex-col justify-center">
-                    <h4 className="font-bold text-lg leading-tight mb-1 group-hover:text-blue-400 transition">{ad.name}</h4>
-                    <p className="text-xs text-blue-500 font-medium mb-3">{ad.campaign}</p>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                        <p className="text-[10px] text-gray-500 uppercase mb-1">Spend</p>
-                        <p className="font-bold">{formatCurrency(ad.spend)}</p>
-                      </div>
-                      <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                        <p className="text-[10px] text-gray-500 uppercase mb-1">Frequency</p>
-                        <p className="font-bold text-yellow-500">{freq.toFixed(2)}x</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Upper Funnel Metrics */}
-                  <div className="lg:col-span-3">
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between items-center mb-1 text-xs">
-                          <span className="text-gray-500">Hook Rate (3s View)</span>
-                          <span className={`${hookRate > 20 ? 'text-green-500' : 'text-yellow-500'} font-bold`}>{hookRate.toFixed(1)}%</span>
-                        </div>
-                        <div className="w-full bg-white/10 rounded-full h-1.5">
-                          <div className={`h-1.5 rounded-full ${hookRate > 20 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${Math.min(hookRate * 2, 100)}%` }}></div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center mb-1 text-xs">
-                          <span className="text-gray-500">Retention Index (50%)</span>
-                          <span className={`${retention > 40 ? 'text-blue-500' : 'text-gray-400'} font-bold`}>{retention.toFixed(1)}%</span>
-                        </div>
-                        <div className="w-full bg-white/10 rounded-full h-1.5">
-                          <div className={`h-1.5 rounded-full ${retention > 40 ? 'bg-blue-500' : 'bg-gray-400'}`} style={{ width: `${retention}%` }}></div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center text-xs pt-1">
-                        <span className="text-gray-500">Discovery Reach:</span>
-                        <span className="font-bold">{formatNumber(ad.reach)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-500">CPM Efficiency:</span>
-                        <span className="font-bold text-indigo-400">{formatCurrency(cpm)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions / Mini Sparkline */}
-                  <div className="lg:col-span-3 flex flex-col justify-between h-full py-2">
-                    <div className="h-[40px] w-full mb-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                         <AreaChart data={ad.history}>
-                            <Area type="monotone" dataKey="spend" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.1} strokeWidth={2} />
-                         </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                       <button className="flex-1 bg-white/10 hover:bg-white/20 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                         <Activity size={14} /> Details
-                       </button>
-                       {ad.preview && (
-                         <a href={ad.preview} target="_blank" rel="noopener noreferrer" className="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-xl transition">
-                           <ExternalLink size={16} />
-                         </a>
-                       )}
-                    </div>
-                  </div>
+        {/* Charts Section */}
+        <div className="charts-row">
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <TrendingUp size={18} style={{ color: '#3B82F6' }} />
+                        Reach & Discovery Trend
+                    </h3>
                 </div>
-              </div>
-            );
-          })}
+                <div style={{ height: '300px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dailyData}>
+                        <defs>
+                        <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                        </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="date" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => {
+                           if(!val || typeof val !== 'string') return '';
+                           return val.split('-').slice(1).join('/');
+                        }} />
+                        <YAxis yAxisId="left" tick={{fontSize: 10, fill: '#64748B'}} />
+                        <YAxis yAxisId="right" orientation="right" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => `${val.toFixed(1)}%`} />
+                        <Tooltip 
+                            contentStyle={{ background: 'rgba(10, 10, 15, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
+                        />
+                        <Area yAxisId="left" type="monotone" dataKey="reach" name="Reach" stroke="#3B82F6" fill="url(#colorReach)" strokeWidth={2} />
+                        <Line yAxisId="right" type="monotone" dataKey="hookRate" name="Hook Rate" stroke="#F59E0B" dot={false} strokeWidth={2} />
+                    </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h3 style={{ fontSize: '1.1rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Eye size={18} style={{ color: '#10B981' }} />
+                    Efficiency Matrix (CPM vs Retention)
+                </h3>
+                <div style={{ height: '300px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={dailyData}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="date" tick={{fontSize: 10, fill: '#64748B'}} />
+                        <YAxis yAxisId="left" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => `Rp${(val/1000).toFixed(0)}K`} />
+                        <YAxis yAxisId="right" orientation="right" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
+                        <Tooltip 
+                            contentStyle={{ background: 'rgba(10, 10, 15, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
+                        />
+                        <Bar yAxisId="right" dataKey="impressions" name="Impressions" fill="#3B82F6" opacity={0.15} barSize={20} />
+                        <Line yAxisId="left" type="monotone" dataKey="cpm" name="CPM" stroke="#6366F1" strokeWidth={3} dot={{r: 4, fill: '#6366F1'}} />
+                    </ComposedChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between pt-6">
-          <p className="text-xs text-gray-500">Showing page {page} of {totalPages}</p>
-          <div className="flex gap-1">
-            <button 
-              onClick={() => setPage(p => Math.max(1, p - 1))} 
-              disabled={page === 1}
-              className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg disabled:opacity-30 transition">&lt;</button>
-            <button 
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
-              disabled={page === totalPages}
-              className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg disabled:opacity-30 transition">&gt;</button>
-          </div>
+        {/* Alerts Section */}
+        <div className="alerts-row">
+            <div className="alert-card alert-critical">
+                <h4 style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, margin: '0 0 1rem 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <AlertCircle size={16} /> Discovery Blockers
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {alerts.filter(a => a.type === 'critical').map((a, i) => (
+                    <div key={i} style={{ fontSize: '0.75rem', color: '#f87171', display: 'flex', gap: '0.5rem' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', marginTop: '4px', flexShrink: 0 }}></span>
+                        {a.msg}
+                    </div>
+                    ))}
+                    {alerts.filter(a => a.type === 'critical').length === 0 && <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>No critical issues detected.</p>}
+                </div>
+            </div>
+            
+            <div className="alert-card alert-warning">
+                <h4 style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700, margin: '0 0 1rem 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Info size={16} /> Saturation Alerts
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {alerts.filter(a => a.type === 'warning').map((a, i) => (
+                    <div key={i} style={{ fontSize: '0.75rem', color: '#fbbf24', display: 'flex', gap: '0.5rem' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b', marginTop: '4px', flexShrink: 0 }}></span>
+                        {a.msg}
+                    </div>
+                    ))}
+                    {alerts.filter(a => a.type === 'warning').length === 0 && <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>Normal saturation levels.</p>}
+                </div>
+            </div>
+
+            <div className="alert-card alert-opportunity">
+                <h4 style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 700, margin: '0 0 1rem 0', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle size={16} /> Scale-up Opportunities
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {alerts.filter(a => a.type === 'opportunity').map((a, i) => (
+                    <div key={i} style={{ fontSize: '0.75rem', color: '#34d399', display: 'flex', gap: '0.5rem' }}>
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', marginTop: '4px', flexShrink: 0 }}></span>
+                        {a.msg}
+                    </div>
+                    ))}
+                    {alerts.filter(a => a.type === 'opportunity').length === 0 && <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>No pending opportunities.</p>}
+                </div>
+            </div>
+        </div>
+
+        {/* Ad Performance Grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Discovery Performance Grid</h3>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                        onClick={() => setViewMode('campaign')} 
+                        style={{ 
+                            padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500, border: 'none', cursor: 'pointer',
+                            background: viewMode === 'campaign' ? '#2563eb' : 'rgba(255,255,255,0.05)',
+                            color: viewMode === 'campaign' ? '#fff' : '#94a3b8'
+                        }}>Campaigns</button>
+                    <button 
+                        onClick={() => setViewMode('ad')} 
+                        style={{ 
+                            padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500, border: 'none', cursor: 'pointer',
+                            background: viewMode === 'ad' ? '#2563eb' : 'rgba(255,255,255,0.05)',
+                            color: viewMode === 'ad' ? '#fff' : '#94a3b8'
+                        }}>Ads</button>
+                </div>
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+            {paginatedAds.map((ad) => {
+                const hookRate = ad.impressions > 0 ? (ad.views / ad.impressions) * 100 : 0;
+                const retention = ad.views > 0 ? (ad.p50 / ad.views) * 100 : 0;
+                const cpm = ad.impressions > 0 ? (ad.spend / ad.impressions) * 1000 : 0;
+                const freq = ad.reach > 0 ? ad.impressions / ad.reach : 0;
+
+                return (
+                <div key={ad.id} className="glass-panel ad-card">
+                    {/* Thumbnail / Status */}
+                    <div className="ad-thumb-container">
+                        {ad.thumbnail ? (
+                            <img src={ad.thumbnail} alt={ad.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                                <Play size={32} style={{ opacity: 0.2 }} />
+                            </div>
+                        )}
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}></div>
+                        <div style={{ position: 'absolute', bottom: '8px', left: '8px' }}>
+                            <span style={{ 
+                                fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+                                background: ad.status === 'ACTIVE' ? '#10b981' : '#f59e0b',
+                                color: ad.status === 'ACTIVE' ? '#fff' : '#000'
+                            }}>
+                            {ad.status}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Core Info */}
+                    <div className="ad-info-container">
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 700 }}>{ad.name}</h4>
+                        <p style={{ margin: '0 0 1rem 0', fontSize: '0.75rem', fontWeight: 500, color: '#3b82f6' }}>{ad.campaign}</p>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '12px' }}>
+                                <p style={{ margin: '0 0 4px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Spend</p>
+                                <p style={{ margin: 0, fontWeight: 700 }}>{formatCurrency(ad.spend)}</p>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '12px' }}>
+                                <p style={{ margin: '0 0 4px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Frequency</p>
+                                <p style={{ margin: 0, fontWeight: 700, color: '#f59e0b' }}>{freq.toFixed(2)}x</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Upper Funnel Metrics */}
+                    <div className="ad-metrics-container">
+                        <div style={{ marginBottom: '1rem' }}>
+                            <div className="metric-row">
+                                <span style={{ color: '#94a3b8' }}>Hook Rate (3s View)</span>
+                                <span style={{ fontWeight: 700, color: hookRate > 20 ? '#10b981' : '#f59e0b' }}>{hookRate.toFixed(1)}%</span>
+                            </div>
+                            <div className="progress-bar-bg">
+                                <div className="progress-bar-fill" style={{ 
+                                    width: `${Math.min(hookRate * 2, 100)}%`, 
+                                    background: hookRate > 20 ? '#10b981' : '#f59e0b' 
+                                }}></div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: '1rem' }}>
+                            <div className="metric-row">
+                                <span style={{ color: '#94a3b8' }}>Retention Index (50%)</span>
+                                <span style={{ fontWeight: 700, color: retention > 40 ? '#3b82f6' : '#94a3b8' }}>{retention.toFixed(1)}%</span>
+                            </div>
+                            <div className="progress-bar-bg">
+                                <div className="progress-bar-fill" style={{ 
+                                    width: `${retention}%`, 
+                                    background: retention > 40 ? '#3b82f6' : '#94a3b8' 
+                                }}></div>
+                            </div>
+                        </div>
+
+                        <div className="metric-row" style={{ marginBottom: '0.5rem' }}>
+                            <span style={{ color: '#94a3b8' }}>Discovery Reach:</span>
+                            <span style={{ fontWeight: 700 }}>{formatNumber(ad.reach)}</span>
+                        </div>
+                        <div className="metric-row">
+                            <span style={{ color: '#94a3b8' }}>CPM Efficiency:</span>
+                            <span style={{ fontWeight: 700, color: '#818cf8' }}>{formatCurrency(cpm)}</span>
+                        </div>
+                    </div>
+
+                    {/* Actions / Mini Sparkline */}
+                    <div className="ad-actions-container">
+                        <div style={{ height: '40px', marginBottom: '1rem' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={ad.history}>
+                                    <Area type="monotone" dataKey="spend" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button style={{ 
+                                flex: 1, padding: '0.75rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer',
+                                background: 'rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem'
+                            }}>
+                                <Activity size={14} /> Details
+                            </button>
+                            {ad.preview && (
+                                <a href={ad.preview} target="_blank" rel="noopener noreferrer" style={{ 
+                                    padding: '0.75rem', borderRadius: '12px', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                    <ExternalLink size={16} />
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                );
+            })}
+            </div>
+
+            {/* Pagination */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
+                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>Showing page {page} of {totalPages}</p>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                        onClick={() => setPage(p => Math.max(1, p - 1))} 
+                        disabled={page === 1}
+                        style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: '#fff', opacity: page === 1 ? 0.3 : 1 }}>&lt;</button>
+                    <button 
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
+                        disabled={page === totalPages}
+                        style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: '#fff', opacity: page === totalPages ? 0.3 : 1 }}>&gt;</button>
+                </div>
+            </div>
         </div>
       </div>
     </div>
