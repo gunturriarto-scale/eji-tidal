@@ -45,18 +45,21 @@ export const MetaRaw = ({ filteredData }) => {
   const dailyData = useMemo(() => {
     const map = {};
     metaAdsData.forEach(row => {
-      const date = row.day;
+      const date = row.day || row.normDate || 'Unknown';
       if (!map[date]) map[date] = { date, reach: 0, impressions: 0, spend: 0, views: 0 };
       map[date].reach += row.reach || 0;
       map[date].impressions += row.impressions || 0;
       map[date].spend += row.spend || 0;
       map[date].views += row.views || 0;
     });
-    return Object.values(map).map(d => ({
-      ...d,
-      cpm: d.impressions > 0 ? (d.spend / d.impressions) * 1000 : 0,
-      hookRate: d.impressions > 0 ? (d.views / d.impressions) * 100 : 0
-    })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    return Object.values(map)
+      .filter(d => d.date !== 'Unknown')
+      .map(d => ({
+        ...d,
+        cpm: d.impressions > 0 ? (d.spend / d.impressions) * 1000 : 0,
+        hookRate: d.impressions > 0 ? (d.views / d.impressions) * 100 : 0
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [metaAdsData]);
 
   // Ad Level Aggregation
@@ -154,7 +157,10 @@ export const MetaRaw = ({ filteredData }) => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="date" tick={{fontSize: 10}} tickFormatter={(val) => val.split('-').slice(1).join('/')} />
+                <XAxis dataKey="date" tick={{fontSize: 10}} tickFormatter={(val) => {
+                  if(!val || typeof val !== 'string') return '';
+                  return val.split('-').slice(1).join('/');
+                }} />
                 <YAxis yAxisId="left" tick={{fontSize: 10}} />
                 <YAxis yAxisId="right" orientation="right" tick={{fontSize: 10}} tickFormatter={(val) => `${val.toFixed(1)}%`} />
                 <Tooltip 

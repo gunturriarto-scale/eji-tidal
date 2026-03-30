@@ -3,7 +3,8 @@ import {
   Target,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
