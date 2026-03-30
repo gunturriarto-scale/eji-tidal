@@ -184,7 +184,17 @@ export const MetaRaw = ({ filteredData }) => {
         }
         
         .ad-thumb-container { width: 140px; flex-shrink: 0; position: relative; border-radius: 12px; overflow: hidden; background: #000; }
-        .ad-info-container { flex: 2; display: flex; flex-direction: column; justify-content: center; min-width: 200px; }
+        .ad-info-container { flex: 2; display: flex; flex-direction: column; justify-content: center; min-width: 200px; padding-right: 1rem; }
+        .ad-name-text { 
+            margin: 0 0 4px 0; 
+            font-size: 1.1rem; 
+            font-weight: 700;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+        }
         .ad-metrics-container { flex: 1.5; padding: 0 1rem; border-right: 1px solid rgba(255,255,255,0.05); border-left: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: center; }
         .ad-actions-container { flex: 1; padding-left: 1rem; display: flex; flex-direction: column; justify-content: space-between; }
         
@@ -354,7 +364,7 @@ export const MetaRaw = ({ filteredData }) => {
 
                     {/* Core Info */}
                     <div className="ad-info-container">
-                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 700 }}>{ad.name}</h4>
+                        <h4 className="ad-name-text">{ad.name}</h4>
                         <p style={{ margin: '0 0 1rem 0', fontSize: '0.75rem', fontWeight: 500, color: '#3b82f6' }}>{ad.campaign}</p>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
