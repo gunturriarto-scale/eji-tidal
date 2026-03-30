@@ -88,7 +88,7 @@ async function fetchAllData() {
     for (const accountId of adAccountIds) {
         console.log(`\n--- Fetching Data for ${accountId} ---`);
         let url = `https://graph.facebook.com/v20.0/act_${accountId}/insights?` + 
-                  `fields=date_start,account_id,account_name,campaign_id,campaign_name,ad_id,ad_name,spend,reach,impressions,frequency,inline_link_clicks,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,video_p100_watched_actions,actions` +
+                  `fields=date_start,account_id,account_name,campaign_id,campaign_name,ad_id,ad_name,spend,reach,impressions,frequency,inline_link_clicks,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,video_p100_watched_actions,actions,objective,buying_type,ad{effective_status,creative{thumbnail_url,preview_url}},action_values` +
                   `&level=ad&time_increment=1&time_range={"since":"${startDate}","until":"${today}"}` +
                   `&access_token=${META_ACCESS_TOKEN}&limit=500`;
 
@@ -139,7 +139,13 @@ async function fetchAllData() {
                         product: product,
                         category: getCategory(item.campaign_name || ''),
                         category_group: getCategoryBrand(product),
-                        brand: getBrand(item.account_name || '')
+                        brand: getBrand(item.account_name || ''),
+                        objective: item.objective || null,
+                        buying_type: item.buying_type || null,
+                        effective_status: item.ad?.effective_status || 'UNKNOWN',
+                        ad_thumbnail_url: item.ad?.creative?.thumbnail_url || null,
+                        ad_preview_url: item.ad?.creative?.preview_url || null,
+                        action_values: item.action_values || []
                     };
                 });
 

@@ -9,6 +9,7 @@ import { CommandCenterView } from './views/CommandCenterView'
 import { useData } from './context/DataContext'
 import { useAuth } from './context/AuthContext'
 import { LoginView } from './views/LoginView'
+import { MetaRaw } from './views/MetaRaw'
 
 const Header = ({ 
   dateFilter, setDateFilter, 
@@ -192,7 +193,8 @@ function App() {
     tiktokShopNco: { ...initialFilters, dateFilter: 'thisMonth' },
     lazadaNco: { ...initialFilters, dateFilter: 'thisMonth' },
     tokopediaNco: { ...initialFilters, dateFilter: 'thisMonth' },
-    commandCenter: { ...initialFilters }
+    commandCenter: { ...initialFilters },
+    perfMarketing: { ...initialFilters, dateFilter: 'last30' }
   });
 
   const currentFilters = viewFilters[activeView] || initialFilters;
@@ -292,7 +294,7 @@ function App() {
   }, [tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData, loading, dateRange, currentFilters]);
 
   const viewNames = {
-    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Performance Marketing Command Center',
+    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', perfMarketing: '🚀 Performance Marketing'
   };
 
   const renderView = () => {
@@ -307,6 +309,7 @@ function App() {
       case 'lazadaNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="lazada" dateRange={dateRange} />;
       case 'tokopediaNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="tokopedia" dateRange={dateRange} />;
       case 'commandCenter': return <CommandCenterView {...commonProps} />;
+      case 'perfMarketing': return <MetaRaw {...commonProps} />;
       default: return <CommandCenterView {...commonProps} />;
     }
   };
