@@ -7,14 +7,14 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'PLAC
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || 'PLACEHOLDER';
 
 const adAccountIds = [
-    '917176454202722',
-    '2086234315025549',
-    '1352894819267337',
-    '843434777940799',
-    '3764874687144822',
-    '1210991147385093',
-    '958731122747957',
-    '2124015835034852'
+    '1352894819267337', // EJI // HANASUI // CPAS // SHOPEE
+    '2124015835034852', // EJI // HANASUI // BODYCARE
+    '1979025405947709', // EJI // HANASUI // CPAS // TOKOPEDIA
+    '2086234315025549', // EJI // HANASUI // DECORATIVE
+    '917176454202722',  // EJI // HANASUI // SKINCARE
+    '843434777940799',  // HMI - HANASUI (BAU)
+    '1073662090239710', // HMI - HANASUI SHOPEE
+    '665572608462548'   // USED // Hanasui Official
 ];
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -87,8 +87,39 @@ async function fetchAllData() {
 
     for (const accountId of adAccountIds) {
         console.log(`\n--- Fetching Data for ${accountId} ---`);
+        
+        // 1. Fetch Ad Creative mapping first to get thumbnails/status
+        console.log(`  > Loading ad creatives for act_${accountId}...`);
+        const adsMap = {};
+        const filterStr = JSON.stringify([{field: "effective_status", operator: "IN", value: ["ACTIVE","PAUSED","DELETED","ARCHIVED"]}]);
+        let adsUrl = `https://graph.facebook.com/v20.0/act_${accountId}/ads?fields=id,effective_status,creative{thumbnail_url,image_url}&limit=1000&filtering=${encodeURIComponent(filterStr)}&access_token=${META_ACCESS_TOKEN}`;
+        
+        try {
+            while (adsUrl) {
+                const adsResp = await fetch(adsUrl);
+                const adsData = await adsResp.json();
+                if (adsData.data) {
+                    adsData.data.forEach(ad => {
+                        adsMap[ad.id] = {
+                            status: ad.effective_status,
+                            thumbnail: ad.creative?.thumbnail_url || ad.creative?.image_url || '',
+                            preview: ad.creative?.preview_url || ''
+                        };
+                    });
+                    adsUrl = adsData.paging?.next || null;
+                } else if (adsData.error) {
+                    console.error(`  > Error loading ads metadata: ${adsData.error.message}`);
+                    adsUrl = null;
+                } else {
+                    adsUrl = null;
+                }
+            }
+            console.log(`  > Total metadata mapped: ${Object.keys(adsMap).length} ads.`);
+        } catch (e) { console.error("Error fetching ads metadata:", e.message); }
+
+        // 2. Fetch Insights
         let url = `https://graph.facebook.com/v20.0/act_${accountId}/insights?` + 
-                  `fields=date_start,account_id,account_name,campaign_id,campaign_name,ad_id,ad_name,spend,reach,impressions,frequency,inline_link_clicks,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,video_p100_watched_actions,actions,objective,buying_type,ad{effective_status,creative{thumbnail_url,preview_url}},action_values` +
+                  `fields=date_start,account_id,account_name,campaign_id,campaign_name,ad_id,ad_name,spend,reach,impressions,frequency,inline_link_clicks,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,video_p100_watched_actions,actions,objective,buying_type,action_values` +
                   `&level=ad&time_increment=1&time_range={"since":"${startDate}","until":"${today}"}` +
                   `&access_token=${META_ACCESS_TOKEN}&limit=500`;
 
@@ -108,9 +139,13 @@ async function fetchAllData() {
                     const post_reaction = item.actions?.find(a => a.action_type === 'post_reaction')?.value || 0;
                     const page_like = item.actions?.find(a => a.action_type === 'page_like')?.value || 0;
                     const page_engagement = item.actions?.find(a => a.action_type === 'page_engagement')?.value || 0;
-                    const video_view = item.actions?.find(a => a.action_type === 'video_view')?.value || 0;
+                    
+                    const video_view_std = item.actions?.find(a => a.action_type === 'video_view')?.value || 0;
+                    const video_view_3s = item.actions?.find(a => a.action_type === 'video_3_sec_watched_actions')?.value || 0;
+                    const video_view = Math.max(parseInt(video_view_std), parseInt(video_view_3s));
 
                     const product = getProduct(item.campaign_name || '');
+                    const adDetails = adsMap[item.ad_id] || {};
                     
                     return {
                         day: item.date_start,
@@ -142,9 +177,9 @@ async function fetchAllData() {
                         brand: getBrand(item.account_name || ''),
                         objective: item.objective || null,
                         buying_type: item.buying_type || null,
-                        effective_status: item.ad?.effective_status || 'UNKNOWN',
-                        ad_thumbnail_url: item.ad?.creative?.thumbnail_url || null,
-                        ad_preview_url: item.ad?.creative?.preview_url || null,
+                        effective_status: adDetails.status || 'UNKNOWN',
+                        ad_thumbnail_url: adDetails.thumbnail || null,
+                        ad_preview_url: adDetails.preview || null,
                         action_values: item.action_values || []
                     };
                 });

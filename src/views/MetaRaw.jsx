@@ -18,15 +18,33 @@ export const MetaRaw = ({ filteredData }) => {
   const [viewMode, setViewMode] = useState('ad'); // 'campaign' or 'ad'
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
+  const [selectedAccountId, setSelectedAccountId] = useState('all');
+
+  // Ad Account List
+  const accounts = useMemo(() => {
+    const accMap = {};
+    metaAdsData.forEach(row => {
+      if (row.account_id && !accMap[row.account_id]) {
+        accMap[row.account_id] = row.account_name || row.account_id;
+      }
+    });
+    return Object.entries(accMap).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [metaAdsData]);
+
+  // Data filtered by Account
+  const filteredMetaAds = useMemo(() => {
+    if (selectedAccountId === 'all') return metaAdsData;
+    return metaAdsData.filter(row => row.account_id === selectedAccountId);
+  }, [metaAdsData, selectedAccountId]);
 
   // Upper Funnel KPI Aggregation
   const stats = useMemo(() => {
-    if (!metaAdsData.length) return [];
-    const spend = metaAdsData.reduce((acc, curr) => acc + (curr.spend || 0), 0);
-    const reach = metaAdsData.reduce((acc, curr) => acc + (curr.reach || 0), 0);
-    const impressions = metaAdsData.reduce((acc, curr) => acc + (curr.impressions || 0), 0);
-    const views = metaAdsData.reduce((acc, curr) => acc + (curr.views || 0), 0);
-    const p50 = metaAdsData.reduce((acc, curr) => acc + (curr.video_p50 || 0), 0);
+    if (!filteredMetaAds.length) return [];
+    const spend = filteredMetaAds.reduce((acc, curr) => acc + (curr.spend || 0), 0);
+    const reach = filteredMetaAds.reduce((acc, curr) => acc + (curr.reach || 0), 0);
+    const impressions = filteredMetaAds.reduce((acc, curr) => acc + (curr.impressions || 0), 0);
+    const views = filteredMetaAds.reduce((acc, curr) => acc + (curr.views || 0), 0);
+    const p50 = filteredMetaAds.reduce((acc, curr) => acc + (curr.video_p50 || 0), 0);
     
     const cpm = impressions > 0 ? (spend / impressions) * 1000 : 0;
     const hookRate = impressions > 0 ? (views / impressions) * 100 : 0;
@@ -39,12 +57,12 @@ export const MetaRaw = ({ filteredData }) => {
       { label: 'Hook Rate (3s)', value: hookRate, format: 'number', suffix: '%', icon: <Zap size={18} />, color: '#F59E0B' },
       { label: 'Retention (50%)', value: retentionRate, format: 'number', suffix: '%', icon: <ShieldCheck size={18} />, color: '#10B981' },
     ];
-  }, [metaAdsData]);
+  }, [filteredMetaAds]);
 
   // Daily Trend Data
   const dailyData = useMemo(() => {
     const map = {};
-    metaAdsData.forEach(row => {
+    filteredMetaAds.forEach(row => {
       const date = row.day || row.normDate || 'Unknown';
       if (!map[date]) map[date] = { date, reach: 0, impressions: 0, spend: 0, views: 0 };
       map[date].reach += row.reach || 0;
@@ -60,22 +78,20 @@ export const MetaRaw = ({ filteredData }) => {
         hookRate: d.impressions > 0 ? (d.views / d.impressions) * 100 : 0
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [metaAdsData]);
+  }, [filteredMetaAds]);
 
   // Ad Level Aggregation
   const adPerformance = useMemo(() => {
     const map = {};
-    metaAdsData.forEach(row => {
+    filteredMetaAds.forEach(row => {
       const id = row.ad_id;
       if (!map[id]) {
         map[id] = { 
           id, 
           name: row.ad_name, 
           campaign: row.campaign_name,
-          spend: 0, 
-          reach: 0, 
-          impressions: 0, 
-          views: 0, 
+          spend: 0, reach: 0, impressions: 0, views: 0, 
+          link_clicks: 0, engagements: 0,
           p25: 0, p50: 0, p75: 0, p100: 0,
           status: row.effective_status || 'ACTIVE',
           thumbnail: row.ad_thumbnail_url,
@@ -87,6 +103,8 @@ export const MetaRaw = ({ filteredData }) => {
       map[id].reach += row.reach || 0;
       map[id].impressions += row.impressions || 0;
       map[id].views += row.views || 0;
+      map[id].link_clicks += row.link_clicks || 0;
+      map[id].engagements += (row.post_engagements || 0);
       map[id].p25 += row.video_p25 || 0;
       map[id].p50 += row.video_p50 || 0;
       map[id].p75 += row.video_p75 || 0;
@@ -95,7 +113,7 @@ export const MetaRaw = ({ filteredData }) => {
     });
     
     return Object.values(map).sort((a, b) => b.spend - a.spend);
-  }, [metaAdsData]);
+  }, [filteredMetaAds]);
 
   // Alerts Logic
   const alerts = useMemo(() => {
@@ -127,24 +145,31 @@ export const MetaRaw = ({ filteredData }) => {
   const discoveryChamps = useMemo(() => {
     if (!adPerformance.length) return [];
     
-    // 1. By Spend
+    // 1. Spending Champ (Highest total spend)
     const bySpend = [...adPerformance].sort((a,b) => b.spend - a.spend)[0];
     
-    // 2. By Impression
+    // 2. Impression Champ (Highest total impressions)
     const byImp = [...adPerformance].sort((a,b) => b.impressions - a.impressions)[0];
     
-    // 3. By CPM (Filter min 1k imp to avoid noise)
-    const byCPM = [...adPerformance].filter(a => a.impressions > 1000).sort((a,b) => {
+    // 3. CPM Efficiency Champ (Lowest CPM with MIN 1,000,000 impressions)
+    const byCPM = [...adPerformance]
+      .filter(a => a.impressions >= 1000000)
+      .sort((a,b) => {
         const c1 = a.impressions > 0 ? a.spend / a.impressions : 9999999;
         const c2 = b.impressions > 0 ? b.spend / b.impressions : 9999999;
         return c1 - c2;
-    })[0];
+      })[0];
     
-    return [
+    const champList = [
        { ...bySpend, champLabel: '💸 Spending Champ', champColor: '#ef4444' },
-       { ...byImp, champLabel: '👁️ Impression Champ', champColor: '#3b82f6' },
-       { ...byCPM, champLabel: '🚀 CPM Efficiency Champ', champColor: '#10b981' }
-    ].filter(a => a && a.id);
+       { ...byImp, champLabel: '👁️ Impression Champ', champColor: '#3b82f6' }
+    ];
+
+    if (byCPM) {
+      champList.push({ ...byCPM, champLabel: '🚀 CPM Efficiency Champ', champColor: '#10b981' });
+    }
+    
+    return champList.filter(a => a && a.id);
   }, [adPerformance]);
 
   if (loading) return (
@@ -211,6 +236,36 @@ export const MetaRaw = ({ filteredData }) => {
       `}</style>
 
       <div className="meta-dashboard-container">
+        {/* Ad Account Filter */}
+        <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>Filter Ad Account:</span>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button 
+                    onClick={() => setSelectedAccountId('all')}
+                    style={{ 
+                        padding: '0.5rem 1rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', 
+                        background: selectedAccountId === 'all' ? '#3b82f6' : 'transparent',
+                        color: '#fff', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: '0.2s'
+                    }}
+                >
+                    ALL ACCOUNTS
+                </button>
+                {accounts.map(acc => (
+                    <button 
+                        key={acc.id}
+                        onClick={() => setSelectedAccountId(acc.id)}
+                        style={{ 
+                            padding: '0.5rem 1rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', 
+                            background: selectedAccountId === acc.id ? '#3b82f6' : 'rgba(255,255,255,0.05)',
+                            color: '#fff', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', transition: '0.2s'
+                        }}
+                    >
+                        {acc.name.replace('EJI // ', '').replace('HMI - ', '')}
+                    </button>
+                ))}
+            </div>
+        </div>
+
         {/* Header Summary */}
         <PlatformSummary title="Meta Awareness Command Center" stats={stats} />
 
@@ -329,8 +384,10 @@ export const MetaRaw = ({ filteredData }) => {
 
             <div style={{ marginTop: '1rem' }}>
             {discoveryChamps.map((ad, idx) => {
+                const isVideo = ad.views > 0;
                 const hookRate = ad.impressions > 0 ? (ad.views / ad.impressions) * 100 : 0;
                 const retention = ad.views > 0 ? (ad.p50 / ad.views) * 100 : 0;
+                const ctr = ad.impressions > 0 ? (ad.link_clicks / ad.impressions) * 100 : 0;
                 const cpm = ad.impressions > 0 ? (ad.spend / ad.impressions) * 1000 : 0;
                 const freq = ad.reach > 0 ? ad.impressions / ad.reach : 0;
 
@@ -344,7 +401,7 @@ export const MetaRaw = ({ filteredData }) => {
                     {/* Thumbnail / Status */}
                     <div className="ad-thumb-container">
                         {ad.thumbnail ? (
-                            <img src={ad.thumbnail} alt={ad.name} style={{ width: '100%', height: '100%', objectCover: 'cover' }} />
+                            <img src={ad.thumbnail} alt={ad.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                                 <Play size={32} style={{ opacity: 0.2 }} />
@@ -357,7 +414,7 @@ export const MetaRaw = ({ filteredData }) => {
                                 background: ad.status === 'ACTIVE' ? '#10b981' : '#f59e0b',
                                 color: ad.status === 'ACTIVE' ? '#fff' : '#000'
                             }}>
-                            {ad.status}
+                            {ad.status.replace('CAMPAIGN_', '').replace('ADSET_', '')}
                             </span>
                         </div>
                     </div>
@@ -373,39 +430,69 @@ export const MetaRaw = ({ filteredData }) => {
                                 <p style={{ margin: 0, fontWeight: 700 }}>{formatCurrency(ad.spend)}</p>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '12px' }}>
-                                <p style={{ margin: '0 0 4px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Frequency</p>
-                                <p style={{ margin: 0, fontWeight: 700, color: '#f59e0b' }}>{freq.toFixed(2)}x</p>
+                                <p style={{ margin: '0 0 4px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>CPM</p>
+                                <p style={{ margin: 0, fontWeight: 700, color: '#818cf8' }}>{formatCurrency(cpm)}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Upper Funnel Metrics */}
                     <div className="ad-metrics-container">
-                        <div style={{ marginBottom: '1rem' }}>
-                            <div className="metric-row">
-                                <span style={{ color: '#94a3b8' }}>Hook Rate (3s View)</span>
-                                <span style={{ fontWeight: 700, color: hookRate > 20 ? '#10b981' : '#f59e0b' }}>{hookRate.toFixed(1)}%</span>
-                            </div>
-                            <div className="progress-bar-bg">
-                                <div className="progress-bar-fill" style={{ 
-                                    width: `${Math.min(hookRate * 2, 100)}%`, 
-                                    background: hookRate > 20 ? '#10b981' : '#f59e0b' 
-                                }}></div>
-                            </div>
-                        </div>
-
-                        <div style={{ marginBottom: '1rem' }}>
-                            <div className="metric-row">
-                                <span style={{ color: '#94a3b8' }}>Retention Index (50%)</span>
-                                <span style={{ fontWeight: 700, color: retention > 40 ? '#3b82f6' : '#94a3b8' }}>{retention.toFixed(1)}%</span>
-                            </div>
-                            <div className="progress-bar-bg">
-                                <div className="progress-bar-fill" style={{ 
-                                    width: `${retention}%`, 
-                                    background: retention > 40 ? '#3b82f6' : '#94a3b8' 
-                                }}></div>
-                            </div>
-                        </div>
+                        {isVideo ? (
+                            <>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <div className="metric-row">
+                                        <span style={{ color: '#94a3b8' }}>Hook Rate (3s View)</span>
+                                        <span style={{ fontWeight: 700, color: hookRate > 20 ? '#10b981' : '#f59e0b' }}>{hookRate.toFixed(1)}%</span>
+                                    </div>
+                                    <div className="progress-bar-bg">
+                                        <div className="progress-bar-fill" style={{ 
+                                            width: `${Math.min(hookRate * 2, 100)}%`, 
+                                            background: hookRate > 20 ? '#10b981' : '#f59e0b' 
+                                        }}></div>
+                                    </div>
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <div className="metric-row">
+                                        <span style={{ color: '#94a3b8' }}>Retention Index (50%)</span>
+                                        <span style={{ fontWeight: 700, color: retention > 30 ? '#10b981' : '#f59e0b' }}>{retention.toFixed(1)}%</span>
+                                    </div>
+                                    <div className="progress-bar-bg">
+                                        <div className="progress-bar-fill" style={{ 
+                                            width: `${Math.min(retention * 2, 100)}%`, 
+                                            background: retention > 30 ? '#10b981' : '#f59e0b' 
+                                        }}></div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <div className="metric-row">
+                                        <span style={{ color: '#94a3b8' }}>Link CTR (Clicks)</span>
+                                        <span style={{ fontWeight: 700, color: ctr > 1 ? '#10b981' : '#f59e0b' }}>{ctr.toFixed(2)}%</span>
+                                    </div>
+                                    <div className="progress-bar-bg">
+                                        <div className="progress-bar-fill" style={{ 
+                                            width: `${Math.min(ctr * 50, 100)}%`, 
+                                            background: ctr > 1 ? '#10b981' : '#f59e0b' 
+                                        }}></div>
+                                    </div>
+                                </div>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <div className="metric-row">
+                                        <span style={{ color: '#94a3b8' }}>Discovery Frequency</span>
+                                        <span style={{ fontWeight: 700, color: freq > 2.5 ? '#f59e0b' : '#10b981' }}>{freq.toFixed(2)}x</span>
+                                    </div>
+                                    <div className="progress-bar-bg">
+                                        <div className="progress-bar-fill" style={{ 
+                                            width: `${Math.min(freq * 30, 100)}%`, 
+                                            background: freq > 2.5 ? '#f59e0b' : '#10b981' 
+                                        }}></div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
 
                         <div className="metric-row" style={{ marginBottom: '0.5rem' }}>
                             <span style={{ color: '#94a3b8' }}>Discovery Reach:</span>
