@@ -9,7 +9,7 @@ import {
 import { 
   DollarSign, Megaphone, Users, MousePointerClick, Eye, ShieldCheck, 
   TrendingUp, BarChart3, Activity, Info, AlertCircle, CheckCircle,
-  Play, ExternalLink, Zap
+  Play, ExternalLink, Zap, Image
 } from 'lucide-react';
 
 export const MetaRaw = ({ filteredData }) => {
@@ -143,33 +143,32 @@ export const MetaRaw = ({ filteredData }) => {
 
   // Discovery Championship Logic
   const discoveryChamps = useMemo(() => {
-    if (!adPerformance.length) return [];
+    const videoAds = adPerformance.filter(a => a.views > 0);
+    const staticAds = adPerformance.filter(a => a.views === 0);
     
-    // 1. Spending Champ (Highest total spend)
-    const bySpend = [...adPerformance].sort((a,b) => b.spend - a.spend)[0];
-    
-    // 2. Impression Champ (Highest total impressions)
-    const byImp = [...adPerformance].sort((a,b) => b.impressions - a.impressions)[0];
-    
-    // 3. CPM Efficiency Champ (Lowest CPM with MIN 1,000,000 impressions)
-    const byCPM = [...adPerformance]
-      .filter(a => a.impressions >= 1000000)
-      .sort((a,b) => {
-        const c1 = a.impressions > 0 ? a.spend / a.impressions : 9999999;
-        const c2 = b.impressions > 0 ? b.spend / b.impressions : 9999999;
-        return c1 - c2;
-      })[0];
-    
-    const champList = [
-       { ...bySpend, champLabel: '💸 Spending Champ', champColor: '#ef4444' },
-       { ...byImp, champLabel: '👁️ Impression Champ', champColor: '#3b82f6' }
-    ];
+    const getChamps = (adsList) => {
+        if (!adsList.length) return [];
+        // 1. Spending Champ
+        const bySpend = [...adsList].sort((a,b) => b.spend - a.spend)[0];
+        // 2. Impression Champ
+        const byImp = [...adsList].sort((a,b) => b.impressions - a.impressions)[0];
+        // 3. CPM Efficiency Champ (MIN 1,000,000 imps)
+        const byCPM = [...adsList]
+          .filter(a => a.impressions >= 1000000)
+          .sort((a,b) => (a.spend/a.impressions) - (b.spend/b.impressions))[0];
+        
+        const res = [
+            { ...bySpend, champLabel: '💸 Spending Champ', champColor: '#ef4444' },
+            { ...byImp, champLabel: '👁️ Impression Champ', champColor: '#3b82f6' }
+        ];
+        if (byCPM) res.push({ ...byCPM, champLabel: '🚀 CPM Efficiency Champ', champColor: '#10b981' });
+        return res.filter(a => a && a.id);
+    };
 
-    if (byCPM) {
-      champList.push({ ...byCPM, champLabel: '🚀 CPM Efficiency Champ', champColor: '#10b981' });
-    }
-    
-    return champList.filter(a => a && a.id);
+    return {
+        video: getChamps(videoAds),
+        static: getChamps(staticAds)
+    };
   }, [adPerformance]);
 
   if (loading) return (
@@ -375,15 +374,24 @@ export const MetaRaw = ({ filteredData }) => {
             </div>
         </div>
 
-        {/* Ad Performance Grid */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Discovery Top Performance Grid</h3>
-                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0, fontStyle: 'italic' }}>Real-time performance distribution & analysis</p>
+        {/* Discovery Championship Grids */}
+        {[
+          { title: 'STATIC PERFORMERS (Image/Carousel)', data: discoveryChamps.static, icon: <Image size={24} /> },
+          { title: 'VIDEO PERFORMERS (Motion Content)', data: discoveryChamps.video, icon: <Play size={24} /> }
+        ].map((section, sIdx) => section.data.length > 0 && (
+          <div key={sIdx} className="glass-panel" style={{ padding: '2rem', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ color: '#3b82f6' }}>{section.icon}</div>
+                    <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>{section.title}</h3>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0, fontStyle: 'italic', background: 'rgba(255,255,255,0.03)', padding: '6px 16px', borderRadius: '20px' }}>
+                    Proprietary Performance Distribution
+                </p>
             </div>
 
-            <div style={{ marginTop: '1rem' }}>
-            {discoveryChamps.map((ad, idx) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {section.data.map((ad, idx) => {
                 const isVideo = ad.views > 0;
                 const hookRate = ad.impressions > 0 ? (ad.views / ad.impressions) * 100 : 0;
                 const retention = ad.views > 0 ? (ad.p50 / ad.views) * 100 : 0;
@@ -392,7 +400,7 @@ export const MetaRaw = ({ filteredData }) => {
                 const freq = ad.reach > 0 ? ad.impressions / ad.reach : 0;
 
                 return (
-                <div key={`${ad.id}-${idx}`} className="glass-panel ad-card">
+                <div key={`${ad.id}-${idx}`} className="glass-panel ad-card" style={{ borderLeft: `5px solid ${ad.champColor}`, padding: '1.5rem' }}>
                     {/* Champion Badge */}
                     <div className="champ-badge" style={{ background: ad.champColor }}>
                         {ad.champLabel}
@@ -403,16 +411,16 @@ export const MetaRaw = ({ filteredData }) => {
                         {ad.thumbnail ? (
                             <img src={ad.thumbnail} alt={ad.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                                <Play size={32} style={{ opacity: 0.2 }} />
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#0f172a' }}>
+                                <Play size={40} style={{ opacity: 0.1 }} />
                             </div>
                         )}
-                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }}></div>
-                        <div style={{ position: 'absolute', bottom: '8px', left: '8px' }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)' }}></div>
+                        <div style={{ position: 'absolute', bottom: '10px', left: '10px' }}>
                             <span style={{ 
-                                fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
-                                background: ad.status === 'ACTIVE' ? '#10b981' : '#f59e0b',
-                                color: ad.status === 'ACTIVE' ? '#fff' : '#000'
+                                fontSize: '9px', fontWeight: 900, padding: '4px 12px', borderRadius: '4px',
+                                background: ad.status.includes('ACTIVE') ? '#10b981' : '#64748b',
+                                color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em'
                             }}>
                             {ad.status.replace('CAMPAIGN_', '').replace('ADSET_', '')}
                             </span>
@@ -421,17 +429,17 @@ export const MetaRaw = ({ filteredData }) => {
 
                     {/* Core Info */}
                     <div className="ad-info-container">
-                        <h4 className="ad-name-text">{ad.name}</h4>
-                        <p style={{ margin: '0 0 1rem 0', fontSize: '0.75rem', fontWeight: 500, color: '#3b82f6' }}>{ad.campaign}</p>
+                        <h4 className="ad-name-text" style={{ color: '#f8fafc', fontSize: '1rem', fontWeight: 700, lineHeight: 1.4 }}>{ad.name}</h4>
+                        <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.75rem', fontWeight: 600, color: '#3b82f6', opacity: 0.7 }}>{ad.campaign}</p>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '12px' }}>
-                                <p style={{ margin: '0 0 4px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>Spend</p>
-                                <p style={{ margin: 0, fontWeight: 700 }}>{formatCurrency(ad.spend)}</p>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <p style={{ margin: '0 0 6px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase', fontWeight: 800 }}>Spend</p>
+                                <p style={{ margin: 0, fontWeight: 800, color: '#fff', fontSize: '1.2rem' }}>{formatCurrency(ad.spend)}</p>
                             </div>
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '0.75rem', borderRadius: '12px' }}>
-                                <p style={{ margin: '0 0 4px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase' }}>CPM</p>
-                                <p style={{ margin: 0, fontWeight: 700, color: '#818cf8' }}>{formatCurrency(cpm)}</p>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <p style={{ margin: '0 0 6px 0', fontSize: '10px', color: '#64748B', textTransform: 'uppercase', fontWeight: 800 }}>CPM Efficiency</p>
+                                <p style={{ margin: 0, fontWeight: 800, color: '#818cf8', fontSize: '1.2rem' }}>{formatCurrency(cpm)}</p>
                             </div>
                         </div>
                     </div>
@@ -440,22 +448,22 @@ export const MetaRaw = ({ filteredData }) => {
                     <div className="ad-metrics-container">
                         {isVideo ? (
                             <>
-                                <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ marginBottom: '1.25rem' }}>
                                     <div className="metric-row">
-                                        <span style={{ color: '#94a3b8' }}>Hook Rate (3s View)</span>
-                                        <span style={{ fontWeight: 700, color: hookRate > 20 ? '#10b981' : '#f59e0b' }}>{hookRate.toFixed(1)}%</span>
+                                        <span style={{ color: '#94a3b8', fontWeight: 600 }}>Hook Rate (3s View)</span>
+                                        <span style={{ fontWeight: 800, color: hookRate > 20 ? '#10b981' : '#f59e0b', fontSize: '1.2rem' }}>{hookRate.toFixed(1)}%</span>
                                     </div>
                                     <div className="progress-bar-bg">
                                         <div className="progress-bar-fill" style={{ 
                                             width: `${Math.min(hookRate * 2, 100)}%`, 
-                                            background: hookRate > 20 ? '#10b981' : '#f59e0b' 
+                                            background: hookRate > 20 ? 'linear-gradient(90deg, #059669, #10b981)' : 'linear-gradient(90deg, #d97706, #f59e0b)' 
                                         }}></div>
                                     </div>
                                 </div>
-                                <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ marginBottom: '1.25rem' }}>
                                     <div className="metric-row">
-                                        <span style={{ color: '#94a3b8' }}>Retention Index (50%)</span>
-                                        <span style={{ fontWeight: 700, color: retention > 30 ? '#10b981' : '#f59e0b' }}>{retention.toFixed(1)}%</span>
+                                        <span style={{ color: '#94a3b8', fontWeight: 600 }}>Retention Index (50%)</span>
+                                        <span style={{ fontWeight: 800, color: retention > 30 ? '#10b981' : '#f59e0b', fontSize: '1.2rem' }}>{retention.toFixed(1)}%</span>
                                     </div>
                                     <div className="progress-bar-bg">
                                         <div className="progress-bar-fill" style={{ 
@@ -467,10 +475,10 @@ export const MetaRaw = ({ filteredData }) => {
                             </>
                         ) : (
                             <>
-                                <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ marginBottom: '1.25rem' }}>
                                     <div className="metric-row">
-                                        <span style={{ color: '#94a3b8' }}>Link CTR (Clicks)</span>
-                                        <span style={{ fontWeight: 700, color: ctr > 1 ? '#10b981' : '#f59e0b' }}>{ctr.toFixed(2)}%</span>
+                                        <span style={{ color: '#94a3b8', fontWeight: 600 }}>Link CTR (Clicks)</span>
+                                        <span style={{ fontWeight: 800, color: ctr > 1 ? '#10b981' : '#f59e0b', fontSize: '1.2rem' }}>{ctr.toFixed(2)}%</span>
                                     </div>
                                     <div className="progress-bar-bg">
                                         <div className="progress-bar-fill" style={{ 
@@ -479,62 +487,57 @@ export const MetaRaw = ({ filteredData }) => {
                                         }}></div>
                                     </div>
                                 </div>
-                                <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ marginBottom: '1.25rem' }}>
                                     <div className="metric-row">
-                                        <span style={{ color: '#94a3b8' }}>Discovery Frequency</span>
-                                        <span style={{ fontWeight: 700, color: freq > 2.5 ? '#f59e0b' : '#10b981' }}>{freq.toFixed(2)}x</span>
+                                        <span style={{ color: '#94a3b8', fontWeight: 600 }}>Discovery Frequency</span>
+                                        <span style={{ fontWeight: 800, color: freq > 2.5 ? '#f59e0b' : '#10b981', fontSize: '1.2rem' }}>{freq.toFixed(2)}x</span>
                                     </div>
                                     <div className="progress-bar-bg">
                                         <div className="progress-bar-fill" style={{ 
                                             width: `${Math.min(freq * 30, 100)}%`, 
-                                            background: freq > 2.5 ? '#f59e0b' : '#10b981' 
+                                            background: freq > 2.5 ? 'linear-gradient(90deg, #d97706, #f59e0b)' : 'linear-gradient(90deg, #059669, #10b981)' 
                                         }}></div>
                                     </div>
                                 </div>
                             </>
                         )}
-
-                        <div className="metric-row" style={{ marginBottom: '0.5rem' }}>
-                            <span style={{ color: '#94a3b8' }}>Discovery Reach:</span>
-                            <span style={{ fontWeight: 700 }}>{formatNumber(ad.reach)}</span>
-                        </div>
-                        <div className="metric-row">
-                            <span style={{ color: '#94a3b8' }}>CPM Efficiency:</span>
-                            <span style={{ fontWeight: 700, color: '#818cf8' }}>{formatCurrency(cpm)}</span>
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div className="metric-row" style={{ marginBottom: '6px' }}>
+                                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Discovery Reach:</span>
+                                <span style={{ fontWeight: 800, color: '#f8fafc' }}>{formatNumber(ad.reach)}</span>
+                            </div>
+                            <div style={{ height: '30px' }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={ad.history}>
+                                        <Area type="monotone" dataKey="spend" stroke={ad.champColor} fill={ad.champColor} fillOpacity={0.1} strokeWidth={2} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Actions / Mini Sparkline */}
-                    <div className="ad-actions-container">
-                        <div style={{ height: '40px', marginBottom: '1rem' }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={ad.history}>
-                                    <Area type="monotone" dataKey="spend" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                        
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button style={{ 
-                                flex: 1, padding: '0.75rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, border: 'none', cursor: 'pointer',
-                                background: 'rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', justifySelf: 'center', gap: '0.5rem'
+                    <div className="ad-actions-container" style={{ display: 'flex', gap: '0.75rem', marginTop: 'auto' }}>
+                        <button className="glass-button" style={{ 
+                            flex: 1, padding: '0.75rem', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                            background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                             <Activity size={14} /> Details
+                        </button>
+                        {ad.preview && (
+                            <a href={ad.preview} target="_blank" rel="noopener noreferrer" style={{
+                                padding: '0.75rem', background: '#3b82f6', color: '#fff', borderRadius: '10px', display: 'flex', alignItems: 'center'
                             }}>
-                                <Activity size={14} /> Details
-                            </button>
-                            {ad.preview && (
-                                <a href={ad.preview} target="_blank" rel="noopener noreferrer" style={{ 
-                                    padding: '0.75rem', borderRadius: '12px', background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                }}>
-                                    <ExternalLink size={16} />
-                                </a>
-                            )}
-                        </div>
+                                <ExternalLink size={16} />
+                            </a>
+                        )}
                     </div>
                 </div>
                 );
             })}
             </div>
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
