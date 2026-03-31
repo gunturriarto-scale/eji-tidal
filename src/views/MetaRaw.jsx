@@ -146,28 +146,51 @@ export const MetaRaw = ({ filteredData }) => {
     const videoAds = adPerformance.filter(a => a.views > 0);
     const staticAds = adPerformance.filter(a => a.views === 0);
     
-    const getChamps = (adsList) => {
+    const getChamps = (adsList, type) => {
         if (!adsList.length) return [];
-        // 1. Spending Champ
+        
+        // 1. Spending Champ (Budget King)
         const bySpend = [...adsList].sort((a,b) => b.spend - a.spend)[0];
-        // 2. Impression Champ
-        const byImp = [...adsList].sort((a,b) => b.impressions - a.impressions)[0];
-        // 3. CPM Efficiency Champ (MIN 1,000,000 imps)
+        
+        // 2. Stop-Ratio Champ (Engagement Favorite)
+        // Filter out tiny ads (< 10k impressions) to ensure significance
+        const significantAds = adsList.filter(a => a.impressions >= 10000);
+        const byEngagement = [...significantAds].sort((a,b) => {
+            if (type === 'video') {
+                const hookA = a.impressions > 0 ? (a.views / a.impressions) : 0;
+                const hookB = b.impressions > 0 ? (b.views / b.impressions) : 0;
+                return hookB - hookA;
+            } else {
+                const ctrA = a.impressions > 0 ? (a.link_clicks / a.impressions) : 0;
+                const ctrB = b.impressions > 0 ? (b.link_clicks / b.impressions) : 0;
+                return ctrB - ctrA;
+            }
+        })[0];
+        
+        // 3. CPM Efficiency Champ (Scale Efficiency - MIN 1,000,000 imps)
         const byCPM = [...adsList]
           .filter(a => a.impressions >= 1000000)
           .sort((a,b) => (a.spend/a.impressions) - (b.spend/b.impressions))[0];
         
         const res = [
-            { ...bySpend, champLabel: '💸 Spending Champ', champColor: '#ef4444' },
-            { ...byImp, champLabel: '👁️ Impression Champ', champColor: '#3b82f6' }
+            { ...bySpend, champLabel: '💸 Spending Champ', champColor: '#ef4444' }
         ];
-        if (byCPM) res.push({ ...byCPM, champLabel: '🚀 CPM Efficiency Champ', champColor: '#10b981' });
+        
+        if (byEngagement) {
+            const label = type === 'video' ? '🪝 Stop-Ratio (Hook)' : '🪝 Stop-Ratio (CTR)';
+            res.push({ ...byEngagement, champLabel: label, champColor: '#3b82f6' });
+        }
+        
+        if (byCPM) {
+            res.push({ ...byCPM, champLabel: '🚀 CPM Efficiency Champ', champColor: '#10b981' });
+        }
+        
         return res.filter(a => a && a.id);
     };
 
     return {
-        video: getChamps(videoAds),
-        static: getChamps(staticAds)
+        video: getChamps(videoAds, 'video'),
+        static: getChamps(staticAds, 'static')
     };
   }, [adPerformance]);
 
