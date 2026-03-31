@@ -64,11 +64,12 @@ export const MetaRaw = ({ filteredData }) => {
     const map = {};
     filteredMetaAds.forEach(row => {
       const date = row.day || row.normDate || 'Unknown';
-      if (!map[date]) map[date] = { date, reach: 0, impressions: 0, spend: 0, views: 0 };
+      if (!map[date]) map[date] = { date, reach: 0, impressions: 0, spend: 0, views: 0, engagements: 0 };
       map[date].reach += row.reach || 0;
       map[date].impressions += row.impressions || 0;
       map[date].spend += row.spend || 0;
       map[date].views += row.views || 0;
+      map[date].engagements += row.post_engagements || 0;
     });
     return Object.values(map)
       .filter(d => d.date !== 'Unknown')
@@ -293,57 +294,70 @@ export const MetaRaw = ({ filteredData }) => {
 
         {/* Charts Section */}
         <div className="charts-row">
+            {/* Chart 1: Spend vs Impression */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <TrendingUp size={18} style={{ color: '#3B82F6' }} />
-                        Reach & Discovery Trend
+                        <Zap size={18} style={{ color: '#FCD34D' }} />
+                        Spend & Impression Trend
                     </h3>
+                    <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>Scale Correlation</p>
                 </div>
                 <div style={{ height: '300px' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={dailyData}>
-                        <defs>
-                        <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                        </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="date" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => {
-                           if(!val || typeof val !== 'string') return '';
-                           return val.split('-').slice(1).join('/');
-                        }} />
-                        <YAxis yAxisId="left" tick={{fontSize: 10, fill: '#64748B'}} />
-                        <YAxis yAxisId="right" orientation="right" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => `${val.toFixed(1)}%`} />
-                        <Tooltip 
-                            contentStyle={{ background: 'rgba(10, 10, 15, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
-                        />
-                        <Area yAxisId="left" type="monotone" dataKey="reach" name="Reach" stroke="#3B82F6" fill="url(#colorReach)" strokeWidth={2} />
-                        <Line yAxisId="right" type="monotone" dataKey="hookRate" name="Hook Rate" stroke="#F59E0B" dot={false} strokeWidth={2} />
-                    </AreaChart>
+                        <ComposedChart data={dailyData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis 
+                                dataKey="date" 
+                                fontSize={10} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tickFormatter={(val) => val && typeof val === 'string' ? val.split('-').slice(1).join('/') : ''}
+                            />
+                            <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `Rp${(val/1000000).toFixed(1)}M`} />
+                            <YAxis yAxisId="right" orientation="right" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
+                            <Tooltip 
+                                contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                itemStyle={{ fontSize: '11px' }}
+                            />
+                            <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                            <Area yAxisId="left" type="monotone" dataKey="spend" name="Spent" fill="#3b82f6" fillOpacity={0.15} stroke="#3b82f6" strokeWidth={3} />
+                            <Line yAxisId="right" type="monotone" dataKey="impressions" name="Impressions" stroke="#f59e0b" strokeWidth={3} dot={false} />
+                        </ComposedChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
+            {/* Chart 2: Post Engagement vs Views */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Eye size={18} style={{ color: '#10B981' }} />
-                    Efficiency Matrix (CPM vs Retention)
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Activity size={18} style={{ color: '#10B981' }} />
+                        Engagement vs View Matrix
+                    </h3>
+                    <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>Interaction Efficiency</p>
+                </div>
                 <div style={{ height: '300px' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={dailyData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="date" tick={{fontSize: 10, fill: '#64748B'}} />
-                        <YAxis yAxisId="left" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => `Rp${(val/1000).toFixed(0)}K`} />
-                        <YAxis yAxisId="right" orientation="right" tick={{fontSize: 10, fill: '#64748B'}} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
-                        <Tooltip 
-                            contentStyle={{ background: 'rgba(10, 10, 15, 0.95)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }}
-                        />
-                        <Bar yAxisId="right" dataKey="impressions" name="Impressions" fill="#3B82F6" opacity={0.15} barSize={20} />
-                        <Line yAxisId="left" type="monotone" dataKey="cpm" name="CPM" stroke="#6366F1" strokeWidth={3} dot={{r: 4, fill: '#6366F1'}} />
-                    </ComposedChart>
+                        <ComposedChart data={dailyData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis 
+                                dataKey="date" 
+                                fontSize={10} 
+                                axisLine={false} 
+                                tickLine={false} 
+                                tickFormatter={(val) => val && typeof val === 'string' ? val.split('-').slice(1).join('/') : ''}
+                            />
+                            <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
+                            <YAxis yAxisId="right" orientation="right" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
+                            <Tooltip 
+                                contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                itemStyle={{ fontSize: '11px' }}
+                            />
+                            <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                            <Area yAxisId="left" type="monotone" dataKey="views" name="Video Views" fill="#818cf8" fillOpacity={0.15} stroke="#818cf8" strokeWidth={3} />
+                            <Line yAxisId="right" type="monotone" dataKey="engagements" name="Post Engagement" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} />
+                        </ComposedChart>
                     </ResponsiveContainer>
                 </div>
             </div>
