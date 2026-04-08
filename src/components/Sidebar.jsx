@@ -38,7 +38,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
   const menuItems = [
     { type: 'divider', label: 'Management' },
     { id: 'commandCenter', name: 'Command Center', icon: <Target size={20} />, color: '#F59E0B' },
-    { id: 'gmvMax', name: 'GMV Max', icon: <Zap size={20} />, color: '#10B981' },
+    { id: 'gmvMax', name: 'GMV Max', icon: <Zap size={20} />, color: '#10B981', badge: 'DEV' },
 
     { type: 'divider', label: 'E-Commerce Hanasui' },
     { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
@@ -111,7 +111,16 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
               style={item.color ? { '--item-accent': item.color } : {}}
             >
               <span style={{ color: activeView === item.id && item.color ? item.color : undefined }}>{item.icon}</span>
-              {!isCollapsed && <span>{item.name}</span>}
+              {!isCollapsed && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <span>{item.name}</span>
+                  {item.badge && (
+                    <span style={{ fontSize: '0.6rem', padding: '2px 6px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', borderRadius: '4px', fontWeight: 700, letterSpacing: '0.05em' }}>
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

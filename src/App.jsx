@@ -76,7 +76,7 @@ const Header = ({
           </div>
         </div>
 
-        {!['creativehub', 'commandCenter'].includes(activeView) && (
+        {!['creativehub', 'commandCenter', 'gmvMax'].includes(activeView) && (
           <div className="filter-deck" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
             <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-end' }}>
               <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
