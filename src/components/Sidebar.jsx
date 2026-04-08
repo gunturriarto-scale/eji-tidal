@@ -3,7 +3,8 @@ import {
   Target,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,7 +38,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
   const menuItems = [
     { type: 'divider', label: 'Management' },
     { id: 'commandCenter', name: 'Command Center', icon: <Target size={20} />, color: '#F59E0B' },
-
+    { id: 'gmvMax', name: 'GMV Max', icon: <Zap size={20} />, color: '#10B981' },
 
     { type: 'divider', label: 'E-Commerce Hanasui' },
     { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },

@@ -317,6 +317,10 @@ export const MetaRaw = ({ filteredData }) => {
                             <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `Rp${(val/1000000).toFixed(1)}M`} />
                             <YAxis yAxisId="right" orientation="right" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
                             <Tooltip 
+                                formatter={(value, name) => {
+                                    if (name === 'Spent') return formatCurrency(value);
+                                    return formatNumber(value);
+                                }}
                                 contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                                 itemStyle={{ fontSize: '11px' }}
                             />
@@ -351,6 +355,7 @@ export const MetaRaw = ({ filteredData }) => {
                             <YAxis yAxisId="left" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
                             <YAxis yAxisId="right" orientation="right" fontSize={10} axisLine={false} tickLine={false} tickFormatter={(val) => `${(val/1000).toFixed(0)}K`} />
                             <Tooltip 
+                                formatter={(value, name) => formatNumber(value)}
                                 contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                                 itemStyle={{ fontSize: '11px' }}
                             />

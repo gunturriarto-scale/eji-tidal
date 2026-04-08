@@ -10,6 +10,7 @@ import { useData } from './context/DataContext'
 import { useAuth } from './context/AuthContext'
 import { LoginView } from './views/LoginView'
 import { MetaRaw } from './views/MetaRaw'
+import { GmvMaxView } from './views/GmvMaxView'
 
 const Header = ({ 
   dateFilter, setDateFilter, 
@@ -194,6 +195,7 @@ function App() {
     lazadaNco: { ...initialFilters, dateFilter: 'thisMonth' },
     tokopediaNco: { ...initialFilters, dateFilter: 'thisMonth' },
     commandCenter: { ...initialFilters },
+    gmvMax: { ...initialFilters },
     perfMarketing: { ...initialFilters, dateFilter: 'last30' }
   });
 
@@ -294,7 +296,7 @@ function App() {
   }, [tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData, loading, dateRange, currentFilters]);
 
   const viewNames = {
-    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)'
+    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)'
   };
 
   const renderView = () => {
@@ -309,6 +311,7 @@ function App() {
       case 'lazadaNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="lazada" dateRange={dateRange} />;
       case 'tokopediaNco': return <EcommerceView ordersData={filteredData.ncoOrders} platform="tokopedia" dateRange={dateRange} />;
       case 'commandCenter': return <CommandCenterView {...commonProps} />;
+      case 'gmvMax': return <GmvMaxView {...commonProps} targetBrand="Hanasui" />;
       case 'perfMarketing': return <MetaRaw {...commonProps} />;
       default: return <CommandCenterView {...commonProps} />;
     }
