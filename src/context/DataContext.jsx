@@ -17,7 +17,8 @@ const urls = {
   CRITEO: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=CRITEO`,
   DAILY_ORDERS: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&sheet=Daily%20Performance%20Orders`,
   NCO_ORDERS: `https://docs.google.com/spreadsheets/d/${sheet_id}/gviz/tq?tqx=out:csv&gid=1823027242`,
-  COMMAND_CENTER: `https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`
+  COMMAND_CENTER: `https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`,
+  GMV_MAX: `https://docs.google.com/spreadsheets/d/1rk3RtRDXJi1stNhBcLdXWNYQwblv359b/gviz/tq?tqx=out:csv&sheet=Data`
 };
 
 const cleanNumbers = (row) => {
@@ -56,6 +57,7 @@ export const DataProvider = ({ children }) => {
     ordersData: [],
     ncoOrdersData: [],
     commandCenterData: [],
+    gmvMaxData: [],
     lastSync: null,
     loading: true,
     error: null
@@ -156,8 +158,8 @@ export const DataProvider = ({ children }) => {
           return error ? [] : data;
         };
 
-        const [offsite, kol, ordersCSV, ncoCSV, metaSup, googleSup, tiktokSup, criteoSup] = await Promise.all([
-          fetchCSV(urls.OFFSITE), fetchCSV(urls.KOL), fetchCSV(urls.DAILY_ORDERS), fetchCSV(urls.NCO_ORDERS),
+        const [offsite, kol, ordersCSV, ncoCSV, gmvMaxRaw, metaSup, googleSup, tiktokSup, criteoSup] = await Promise.all([
+          fetchCSV(urls.OFFSITE), fetchCSV(urls.KOL), fetchCSV(urls.DAILY_ORDERS), fetchCSV(urls.NCO_ORDERS), fetchCSV(urls.GMV_MAX),
           fetchSupabaseAll('meta_ads_performance'), fetchSupabaseAll('google_ads_performance'),
           fetchSupabaseAll('tiktok_ads_performance'), fetchSupabaseAll('criteo_ads_performance')
         ]);
@@ -223,6 +225,7 @@ export const DataProvider = ({ children }) => {
           ordersData,
           ncoOrdersData,
           commandCenterData: mapPositionalData(ccRows),
+          gmvMaxData: gmvMaxRaw,
           lastSync: getFormattedDate(),
           loading: false,
           error: null

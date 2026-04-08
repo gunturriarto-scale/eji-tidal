@@ -177,7 +177,7 @@ function App() {
   
   const { 
     tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, offsiteData, kolData, criteoData, ordersData, ncoOrdersData,
-    commandCenterData,
+    commandCenterData, gmvMaxData,
     loading, error 
   } = useData();
 
@@ -286,6 +286,7 @@ function App() {
       orders: ordersData.filter(row => !row.normDate || (row.normDate >= dateRange.start && row.normDate <= dateRange.end)),
       ncoOrders: ncoOrdersData.filter(row => !row.normDate || (row.normDate >= dateRange.start && row.normDate <= dateRange.end)),
       commandCenter: commandCenterData,
+      gmvMax: gmvMaxData,
       kpiDates: (() => {
         const all = new Set();
         const check = (arr, isKOL = false) => arr?.forEach(d => { if (isKOL || matchesAttributes(d)) { if (d.normDate >= dateRange.compStart && d.normDate <= dateRange.end) all.add(d.normDate); } });

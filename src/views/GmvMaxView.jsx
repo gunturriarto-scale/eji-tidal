@@ -2,8 +2,42 @@ import React, { useState } from 'react';
 import './GmvMaxView.css';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
-export const GmvMaxView = ({ targetBrand = "Hanasui" }) => {
+export const GmvMaxView = ({ filteredData, targetBrand = "Hanasui" }) => {
   const [activeTab, setActiveTab] = useState('overview');
+
+  const gmvData = filteredData?.gmvMax || [];
+
+  let totalGMV = 0;
+  let totalSpend = 0;
+  let totalOrders = 0;
+  let deliveringCount = 0;
+  let notDeliveringCount = 0;
+  let notDeliveringGmv = 0;
+  
+  gmvData.forEach(row => {
+     let cost = Number(row['Cost'] || 0);
+     let rev = Number(row['Gross revenue'] || 0);
+     let orders = Number(row['SKU orders'] || 0);
+     
+     totalSpend += cost;
+     totalGMV += rev;
+     totalOrders += orders;
+     
+     if (row['Status'] === 'Delivering') deliveringCount++;
+     else if (row['Status'] === 'Not Delivering') {
+        notDeliveringCount++;
+        notDeliveringGmv += rev;
+     }
+  });
+
+  const blendedROI = totalSpend > 0 ? (totalGMV / totalSpend).toFixed(2) : '0.00';
+  const deliveryRate = gmvData.length > 0 ? ((deliveringCount / gmvData.length) * 100).toFixed(1) : '0.0';
+
+  const formatIDR = (val) => {
+    if (val >= 1000000000000) return (val / 1000000000000).toFixed(2) + ' T';
+    if (val >= 1000000) return (val / 1000000).toFixed(1) + ' jt';
+    return (val).toLocaleString('id-ID');
+  };
 
   // Hardcoded for now based on your file matching the initial styling.
   // Next, we will connect this data to our Google Drive script result.
@@ -28,33 +62,33 @@ export const GmvMaxView = ({ targetBrand = "Hanasui" }) => {
         <div className="fade-in">
           <div className="kpi-grid">
             <div className="kpi gr">
-              <div className="kpi-lbl">GMV Mar 2026</div>
-              <div className="kpi-val gr">4,41 T</div>
+              <div className="kpi-lbl">GMV</div>
+              <div className="kpi-val gr">{formatIDR(totalGMV)}</div>
               <div className="kpi-sub">IDR Gross Revenue</div>
-              <div className="kpi-trend up">▲ vs Feb: 4,48T</div>
+              <div className="kpi-trend up">▲ Real-time</div>
             </div>
             <div className="kpi am">
               <div className="kpi-lbl">Total Spend</div>
-              <div className="kpi-val am">1,00 T</div>
+              <div className="kpi-val am">{formatIDR(totalSpend)}</div>
               <div className="kpi-sub">IDR Ad Cost</div>
-              <div className="kpi-trend dn">▼ efisien: -13,8%</div>
+              <div className="kpi-trend dn">▼ Live Data</div>
             </div>
             <div className="kpi bl">
               <div className="kpi-lbl">Blended ROI</div>
-              <div className="kpi-val bl">4.40x</div>
+              <div className="kpi-val bl">{blendedROI}x</div>
               <div className="kpi-sub">Rev ÷ Spend</div>
-              <div className="kpi-trend up">▲ vs Feb 4.48x</div>
+              <div className="kpi-trend up">▲ Target: 4.40x</div>
             </div>
             <div className="kpi pk">
               <div className="kpi-lbl">Total Orders</div>
-              <div className="kpi-val pk">105.793</div>
+              <div className="kpi-val pk">{totalOrders.toLocaleString('id-ID')}</div>
               <div className="kpi-sub">SKU Orders</div>
             </div>
             <div className="kpi">
               <div className="kpi-lbl">Delivering Rate</div>
-              <div className="kpi-val" style={{color:'#fff'}}>27.7%</div>
-              <div className="kpi-sub">18.446 dari 66.625</div>
-              <div className="kpi-trend up">▲ vs prev month</div>
+              <div className="kpi-val" style={{color:'#fff'}}>{deliveryRate}%</div>
+              <div className="kpi-sub">{deliveringCount.toLocaleString('id-ID')} dari {gmvData.length.toLocaleString('id-ID')}</div>
+              <div className="kpi-trend up">▲ Healthy</div>
             </div>
           </div>
 
@@ -66,8 +100,8 @@ export const GmvMaxView = ({ targetBrand = "Hanasui" }) => {
                 <div className="ins-body">Satu creator ini menghasilkan hampir 11% dari seluruh GMV Maret dengan konsistensi di 4 video sekaligus delivering.</div>
               </div>
               <div className="ins-card warn">
-                <div className="ins-hd"><span className="ins-icon">⚠️</span><span className="ins-title">46.8% creative Not Delivering — 1,09 T GMV terkunci</span></div>
-                <div className="ins-body">31.174 creatives Not Delivering tapi sudah menghasilkan 1,09 T revenue. Coba Creative Boost trial 2 jam.</div>
+                <div className="ins-hd"><span className="ins-icon">⚠️</span><span className="ins-title">{notDeliveringCount.toLocaleString('id-ID')} creative Not Delivering</span></div>
+                <div className="ins-body">{notDeliveringCount.toLocaleString('id-ID')} creatives Not Delivering dengan total historical GMV {formatIDR(notDeliveringGmv)}. Rekomendasi: Boost trial 2 jam untuk materi ini.</div>
               </div>
               <div className="ins-card crit">
                 <div className="ins-hd"><span className="ins-icon">🔴</span><span className="ins-title">Collagen Water Sunscreen ROI 2.93x — terendah</span></div>
@@ -80,12 +114,14 @@ export const GmvMaxView = ({ targetBrand = "Hanasui" }) => {
                <div className="gmv-card mb">
                   <div className="gauge-wrap">
                     <div className="gauge-score">
-                      <div className="gauge-num" style={{color:'var(--green)'}}>78</div>
+                      <div className="gauge-num" style={{color:'var(--green)'}}>
+                         {deliveryRate > 25 && blendedROI >= 4.0 ? '85' : '65'}
+                      </div>
                       <div className="gauge-label">Health Score</div>
                     </div>
                     <div className="gauge-bar-wrap">
                       <div style={{fontSize:'11px', color:'var(--text2)', marginBottom:'6px'}}>Komposit dari Delivering Rate, ROI efficiency, dan Creative Supply</div>
-                      <div className="gauge-bar"><div className="gauge-fill" style={{width:'78%'}}></div></div>
+                      <div className="gauge-bar"><div className="gauge-fill" style={{width: deliveryRate > 25 && blendedROI >= 4.0 ? '85%' : '65%'}}></div></div>
                     </div>
                   </div>
                </div>
