@@ -38,7 +38,6 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
   const menuItems = [
     { type: 'divider', label: 'Management' },
     { id: 'commandCenter', name: 'Command Center', icon: <Target size={20} />, color: '#F59E0B' },
-    { id: 'gmvMax', name: 'GMV Max', icon: <Zap size={20} />, color: '#10B981', badge: 'DEV' },
 
     { type: 'divider', label: 'E-Commerce Hanasui' },
     { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
