@@ -433,6 +433,21 @@ export const CommandCenterView = ({ filteredData }) => {
       { id: 'segumento', name: 'Segumento', budget: 'budgetSegumento', spent: 'spentSegumento', imp: 'actualImpSegumento', color: '#8A2BE2', icon: <BarChart2 size={20} /> },
     ];
 
+    // Compute prevMonth Data
+    const MONTHS_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const curMonthIdx = MONTHS_ORDER.findIndex(m => monthFilter.startsWith(m));
+    const prevMonthIdx = curMonthIdx > 0 ? curMonthIdx - 1 : (curMonthIdx === 0 ? 11 : -1);
+    
+    let pmData = [];
+    if (prevMonthIdx !== -1 && monthFilter !== 'all') {
+      const pmLabel = MONTHS_ORDER[prevMonthIdx];
+      pmData = rawData.filter(d => {
+        if (!d.month.startsWith(pmLabel)) return false;
+        if (brandFilter !== 'all' && d.brand !== brandFilter) return false;
+        return true;
+      });
+    }
+
     return platformsConfigs.map(p => {
       let b = 0, s = 0, i = 0;
       data.forEach(d => {
@@ -446,9 +461,22 @@ export const CommandCenterView = ({ filteredData }) => {
       });
       const cpm = i > 0 ? (s / i) * 1000 : 0;
       const pacing = b > 0 ? (s / b) * 100 : 0;
-      return { ...p, budget: b, spent: s, imp: i, cpm: Number(cpm.toFixed(4)), pacing };
+
+      // Compute Prev CPM
+      let prevS = 0, prevI = 0;
+      pmData.forEach(d => {
+        prevS += (d[p.spent] || 0);
+        prevI += (d[p.imp] || 0);
+      });
+      const prevCpm = prevI > 0 ? (prevS / prevI) * 1000 : 0;
+      let cpmTrend = 0;
+      if (prevCpm > 0 && cpm > 0) {
+         cpmTrend = ((cpm - prevCpm) / prevCpm) * 100;
+      }
+
+      return { ...p, budget: b, spent: s, imp: i, cpm: Number(cpm.toFixed(4)), pacing, prevCpm, cpmTrend };
     }).filter(p => p.budget > 0 || p.spent > 0);
-  }, [data]);
+  }, [data, rawData, monthFilter, brandFilter]);
 
   // ── Custom Styles ──
   const styles = `
@@ -830,7 +858,16 @@ export const CommandCenterView = ({ filteredData }) => {
                 <div style={{ background: '#1a1a25', borderRadius: '8px', padding: '12px' }}>
                   <div style={{ fontSize: '11px', color: '#8b8b9e', marginBottom: '4px' }}>Average CPM</div>
                   <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '8px' }}>{formatCPM(ch.cpm)}</div>
-                  <div style={{ fontSize: '10px', color: '#8b8b9e' }}>Efficiency Index</div>
+                  {monthFilter !== 'all' && ch.prevCpm > 0 ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                      <span className={`cc2-badge ${ch.cpmTrend <= 0 ? 'cc2-badge-success' : 'cc2-badge-danger'}`} style={{ padding: '2px 6px' }}>
+                        {ch.cpmTrend > 0 ? '▲' : '▼'} {Math.abs(ch.cpmTrend).toFixed(1)}%
+                      </span>
+                      <span style={{ color: '#8b8b9e' }}>vs {formatCPM(ch.prevCpm)}</span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '10px', color: '#8b8b9e' }}>vs Previous Month</div>
+                  )}
                 </div>
 
                 <div style={{ background: '#1a1a25', borderRadius: '8px', padding: '12px', gridColumn: 'span 2' }}>
