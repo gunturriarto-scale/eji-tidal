@@ -243,13 +243,15 @@ export const CommandCenterView = ({ filteredData }) => {
     rawData.forEach(d => {
       const key = d.month;
       if (!key) return;
-      if (!map[key]) map[key] = { month: key, monthNum: d.monthNum || 0, budget: 0, spent: 0 };
+      if (!map[key]) map[key] = { month: key, monthNum: d.monthNum || 0, budget: 0, spent: 0, imp: 0 };
       map[key].budget += d.budgetOverall;
       map[key].spent += d.spent;
+      map[key].imp += d.impressions || 0;
     });
     return Object.values(map).map(m => ({
       ...m,
-      pacing: m.budget > 0 ? (m.spent / m.budget) * 100 : 0
+      pacing: m.budget > 0 ? (m.spent / m.budget) * 100 : 0,
+      cpm: m.imp > 0 ? (m.spent / m.imp) * 1000 : 0
     })).sort((a, b) => a.monthNum - b.monthNum);
   }, [rawData]);
 
@@ -573,6 +575,45 @@ export const CommandCenterView = ({ filteredData }) => {
           </div>
         </div>
       )}
+
+      {/* ── TWO MONTHLY TRENDS CHARTS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '20px', marginBottom: '24px' }}>
+        <div className="cc2-card">
+          <div style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 600 }}>Total Budget vs Overall Pacing</div>
+          <div style={{ height: '240px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={monthlyTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" vertical={false} />
+                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" stroke="#8b8b9e" fontSize={11} tickFormatter={v => (v/1e9).toFixed(0)+'B'} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="#7c3aed" fontSize={11} tickFormatter={v => v.toFixed(0)+'%'} tickLine={false} axisLine={false} />
+                <RechartsTooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                <Bar yAxisId="left" dataKey="budget" name="Total Budget" fill="#1877F2" radius={[4, 4, 0, 0]} barSize={30} />
+                <Line yAxisId="right" type="monotone" dataKey="pacing" name="Overall Pacing (%)" stroke="#7c3aed" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="cc2-card">
+          <div style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 600 }}>Total Spent vs Actual Blended CPM</div>
+          <div style={{ height: '240px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={monthlyTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" vertical={false} />
+                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" stroke="#8b8b9e" fontSize={11} tickFormatter={v => (v/1e9).toFixed(0)+'B'} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="#059669" fontSize={11} tickFormatter={v => 'Rp '+(v/1000).toFixed(0)+'k'} tickLine={false} axisLine={false} />
+                <RechartsTooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
+                <Bar yAxisId="left" dataKey="spent" name="Total Spent" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={30} />
+                <Line yAxisId="right" type="monotone" dataKey="cpm" name="Blended CPM" stroke="#059669" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
 
       {/* ── KPI CARDS with SPARKLINES ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
