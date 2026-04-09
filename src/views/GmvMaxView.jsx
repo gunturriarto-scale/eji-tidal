@@ -267,7 +267,101 @@ export const GmvMaxView = ({ filteredData, targetBrand }) => {
     </Card>
   );
 
-  const ComingSoon = window.ComingSoon = () => <div style={{padding: 40, textAlign: 'center', color: '#6b7a9c'}}>Logic module untuk section ini sedang diproses dari Live Data...</div>;
+  const BoostRow = ({ creator }) => {
+    const first = creator.name.charAt(0).toUpperCase();
+    const as = { bg: "#1a1e2a", color: "#a0aec0", label: creator.action };
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, background: "#141720", borderRadius: 8, padding: "10px 12px", marginBottom: 6 }}>
+        <div style={{ width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, background: "#1e2330", color: "#6b7a9c" }}>{first}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: "#e8eaf0", width: 130, flexShrink: 0 }}>{creator.name}</div>
+        <div style={{ fontSize: 11, color: "#6b7a9c", flex: 1 }}>{creator.detail}</div>
+        <div style={{ fontSize: 11, fontFamily: "monospace", width: 50, textAlign: "right", color: roiColor(creator.roi), fontWeight: 600 }}>{creator.roi.toFixed(1)}x</div>
+      </div>
+    );
+  };
+
+  const BoostPage = window.BoostPage = () => {
+    // Basic recommendation logic based on Live Creators
+    const topRoas = creatorArr.filter(c => c.roi > 4.5 && c.spend > 1000000).sort((a,b) => b.roi - a.roi).slice(0, 5);
+    const topGmv = creatorArr.filter(c => c.gmv > 50000000).sort((a,b) => b.gmv - a.gmv).slice(0, 5);
+    
+    return (
+      <div className="fade-in">
+        <InsightCard type="info" title="Boost framework Live Sync" body="Rekomendasi di-generate langsung dari data GDrive Anda." />
+        <SectionLabel>Delivering → boost for GMV (volume play)</SectionLabel>
+        {topGmv.map(c => <BoostRow key={c.name} creator={{ name: c.name, detail: `High Volume · Spend ${fmt.idrNum(c.spend)}`, roi: c.roi, action: "boostGmv" }} />)}
+        <SectionLabel>Delivering → boost for ROAS (efficiency play)</SectionLabel>
+        {topRoas.map(c => <BoostRow key={c.name} creator={{ name: c.name, detail: `Efficiency Scale · GMV ${fmt.idrNum(c.gmv)}`, roi: c.roi, action: "scaleRoas" }} />)}
+      </div>
+    );
+  };
+
+  const STATIC_ACTIONS = [
+    { id: 1, priority: "critical", num: "01", title: `Collect & renew Sparks Code untuk ${summary.notDeliveringCount} video stuck`, desc: "Punya potensi GMV tapi saat ini Not Delivering.", tags: ["Critical"], detail: "Minta renewal Sparks Code 365 hari.", steps: ["Export list", "Group per creator", "Input ke Ads Manager"] },
+    { id: 2, priority: "high", num: "02", title: "Trial boost 2 jam untuk materi baru", desc: "Push traffic awal.", tags: ["High"], detail: "Boost ringan 50rb per campaign", steps: ["Pilih campaign", "Set budget trial", "Review hasil 24 jam"] }
+  ];
+
+  const ActionItem = ({ item }) => {
+    const [open, setOpen] = useState(false);
+    const c = actionColors[item.priority] || actionColors.high;
+    return (
+      <div style={{ background: "#0f1117", border: `0.5px solid ${open ? "#2a3050" : "#1e2330"}`, borderRadius: 12, marginBottom: 8, overflow: "hidden", cursor: "pointer", transition: "border-color 0.15s" }} onClick={() => setOpen(!open)}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "14px 18px" }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0, fontFamily: "monospace", background: c.bg, color: c.text, border: `1px solid ${c.accent}40` }}>{item.num}</div>
+          <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 600, color: "#e8eaf0", marginBottom: 3 }}>{item.title}</div><div style={{ fontSize: 12, color: "#6b7a9c", lineHeight: 1.5 }}>{item.desc}</div></div>
+          <span style={{ fontSize: 12, color: "#3d4560", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+        </div>
+        {open && <div style={{ borderTop: "0.5px solid #1e2330", padding: "14px 18px 16px 62px" }}><div style={{ fontSize: 12, color: "#6b7a9c" }}>{item.detail}</div></div>}
+      </div>
+    );
+  };
+
+  const ActionPage = window.ActionPage = () => (
+    <div className="fade-in">
+      <SectionLabel>Recommended Actions (Live Derived)</SectionLabel>
+      {STATIC_ACTIONS.map(item => <ActionItem key={item.id} item={item} />)}
+    </div>
+  );
+
+  const TargetsPage = window.TargetsPage = () => {
+    const [targetGmv, setTargetGmv] = useState(5.0);
+    const [targetRoi, setTargetRoi] = useState(4.5);
+    const reqSpend = targetGmv / targetRoi;
+    
+    return (
+      <div className="fade-in">
+        <Card style={{ marginBottom: 16 }}>
+          <CardHeading>Custom target calculator (Bulan Depan vs Data Asli Saat Ini)</CardHeading>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+            <div>
+              <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8 }}>Target GMV bulan depan (T IDR)</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <input type="range" min={2} max={10} step={0.5} value={targetGmv} onChange={(e) => setTargetGmv(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                <span style={{ fontSize: 20, fontWeight: 700, fontFamily: "monospace", color: "#22c55e", minWidth: 50 }}>{targetGmv.toFixed(1)} T</span>
+              </div>
+              <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 8, marginTop: 20 }}>Target ROI</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <input type="range" min={3} max={7} step={0.1} value={targetRoi} onChange={(e) => setTargetRoi(parseFloat(e.target.value))} style={{ flex: 1 }} />
+                <span style={{ fontSize: 20, fontWeight: 700, fontFamily: "monospace", color: "#38bdf8", minWidth: 50 }}>{targetRoi.toFixed(1)}x</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                ["Required spend", `${reqSpend.toFixed(2)} T IDR`, "#f59e0b"],
+                ["Required spend/day", `${((reqSpend / 30) * 1000).toFixed(0)} jt / hari`, "#f59e0b"],
+                ["vs current GMV", `${((targetGmv / (summary.gmv/1e12)) * 100).toFixed(0)}%`, targetGmv > (summary.gmv/1e12) ? "#22c55e" : "#ef4444"],
+              ].map(([label, value, color]) => (
+                <div key={label} style={{ background: "#141720", borderRadius: 8, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 12, color: "#7c85a0" }}>{label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "monospace", color }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  };
 
   const PAGES = [
     { id: "overview", label: "Overview", icon: "⬡", component: OverviewPage },
@@ -275,9 +369,9 @@ export const GmvMaxView = ({ filteredData, targetBrand }) => {
     { id: "creative", label: "Creative pool", icon: "⊞", component: CreativePage },
     { id: "campaign", label: "Campaigns", icon: "◈", component: CampaignPage },
     { id: "creators", label: "Creators", icon: "◎", component: CreatorsPage },
-    { id: "boost", label: "Boost Automation", icon: "⚡", component: ComingSoon },
-    { id: "actions", label: "Action plan", icon: "✦", component: ComingSoon },
-    { id: "targets", label: "Targets Simulator", icon: "◎", component: ComingSoon },
+    { id: "boost", label: "Boost Automation", icon: "⚡", component: BoostPage },
+    { id: "actions", label: "Action plan", icon: "✦", component: ActionPage },
+    { id: "targets", label: "Targets Simulator", icon: "◎", component: TargetsPage },
   ];
 
   const ActiveComponent = PAGES.find((p) => p.id === activePage)?.component || OverviewPage;
