@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  ComposedChart, Legend
+  ComposedChart, Legend, PieChart, Pie, Cell
 } from 'recharts';
 import { Search, Download, AlertCircle, Users, BarChart2, Briefcase, Activity, Facebook, Video, Layout, MessageSquare, Target } from 'lucide-react';
 
@@ -642,48 +642,62 @@ export const CommandCenterView = ({ filteredData }) => {
       {/* ── MAIN GRID ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '20px', marginBottom: '20px' }}>
         
-        {/* Left Col: Platform Efficiency + Trend */}
+        {/* Left Col: Channel Contribution Analytics */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           <div className="cc2-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <span style={{ fontSize: '16px', fontWeight: 600 }}>Platform Efficiency Matrix</span>
+              <span style={{ fontSize: '16px', fontWeight: 600 }}>Channel Contribution Analytics</span>
               <BarChart2 size={20} color="#8b8b9e" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
-              {platformMatrix.map(p => (
-                <div key={p.id} className="cc2-platform-card" style={{ borderTop: `3px solid ${p.color}` }}>
-                  <div style={{ fontSize: '12px', color: '#8b8b9e', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{p.name}</div>
-                  <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '4px' }}>{formatCurrency(p.budget)}</div>
-                  <div style={{ fontSize: '12px', color: '#8b8b9e', marginBottom: '12px' }}>CPM: {formatCurrency(p.cpm)}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px', fontWeight: 600 }}>
-                    <span style={{width: '32px', textAlign: 'right'}}>{p.pacing.toFixed(0)}%</span>
-                    <div style={{ width: '60px', height: '6px', background: '#2a2a3a', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ 
-                        height: '100%', width: `${Math.min(p.pacing, 100)}%`, 
-                        background: p.pacing > 100 ? '#ef4444' : p.pacing > 85 ? '#f59e0b' : '#10b981' 
-                      }}></div>
-                    </div>
-                  </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              {/* Pie 1: Impressions */}
+              <div style={{ background: '#1a1a25', padding: '16px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, textAlign: 'center', color: '#8b8b9e', marginBottom: '0px' }}>Impression Contribution</div>
+                <div style={{ height: '180px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={platformMatrix} dataKey="imp" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} stroke="none">
+                        {platformMatrix.map((entry, index) => <Cell key={index} fill={entry.color} />)}
+                      </Pie>
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
+              </div>
+
+              {/* Pie 2: Spent */}
+              <div style={{ background: '#1a1a25', padding: '16px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, textAlign: 'center', color: '#8b8b9e', marginBottom: '0px' }}>Spent Contribution</div>
+                <div style={{ height: '180px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={platformMatrix} dataKey="spent" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} stroke="none">
+                        {platformMatrix.map((entry, index) => <Cell key={index} fill={entry.color} />)}
+                      </Pie>
+                      <RechartsTooltip content={<CustomTooltip />} />
+                      <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
 
-            {/* Monthly Trend Chart connected underneath */}
-            <div style={{ marginTop: '32px', height: '260px' }}>
-              <h3 style={{ fontSize: '13px', color: '#8b8b9e', marginBottom: '16px', textTransform: 'uppercase' }}>Monthly Spend vs Pacing Trend</h3>
+            {/* CPM Comparison Bar Chart */}
+            <div style={{ marginTop: '16px', height: '240px', background: '#1a1a25', padding: '16px', borderRadius: '12px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#8b8b9e', marginBottom: '8px' }}>CPM Comparison per Channel</div>
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={monthlyTrend} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" vertical={false} />
-                  <XAxis dataKey="month" stroke="#8b8b9e" fontSize={12} tickLine={false} />
-                  <YAxis yAxisId="left" stroke="#8b8b9e" fontSize={11} tickLine={false} tickFormatter={v => `${(v/1e9).toFixed(0)}B`} />
-                  <YAxis yAxisId="right" orientation="right" stroke="#8b8b9e" fontSize={11} tickLine={false} tickFormatter={v => `${v}%`} domain={[0, 'auto']} hide />
-                  <RechartsTooltip content={<CustomTooltip />} />
-                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                  <Bar yAxisId="left" dataKey="budget" name="Budget" fill="transparent" stroke="#3742fa" strokeWidth={1} radius={[4, 4, 0, 0]} />
-                  <Bar yAxisId="left" dataKey="spent" name="Spent" fill="#00d084" radius={[4, 4, 0, 0]} barSize={20} />
-                  <Line yAxisId="right" type="monotone" dataKey="pacing" name="Pacing %" stroke="#ff9500" strokeWidth={2} dot={{ r: 4, fill: '#12121a', stroke: '#ff9500', strokeWidth: 2 }} strokeDasharray="5 5" />
-                </ComposedChart>
+                <BarChart data={platformMatrix} margin={{ top: 10, right: 30, left: 10, bottom: 0 }} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" horizontal={false} />
+                  <XAxis type="number" stroke="#8b8b9e" fontSize={11} tickFormatter={v => 'Rp ' + (v/1000).toFixed(0) + 'k'} tickLine={false} axisLine={false} />
+                  <YAxis dataKey="name" type="category" stroke="#e8eaf0" fontSize={11} fontWeight={600} tickLine={false} axisLine={false} />
+                  <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: '#2a2a3a', opacity: 0.4 }} />
+                  <Bar dataKey="cpm" name="Actual CPM" radius={[0, 4, 4, 0]} barSize={20}>
+                    {platformMatrix.map((entry, index) => <Cell key={index} fill={entry.color} />)}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
