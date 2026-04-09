@@ -241,6 +241,8 @@ export const CommandCenterView = ({ filteredData }) => {
   const monthlyTrend = useMemo(() => {
     const map = {};
     rawData.forEach(d => {
+      if (brandFilter !== 'all' && d.brand !== brandFilter) return;
+      
       const key = d.month;
       if (!key) return;
       if (!map[key]) map[key] = { month: key, monthNum: d.monthNum || 0, budget: 0, spent: 0, imp: 0 };
@@ -253,7 +255,7 @@ export const CommandCenterView = ({ filteredData }) => {
       pacing: m.budget > 0 ? (m.spent / m.budget) * 100 : 0,
       cpm: m.imp > 0 ? (m.spent / m.imp) * 1000 : 0
     })).sort((a, b) => a.monthNum - b.monthNum);
-  }, [rawData]);
+  }, [rawData, brandFilter]);
 
 
   // ── Performance by PIC (Card Layout) ──
