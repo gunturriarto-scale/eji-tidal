@@ -7,11 +7,7 @@ import { Search, Download, AlertCircle, Users, BarChart2, Briefcase, Activity, F
 
 const formatCurrency = (val) => {
   if (!val && val !== 0) return 'Rp 0';
-  if (Math.abs(val) >= 1e12) return `Rp ${(val / 1e12).toFixed(2)}T`;
-  if (Math.abs(val) >= 1e9) return `Rp ${(val / 1e9).toFixed(2)}B`;
-  if (Math.abs(val) >= 1e6) return `Rp ${(val / 1e6).toFixed(1)}M`;
-  if (Math.abs(val) >= 1e3) return `Rp ${(val / 1e3).toFixed(0)}K`;
-  return `Rp ${val.toLocaleString('id-ID')}`;
+  return `Rp ${Math.round(val).toLocaleString('id-ID')}`;
 };
 
 const formatCPM = (val) => {
@@ -21,10 +17,7 @@ const formatCPM = (val) => {
 
 const formatNumber = (val) => {
   if (!val && val !== 0) return '0';
-  if (Math.abs(val) >= 1e9) return `${(val / 1e9).toFixed(2)}B`;
-  if (Math.abs(val) >= 1e6) return `${(val / 1e6).toFixed(1)}M`;
-  if (Math.abs(val) >= 1e3) return `${(val / 1e3).toFixed(1)}K`;
-  return val.toLocaleString('id-ID');
+  return Math.round(val).toLocaleString('id-ID');
 };
 
 const CustomTooltip = ({ active, payload, label }) => {
