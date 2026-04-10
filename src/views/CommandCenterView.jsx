@@ -131,10 +131,29 @@ export const CommandCenterView = ({ filteredData }) => {
       pk = { spent: ps, imp: pi, cpm: pi > 0 ? (ps / pi) * 1000 : 0 };
     }
 
+    const now = new Date();
+    const currentRealMonthIdx = now.getMonth();
+    const currentRealDay = now.getDate();
+    let expectedPacing = 0;
+    
+    if (monthFilter === 'all') {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const dayOfYear = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000)) + 1;
+      const isLeap = (now.getFullYear() % 4 === 0);
+      expectedPacing = (dayOfYear / (isLeap ? 366 : 365)) * 100;
+    } else if (curMonthIdx === currentRealMonthIdx) {
+      const daysInMonth = new Date(now.getFullYear(), currentRealMonthIdx + 1, 0).getDate();
+      expectedPacing = (currentRealDay / daysInMonth) * 100;
+    } else if (curMonthIdx < currentRealMonthIdx) {
+      expectedPacing = 100;
+    } else {
+      expectedPacing = 0;
+    }
+
     return { 
       kpi: { 
         totalBudget, totalSpent, totalRemaining, avgPacing, actualCPM, 
-        totalTargetImp, totalActualImp, pacingImp,
+        totalTargetImp, totalActualImp, pacingImp, expectedPacing,
         overspending: data.filter(d => d.budgetOverall > 0 && (d.spent / d.budgetOverall) > 1.1),
         underperforming: data.filter(d => d.budgetOverall > 0 && d.estReach > 0 && (d.reach / d.estReach) < 0.5)
       },
@@ -644,11 +663,11 @@ export const CommandCenterView = ({ filteredData }) => {
           { label: 'Total Budget', val: kpi.totalBudget, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: 'Monthly Plan', type: 'up', line: sparklines.budget, cls: 'cc2-kpi-budget', color: '#1877F2' },
           { label: 'Total Spent', val: kpi.totalSpent, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: getTrend(kpi.totalSpent, prevKpi?.spent).val, type: getTrend(kpi.totalSpent, prevKpi?.spent).type, line: sparklines.spent, cls: 'cc2-kpi-spent', color: '#f59e0b' },
           { label: 'Remaining Budget', val: kpi.totalRemaining, fmt: v => 'Rp ' + (v || 0).toLocaleString('id-ID'), trend: 'Balance', type: 'neutral', line: sparklines.remaining, cls: 'cc2-kpi-rem', color: '#10b981' },
-          { label: 'Overall Pacing', val: kpi.avgPacing, fmt: v => `${v.toFixed(1)}%`, trend: kpi.avgPacing > 100 ? '+Alert' : 'On Track', type: kpi.avgPacing > 100 ? 'down' : 'up', line: sparklines.pacing, cls: 'cc2-kpi-pacing', color: '#7c3aed' },
+          { label: 'Overall Pacing', val: kpi.avgPacing, fmt: v => `${v.toFixed(1)}%`, trend: `Target: ${kpi.expectedPacing.toFixed(1)}%`, type: kpi.avgPacing > kpi.expectedPacing * 1.1 ? 'down' : 'up', line: sparklines.pacing, cls: 'cc2-kpi-pacing', color: '#7c3aed' },
           { label: 'Actual Blended CPM', val: kpi.actualCPM, fmt: formatCPM, trend: getTrend(kpi.actualCPM, prevKpi?.cpm).val, type: getTrend(kpi.actualCPM, prevKpi?.cpm).type === 'up' ? 'down' : 'up', line: sparklines.cpm, cls: 'cc2-kpi-cpm', color: '#059669' },
           { label: 'Target Impression', val: kpi.totalTargetImp, fmt: v => v.toLocaleString('id-ID'), trend: 'Monthly Goal', type: 'up', line: sparklines.targetImp, cls: 'cc2-kpi-budget', color: '#1877F2' },
           { label: 'Actual Impression', val: kpi.totalActualImp, fmt: v => v.toLocaleString('id-ID'), trend: getTrend(kpi.totalActualImp, prevKpi?.imp).val, type: getTrend(kpi.totalActualImp, prevKpi?.imp).type, line: sparklines.actualImp, cls: 'cc2-kpi-rem', color: '#10b981' },
-          { label: 'Pacing Impression %', val: kpi.pacingImp, fmt: v => `${v.toFixed(1)}%`, trend: kpi.pacingImp > 85 ? 'Healthy' : 'Behind', type: kpi.pacingImp > 85 ? 'up' : 'down', line: sparklines.pacingImp, cls: 'cc2-kpi-pacing', color: '#f59e0b' },
+          { label: 'Pacing Impression %', val: kpi.pacingImp, fmt: v => `${v.toFixed(1)}%`, trend: `Target: ${kpi.expectedPacing.toFixed(1)}%`, type: kpi.pacingImp >= kpi.expectedPacing * 0.9 ? 'up' : 'down', line: sparklines.pacingImp, cls: 'cc2-kpi-pacing', color: '#f59e0b' },
         ].map((card, i) => (
           <div key={i} className={`cc2-card cc2-kpi ${card.cls}`}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
