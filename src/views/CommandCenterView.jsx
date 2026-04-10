@@ -373,6 +373,37 @@ export const CommandCenterView = ({ filteredData }) => {
 
   // ── Product Breakdown by PIC ──
   const productDetailByPic = useMemo(() => {
+    // Compute pmData
+    const MONTHS_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const curMonthIdx = MONTHS_ORDER.findIndex(m => monthFilter.startsWith(m));
+    const prevMonthIdx = curMonthIdx > 0 ? curMonthIdx - 1 : (curMonthIdx === 0 ? 11 : -1);
+    
+    let pmData = [];
+    if (prevMonthIdx !== -1 && monthFilter !== 'all') {
+      const pmLabel = MONTHS_ORDER[prevMonthIdx];
+      pmData = rawData.filter(d => {
+        if (!d.month.startsWith(pmLabel)) return false;
+        if (brandFilter !== 'all' && d.brand !== brandFilter) return false;
+        return true;
+      });
+    }
+
+    const pmMap = {};
+    pmData.forEach(d => {
+      if (!d.pic || !d.product) return;
+      const picName = d.pic.toUpperCase();
+      let catName = 'Uncategorized';
+      if (picName.includes('NIKEN') || picName === 'NIKEN') {
+         catName = d.category || 'Uncategorized Category';
+      } else {
+         catName = d.categoryProduct || 'Uncategorized Category Product';
+      }
+      const key = `${d.pic}_${catName}`;
+      if (!pmMap[key]) pmMap[key] = { spent: 0, imp: 0 };
+      pmMap[key].spent += (d.spent || 0);
+      pmMap[key].imp += (d.impressions || d.imp || 0);
+    });
+
     const map = {};
     
     data.forEach(d => {
@@ -423,6 +454,17 @@ export const CommandCenterView = ({ filteredData }) => {
       pic: p.pic,
       categories: Object.entries(p.categories).map(([catName, catData]) => {
         const { budget, spent, estImp, imp } = catData.summary;
+        const avgCpm = imp > 0 ? (spent / imp) * 1000 : 0;
+        
+        const pmKey = `${p.pic}_${catName}`;
+        const prevCpm = pmMap[pmKey] && pmMap[pmKey].imp > 0 ? (pmMap[pmKey].spent / pmMap[pmKey].imp) * 1000 : 0;
+        let cpmTrend = 0;
+        if (prevCpm > 0 && avgCpm > 0) {
+           cpmTrend = ((avgCpm - prevCpm) / prevCpm) * 100;
+        } else if (prevCpm === 0 && avgCpm > 0) {
+           cpmTrend = 100;
+        }
+
         return {
           name: catName,
           labelType: catData.labelType,
@@ -433,13 +475,15 @@ export const CommandCenterView = ({ filteredData }) => {
             imp,
             pacingBudget: budget > 0 ? (spent / budget) * 100 : 0,
             pacingImp: estImp > 0 ? (imp / estImp) * 100 : 0,
-            avgCpm: imp > 0 ? (spent / imp) * 1000 : 0
+            avgCpm,
+            prevCpm,
+            cpmTrend
           },
           products: catData.products.sort((a, b) => b.budget - a.budget)
         };
       }).sort((a,b) => a.name.localeCompare(b.name))
     })).sort((a, b) => a.pic.localeCompare(b.pic));
-  }, [data]);
+  }, [data, rawData, monthFilter, brandFilter]);
 
 
   // ── Performance by Channel (Global Aggregation) ──
@@ -1053,7 +1097,7 @@ export const CommandCenterView = ({ filteredData }) => {
                      { label: 'Est. Imp', value: cat.summary.estImp, format: 'number' },
                      { label: 'Act. Imp', value: cat.summary.imp, format: 'number' },
                      { label: 'Pacing Imp %', value: cat.summary.pacingImp, format: 'percentage' },
-                     { label: 'Avg. CPM', value: cat.summary.avgCpm, format: 'cpm' }
+                     { label: 'Avg. CPM', value: cat.summary.avgCpm, format: 'cpm', prevCpm: cat.summary.prevCpm, trend: cat.summary.cpmTrend }
                    ].map((s, idx) => (
                      <div key={idx} style={{ background: '#1a1a25', padding: '12px', borderRadius: '8px', border: '1px solid #2a2a3a' }}>
                         <div style={{ fontSize: '10px', color: '#8b8b9e', textTransform: 'uppercase', marginBottom: '4px' }}>{s.label}</div>
@@ -1063,6 +1107,17 @@ export const CommandCenterView = ({ filteredData }) => {
                             s.format === 'cpm' ? formatCPM(s.value) :
                             formatNumber(s.value)}
                         </div>
+                        {s.label === 'Avg. CPM' && monthFilter !== 'all' && s.prevCpm > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', marginTop: '6px' }}>
+                             <span className={`cc2-badge ${s.trend <= 0 ? 'cc2-badge-success' : 'cc2-badge-danger'}`} style={{ padding: '2px 4px', fontSize: '9px' }}>
+                               {s.trend > 0 ? '▲' : '▼'} {Math.abs(s.trend).toFixed(1)}%
+                             </span>
+                             <span style={{ color: '#8b8b9e' }}>vs {formatCPM(s.prevCpm)}</span>
+                          </div>
+                        )}
+                        {s.label === 'Avg. CPM' && monthFilter !== 'all' && (!s.prevCpm || s.prevCpm === 0) && (
+                          <div style={{ fontSize: '9px', color: '#8b8b9e', marginTop: '6px' }}>vs Prev Month</div>
+                        )}
                      </div>
                    ))}
                 </div>
