@@ -11,6 +11,7 @@ import { useAuth } from './context/AuthContext'
 import { LoginView } from './views/LoginView'
 import { MetaRaw } from './views/MetaRaw'
 import { GmvMaxView } from './views/GmvMaxView'
+import { KolView } from './views/KolView'
 
 const Header = ({ 
   dateFilter, setDateFilter, 
@@ -297,7 +298,7 @@ function App() {
   }, [tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData, loading, dateRange, currentFilters]);
 
   const viewNames = {
-    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)'
+    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)', kol: '⚡ KOL APIFY System'
   };
 
   const renderView = () => {
@@ -314,6 +315,7 @@ function App() {
       case 'commandCenter': return <CommandCenterView {...commonProps} />;
       case 'gmvMax': return <GmvMaxView {...commonProps} targetBrand="Hanasui" />;
       case 'perfMarketing': return <MetaRaw {...commonProps} />;
+      case 'kol': return <KolView />;
       default: return <CommandCenterView {...commonProps} />;
     }
   };

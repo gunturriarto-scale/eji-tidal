@@ -50,6 +50,9 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { id: 'tiktokShopNco', name: 'TikTok Shop NCO', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
     { id: 'lazadaNco',     name: 'Lazada NCO',      icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
     { id: 'tokopediaNco',  name: 'Tokopedia NCO',   icon: <TokopediaIcon size={20} />, color: '#059669' },
+
+    { type: 'divider', label: 'Social Analytics' },
+    { id: 'kol',  name: 'KOL System',   icon: <Zap size={20} />, color: '#E11D48' },
   ];
 
   return (
