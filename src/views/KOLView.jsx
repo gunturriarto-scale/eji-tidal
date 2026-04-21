@@ -1,67 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Zap, Loader2, CheckCircle, AlertTriangle, Terminal } from 'lucide-react';
+import React, { useState } from 'react';
+import { Zap, Loader2, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 
 export const KOLView = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState(null); 
-  const [logs, setLogs] = useState('');
-  
-  const logsEndRef = useRef(null);
-
-  // Auto scroll logs down
-  useEffect(() => {
-    if (logsEndRef.current) {
-      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [logs]);
-
-  // Polling logs if syncing
-  useEffect(() => {
-    let interval;
-    if (isSyncing) {
-      interval = setInterval(async () => {
-        try {
-          const res = await fetch('/api/status-kol');
-          const data = await res.json();
-          if (data.logs) {
-            setLogs(data.logs);
-          }
-          if (data.isSyncing === false) {
-            // Processing done
-            setIsSyncing(false);
-            setMessage('Proses Sync Selesai! Data berhasil ditulis ke Spreadsheets.');
-            setStatus('success');
-          }
-        } catch (e) {
-          console.error("Error polling logs", e);
-        }
-      }, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [isSyncing]);
 
   const handleSync = async () => {
     setIsSyncing(true);
-    setMessage('Menghubungi Server Eksekutor...');
+    setMessage('Mengontak Apify Cloud Pipeline...');
     setStatus(null);
-    setLogs('Menyiapkan instance bot...');
     
     try {
-      const res = await fetch('/api/sync-kol', { method: 'POST' });
+      const res = await fetch('/api/start-apify', { method: 'POST' });
       const data = await res.json();
       
       if (!res.ok) {
-        if (res.status === 429) {
-          setMessage('Melanjutkan pemantauan log proses yang sedang berjalan.');
-          setStatus('success');
-        } else {
-          setMessage(data.message || 'Gagal terhubung ke VPS Webhook.');
-          setStatus('error');
-          setIsSyncing(false);
-        }
+        setMessage(data.message || 'Gagal memulai Apify.');
+        setStatus('error');
+        setIsSyncing(false);
       } else {
-        setMessage('Proses penarikan data Apify dimulai.');
+        setMessage('✅ Sinyal dilesatkan! Robot Apify sedang berlari di background. Silahkan cek link Spreadsheet di bawah secara berkala ya, proses ini biasanya memakan waktu sekitar 3-5 menit.');
         setStatus('success');
       }
     } catch (err) {
@@ -81,38 +40,56 @@ export const KOLView = () => {
           </div>
           <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>KOL Management</h2>
-            <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>TikTok & Apify Live Runner</p>
+            <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>Full Vercel Serverless Sync</p>
           </div>
         </div>
 
         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '2rem' }}>
-          Tombol di bawah ini akan memerintahkan Server VPS secara jarak jauh untuk menarik data metrik TikTok (Views, Likes, Share, dll) via <strong>Apify Actor</strong> lalu menuliskan hasilnya ke <strong>Kumpulan Google Spreadsheet Hanasui KOL</strong>. Proses memakan waktu 2-5 menit berdasarkan log Terminal di bawah.
+          Berhubung proses ini sudah dipindahkan ke Vercel 100% tanpa batas waktu (Serverless), tombol ini hanya akan men-trigger Cloud API Apify dan menyelesaikannya secara asinkron.
+          <br /><br />
+          Data akan otomatis ditulis ke <strong>Kumpulan Google Spreadsheet Hanasui KOL</strong> saat robot selesai.
         </p>
 
-        <button
-          onClick={handleSync}
-          disabled={isSyncing}
-          style={{
-            background: isSyncing ? 'var(--border-color)' : 'linear-gradient(135deg, #E11D48, #BE123C)',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '12px',
-            fontSize: '1rem',
-            fontWeight: 600,
-            cursor: isSyncing ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            transition: 'all 0.3s'
-          }}
-        >
-          {isSyncing ? (
-            <><Loader2 size={18} className="spin" /> Executing Background Process...</>
-          ) : (
-            <><Zap size={18} /> RUN MANUAL SYNC NOW</>
-          )}
-        </button>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleSync}
+            disabled={isSyncing}
+            style={{
+              background: isSyncing ? 'var(--border-color)' : 'linear-gradient(135deg, #E11D48, #BE123C)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: isSyncing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              transition: 'all 0.3s'
+            }}
+          >
+            {isSyncing && status !== 'success' ? (
+              <><Loader2 size={18} className="spin" /> Triggering Background Process...</>
+            ) : (
+              <><Zap size={18} /> RUN MANUAL SYNC NOW</>
+            )}
+          </button>
+
+          <a 
+            href="https://docs.google.com/spreadsheets/d/1o3Xt5Dv0cxHxdG2C8vja29X7Co8Lmpm2DsVYC8ldcx8" 
+            target="_blank" 
+            rel="noreferrer"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px', 
+              color: '#34D399', textDecoration: 'none', fontSize: '0.9rem', fontWeight: 600,
+              padding: '12px 24px', borderRadius: '12px', border: '1px solid rgba(52, 211, 153, 0.3)',
+              background: 'rgba(52, 211, 153, 0.05)'
+            }}
+          >
+            Buka Spreadsheet <ExternalLink size={16} />
+          </a>
+        </div>
 
         {message && (
           <div style={{ 
@@ -126,37 +103,10 @@ export const KOLView = () => {
             gap: '12px',
             border: `1px solid ${status === 'success' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
           }}>
-            {status === 'success' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
-            <span style={{ fontSize: '0.9rem', lineHeight: 1.4 }}>{message}</span>
+            {status === 'success' ? <CheckCircle size={20} style={{ flexShrink: 0 }} /> : <AlertTriangle size={20} style={{ flexShrink: 0 }} />}
+            <span style={{ fontSize: '0.95rem', lineHeight: 1.5, fontWeight: 500 }}>{message}</span>
           </div>
         )}
-
-        <div style={{ 
-          marginTop: '2rem', 
-          background: '#0F172A', 
-          borderRadius: '8px', 
-          border: '1px solid #1E293B',
-          overflow: 'hidden'
-        }}>
-          <div style={{ padding: '8px 12px', background: '#1E293B', borderBottom: '1px solid #334155', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Terminal size={14} color="#94A3B8" />
-            <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontFamily: 'monospace', fontWeight: 600 }}>VPS TERMINAL LOGS</span>
-            {isSyncing && <Loader2 size={12} color="#10B981" className="spin" style={{ marginLeft: 'auto' }} />}
-          </div>
-          <div style={{ 
-            padding: '12px', 
-            fontFamily: 'monospace', 
-            fontSize: '0.8rem', 
-            color: '#A7F3D0', 
-            height: '250px', 
-            overflowY: 'auto',
-            whiteSpace: 'pre-wrap',
-            lineHeight: 1.6
-          }}>
-            {logs || 'Terminal is silent. Click RUN MANUAL SYNC to awake.'}
-            <div ref={logsEndRef} />
-          </div>
-        </div>
       </div>
 
       <style jsx>{`
