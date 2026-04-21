@@ -4,11 +4,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch('http://20.193.224.225:5050/api/trigger-sync', {
+    const response = await fetch('https://eji-webhook-2026.loca.lt/api/trigger-sync', {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer EJI_KOL_NGE_SYNC_2026',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Bypass-Tunnel-Reminder': 'true'
       }
     });
 
