@@ -11,7 +11,7 @@ import { useAuth } from './context/AuthContext'
 import { LoginView } from './views/LoginView'
 import { MetaRaw } from './views/MetaRaw'
 import { GmvMaxView } from './views/GmvMaxView'
-import { KolView } from './views/KolView'
+import { KolView } from './views/KOLView'
 
 const Header = ({ 
   dateFilter, setDateFilter, 
