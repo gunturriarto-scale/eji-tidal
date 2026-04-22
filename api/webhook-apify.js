@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { ApifyClient } from 'apify-client';
+import 'proxy-agent'; // Force Vercel to bundle this module
 
 const APIFY_TOKEN = process.env.VITE_APIFY_API_TOKEN;
 const SPREADSHEET_ID = process.env.VITE_SPREADSHEET_ID;
