@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Zap, Loader2, CheckCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 
-export const KOLView = () => {
+export const KolView = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState(null); 
