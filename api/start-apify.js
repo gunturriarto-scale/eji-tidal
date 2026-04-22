@@ -1,27 +1,36 @@
 import { google } from 'googleapis';
 import { ApifyClient } from 'apify-client';
 
-// We map credentials via process.env internally
 const APIFY_TOKEN = process.env.VITE_APIFY_API_TOKEN;
 const SPREADSHEET_ID = process.env.VITE_SPREADSHEET_ID;
-const SHEET_NAME = 'Sheet1'; 
 
-// Using the same credentials from your GCP
 const CREDENTIALS = {
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
   private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
 };
 
-/** Normalisasi URL untuk cocokin */
-function normalizeUrl(url) {
-  if (!url) return '';
-  let u = url.trim().split('?')[0]; 
-  if (u.endsWith('/')) u = u.slice(0, -1);
-  return u.replace(/^https?:\/\//i, '');
-}
-function extractVideoId(url) {
-  const match = url?.match(/\/video\/(\d+)/);
-  return match ? match[1] : null;
+const SHEET_CONFIGS = [
+  { gid: '1955657192', name: null }, 
+  { gid: '1281836300', name: null },
+  { gid: '1330361111', name: null },
+  { gid: '1915305170', name: null },
+  { gid: '1051897312', name: null },
+  { gid: '15317985',   name: null },
+  { gid: '1430262330', name: null },
+];
+
+async function resolveSheetNames(sheets) {
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const sheetList = meta.data.sheets;
+
+  for (const cfg of SHEET_CONFIGS) {
+    const found = sheetList.find(s => String(s.properties.sheetId) === cfg.gid);
+    if (found) {
+      cfg.name = found.properties.title;
+    } else {
+      cfg.skip = true;
+    }
+  }
 }
 
 export default async function handler(req, res) {
@@ -34,29 +43,34 @@ export default async function handler(req, res) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
+    await resolveSheetNames(sheets);
 
-    // Step 1: Read urls from Column H
-    const getRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!H2:H`,
-    });
-    
-    const rows = getRes.data.values;
-    if (!rows || rows.length === 0) {
-      return res.status(200).json({ message: 'Tidak ada data URL di kolom H ditemukan.' });
+    const allUrls = [];
+
+    // Read column H from all valid sheets
+    for (const cfg of SHEET_CONFIGS) {
+      if (cfg.skip || !cfg.name) continue;
+      
+      const getRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `'${cfg.name}'!H2:H`,
+      });
+      
+      const rows = getRes.data.values || [];
+      rows.forEach(r => {
+        const val = r[0];
+        if (typeof val === 'string' && val.includes('tiktok.com/')) {
+          allUrls.push(val);
+        }
+      });
     }
 
-    // Step 2: Ambil yg formatnya Tiktok / valid URL string
-    const urlsToScrape = [...new Set(
-      rows.map(r => r[0])
-          .filter(val => typeof val === 'string' && val.includes('tiktok.com/'))
-    )];
+    const urlsToScrape = [...new Set(allUrls)];
 
     if (urlsToScrape.length === 0) {
       return res.status(200).json({ message: 'Tidak ada URL valid untuk di-scrape.' });
     }
 
-    // Step 3: Trigger Apify dengan Webhook
     const client = new ApifyClient({ token: APIFY_TOKEN });
     const host = req.headers.origin || `https://${req.headers.host}`;
     

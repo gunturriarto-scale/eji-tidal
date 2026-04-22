@@ -16,7 +16,7 @@ export const KolView = () => {
       const data = await res.json();
       
       if (!res.ok) {
-        setMessage(data.message || 'Gagal memulai Apify.');
+        setMessage((data.message || 'Gagal memulai Apify.') + (data.error ? ' Detail: ' + data.error : ''));
         setStatus('error');
         setIsSyncing(false);
       } else {

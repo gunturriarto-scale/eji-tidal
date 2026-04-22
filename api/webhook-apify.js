@@ -3,12 +3,35 @@ import { ApifyClient } from 'apify-client';
 
 const APIFY_TOKEN = process.env.VITE_APIFY_API_TOKEN;
 const SPREADSHEET_ID = process.env.VITE_SPREADSHEET_ID;
-const SHEET_NAME = 'Sheet1';
 
 const CREDENTIALS = {
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
   private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
 };
+
+const SHEET_CONFIGS = [
+  { gid: '1955657192', name: null }, 
+  { gid: '1281836300', name: null },
+  { gid: '1330361111', name: null },
+  { gid: '1915305170', name: null },
+  { gid: '1051897312', name: null },
+  { gid: '15317985',   name: null },
+  { gid: '1430262330', name: null },
+];
+
+async function resolveSheetNames(sheets) {
+  const meta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const sheetList = meta.data.sheets;
+
+  for (const cfg of SHEET_CONFIGS) {
+    const found = sheetList.find(s => String(s.properties.sheetId) === cfg.gid);
+    if (found) {
+      cfg.name = found.properties.title;
+    } else {
+      cfg.skip = true;
+    }
+  }
+}
 
 function normalizeUrl(url) {
   if (!url) return '';
@@ -16,6 +39,7 @@ function normalizeUrl(url) {
   if (u.endsWith('/')) u = u.slice(0, -1);
   return u.replace(/^https?:\/\//i, '');
 }
+
 function extractVideoId(url) {
   const match = url?.match(/\/video\/(\d+)/);
   return match ? match[1] : null;
@@ -59,46 +83,49 @@ export default async function handler(req, res) {
       scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     });
     const sheets = google.sheets({ version: 'v4', auth });
-
-    // Patch to Google Sheet
-    const getRes = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!H2:N`,
-    });
     
-    const rows = getRes.data.values || [];
+    await resolveSheetNames(sheets);
+
     const updates = [];
 
-    rows.forEach((row, index) => {
-      const originalUrl = row[0];
-      if (!originalUrl || !originalUrl.includes('tiktok.com/')) return;
+    // Loop through all sheets
+    for (const cfg of SHEET_CONFIGS) {
+      if (cfg.skip || !cfg.name) continue;
 
-      const cleanUrl = normalizeUrl(originalUrl);
-      const videoId = extractVideoId(originalUrl);
+      const getRes = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `'${cfg.name}'!H2:N`,
+      });
       
-      const metrics = metricsMap.get(cleanUrl) || metricsMap.get(videoId);
+      const rows = getRes.data.values || [];
 
-      if (metrics) {
-        updates.push({
-          range: `${SHEET_NAME}!I${index + 2}:N${index + 2}`,
-          values: [[
-            metrics.impression.toString(),
-            metrics.view.toString(),
-            metrics.likes.toString(),
-            metrics.share.toString(),
-            metrics.comment.toString(),
-            metrics.save.toString()
-          ]]
-        });
-      } else {
-        updates.push({
-          range: `${SHEET_NAME}!I${index + 2}:N${index + 2}`,
-          values: [['', '', '', '', '', '']]
-        });
-      }
-    });
+      rows.forEach((row, index) => {
+        const originalUrl = row[0];
+        if (!originalUrl || !originalUrl.includes('tiktok.com/')) return;
+
+        const cleanUrl = normalizeUrl(originalUrl);
+        const videoId = extractVideoId(originalUrl);
+        
+        const metrics = metricsMap.get(cleanUrl) || metricsMap.get(videoId);
+
+        if (metrics) {
+          updates.push({
+            range: `'${cfg.name}'!I${index + 2}:N${index + 2}`,
+            values: [[
+              metrics.impression.toString(),
+              metrics.view.toString(),
+              metrics.likes.toString(),
+              metrics.share.toString(),
+              metrics.comment.toString(),
+              metrics.save.toString()
+            ]]
+          });
+        }
+      });
+    }
 
     if (updates.length > 0) {
+      // Chunk updates if it exceeds payload size, but Vercel / Google API handle ~500 updates fine.
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
         requestBody: {
