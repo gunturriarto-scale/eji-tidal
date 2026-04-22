@@ -4,9 +4,23 @@ import { ApifyClient } from 'apify-client';
 const APIFY_TOKEN = process.env.VITE_APIFY_API_TOKEN;
 const SPREADSHEET_ID = process.env.VITE_SPREADSHEET_ID;
 
+function formatPrivateKey(key) {
+  if (!key) return '';
+  let k = key.replace(/\\n/g, '\n').replace(/"/g, '');
+  if (k.indexOf('\n') === -1) {
+      const prefix = '-----BEGIN PRIVATE KEY-----';
+      const suffix = '-----END PRIVATE KEY-----';
+      if (k.startsWith(prefix) && k.endsWith(suffix)) {
+         let body = k.substring(prefix.length, k.length - suffix.length).replace(/\s+/g, '');
+         return `${prefix}\n${body.match(/.{1,64}/g).join('\n')}\n${suffix}`;
+      }
+  }
+  return k;
+}
+
 const CREDENTIALS = {
   client_email: process.env.GOOGLE_CLIENT_EMAIL,
-  private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
+  private_key: formatPrivateKey(process.env.GOOGLE_PRIVATE_KEY)
 };
 
 const SHEET_CONFIGS = [
