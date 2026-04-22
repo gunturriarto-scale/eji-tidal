@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   Target,
   ChevronLeft,
   ChevronRight,
@@ -7,6 +7,12 @@ import {
   Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+const MetaIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2.5c-5.248 0-9.5 4.252-9.5 9.5s4.252 9.5 9.5 9.5 9.5-4.252 9.5-9.5S17.248 2.5 12 2.5zm-1.5 13.5v-8l6 4-6 4z" fill="currentColor"/>
+  </svg>
+);
 
 const ShopeeIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -53,6 +59,9 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
 
     { type: 'divider', label: 'Social Analytics' },
     { id: 'kol',  name: 'KOL System',   icon: <Zap size={20} />, color: '#E11D48' },
+
+    { type: 'divider', label: 'Meta Analytics' },
+    { id: 'metaAnalytics', name: 'Meta Analytics', icon: <MetaIcon size={20} />, color: '#1877F2' },
   ];
 
   return (
