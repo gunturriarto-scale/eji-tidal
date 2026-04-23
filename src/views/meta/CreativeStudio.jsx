@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, Cell
 } from 'recharts';
-import { Film, TrendingUp, ShoppingCart, Play } from 'lucide-react';
+import { Film, TrendingUp, ShoppingCart, Play, Clock, Zap } from 'lucide-react';
 
 const API = '/api/bigquery';
 
@@ -36,11 +36,25 @@ const ACTION_LABELS = {
 };
 const ACTION_COLORS = ['#4F46E5', '#6366F1', '#10B981', '#F59E0B'];
 
-const KPICard = ({ icon, label, value, sub }) => (
+const CTA_LABELS = {
+  SHOP_NOW: 'Shop Now',
+  ORDER_NOW: 'Order Now',
+  LEARN_MORE: 'Learn More',
+  WHATSAPP_MESSAGE: 'WhatsApp',
+  SEE_DETAILS: 'See Details',
+  BUY_NOW: 'Buy Now',
+};
+
+const FORMAT_LABELS = {
+  VIDEO: 'Video',
+  SHARE: 'Image/Carousel',
+};
+
+const KPICard = ({ icon, label, value, sub, accent }) => (
   <div className="glass-panel kpi-card" style={{ padding: '1.5rem' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
       <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{label}</span>
-      <div style={{ padding: '6px', background: 'rgba(79,70,229,0.1)', borderRadius: '6px', color: 'var(--accent-primary)' }}>{icon}</div>
+      <div style={{ padding: '6px', background: accent ? 'rgba(16,185,129,0.12)' : 'rgba(79,70,229,0.1)', borderRadius: '6px', color: accent || 'var(--accent-primary)' }}>{icon}</div>
     </div>
     <div style={{ fontSize: '1.85rem', fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>{value}</div>
     {sub && <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>{sub}</div>}
@@ -73,7 +87,17 @@ const ThruPlayBadge = ({ rate }) => {
   );
 };
 
-// Short ad name — strip leading code prefix
+const ROASBadge = ({ roas }) => {
+  if (!roas || roas <= 0) return <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>—</span>;
+  const color = roas >= 5 ? '#10B981' : roas >= 1 ? '#F59E0B' : '#EF4444';
+  const bg = roas >= 5 ? 'rgba(16,185,129,0.1)' : roas >= 1 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
+  return (
+    <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', color, background: bg }}>
+      {roas.toFixed(1)}x
+    </span>
+  );
+};
+
 function shortName(name) {
   if (!name) return '';
   const parts = name.split('//').map(s => s.trim());
@@ -83,6 +107,7 @@ function shortName(name) {
 export const CreativeStudio = ({ start, end, account }) => {
   const [videoData, setVideoData] = useState([]);
   const [convData, setConvData] = useState([]);
+  const [ctaData, setCtaData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortKey, setSortKey] = useState('video_views');
@@ -97,9 +122,11 @@ export const CreativeStudio = ({ start, end, account }) => {
     Promise.all([
       fetch(`${API}?type=videoFunnel&${params}`).then(r => r.json()),
       fetch(`${API}?type=conversions&${params}`).then(r => r.json()),
-    ]).then(([v, c]) => {
+      fetch(`${API}?type=ctaPerformance&${params}`).then(r => r.json()),
+    ]).then(([v, c, cta]) => {
       setVideoData(v.data || []);
       setConvData(c.data || []);
+      setCtaData(cta.data || []);
       setLoading(false);
     }).catch(e => {
       setError(e.message);
@@ -116,10 +143,14 @@ export const CreativeStudio = ({ start, end, account }) => {
     const atcRow = convData.find(d => d.ACTION_TYPE === 'offsite_conversion.fb_pixel_add_to_cart');
     const atcValue = atcRow?.total_value || 0;
 
-    return { totalViews, avgThruRate, topCreative, atcValue };
+    const validWatchTimes = videoData.filter(d => d.avg_watch_sec > 0);
+    const avgWatchSec = validWatchTimes.length > 0
+      ? (validWatchTimes.reduce((s, d) => s + Number(d.avg_watch_sec), 0) / validWatchTimes.length).toFixed(1)
+      : null;
+
+    return { totalViews, avgThruRate, topCreative, atcValue, avgWatchSec };
   }, [videoData, convData]);
 
-  // Funnel chart: top 10 creatives
   const funnelChartData = videoData.map(d => ({
     name: shortName(d.AD_NAME),
     fullName: d.AD_NAME,
@@ -130,14 +161,13 @@ export const CreativeStudio = ({ start, end, account }) => {
     p100: Number(d.p100) || 0,
     thruplay: Number(d.thruplay) || 0,
     video_views: Number(d.video_views) || 0,
+    avg_watch_sec: d.avg_watch_sec != null ? Number(d.avg_watch_sec) : null,
   }));
 
-  // ThruPlay rate chart (sorted by rate)
   const thruplayRateData = [...funnelChartData]
     .map(d => ({ ...d, thruRate: d.video_views > 0 ? d.thruplay / d.video_views : 0 }))
     .sort((a, b) => b.thruRate - a.thruRate);
 
-  // Conversion funnel chart
   const convChartData = convData.map((d, i) => ({
     name: ACTION_LABELS[d.ACTION_TYPE] || d.ACTION_TYPE,
     Actions: Number(d.total_actions) || 0,
@@ -145,7 +175,14 @@ export const CreativeStudio = ({ start, end, account }) => {
     color: ACTION_COLORS[i % ACTION_COLORS.length],
   }));
 
-  // All ads table with all video data sorted
+  const ctaTableData = useMemo(() => ctaData.map(d => ({
+    ...d,
+    ctaLabel: CTA_LABELS[d.cta] || d.cta,
+    formatLabel: FORMAT_LABELS[d.format] || d.format,
+    roas: d.purchase_value && d.spend > 0 ? d.purchase_value / d.spend : 0,
+    cpm: d.impressions > 0 ? Math.round((d.spend / d.impressions) * 1000) : 0,
+  })), [ctaData]);
+
   const sortedVideoAll = useMemo(() => {
     return [...funnelChartData].sort((a, b) => {
       const av = a[sortKey] ?? 0; const bv = b[sortKey] ?? 0;
@@ -177,7 +214,7 @@ export const CreativeStudio = ({ start, end, account }) => {
       <div className="kpi-grid">
         <KPICard icon={<Play size={16} />} label="Total Video Views" value={fmt(kpis.totalViews)} sub="All creatives" />
         <KPICard icon={<Film size={16} />} label="Avg ThruPlay Rate" value={`${Math.round(kpis.avgThruRate * 100)}%`} sub="Completed views" />
-        <KPICard icon={<TrendingUp size={16} />} label="Top Creative" value={kpis.topCreative} sub="Most views" />
+        <KPICard icon={<Clock size={16} />} label="Avg Watch Time" value={kpis.avgWatchSec ? `${kpis.avgWatchSec}s` : '—'} sub="Per creative" accent={kpis.avgWatchSec >= 20 ? '#10B981' : undefined} />
         <KPICard icon={<ShoppingCart size={16} />} label="Add to Cart Value" value={fmtRp(kpis.atcValue)} sub="Pixel attribution" />
       </div>
 
@@ -209,7 +246,6 @@ export const CreativeStudio = ({ start, end, account }) => {
 
       {/* ThruPlay Rate + Conversion Funnel */}
       <div className="charts-grid">
-        {/* ThruPlay Rate Ranking */}
         <div className="glass-panel chart-container">
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
             ThruPlay Rate Ranking
@@ -236,7 +272,6 @@ export const CreativeStudio = ({ start, end, account }) => {
           </div>
         </div>
 
-        {/* Conversion Funnel */}
         <div className="glass-panel chart-container">
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
             Conversion Funnel
@@ -254,7 +289,6 @@ export const CreativeStudio = ({ start, end, account }) => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          {/* Value summary */}
           <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {convChartData.filter(d => d.Value > 0).map((d, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '6px' }}>
@@ -265,6 +299,64 @@ export const CreativeStudio = ({ start, end, account }) => {
           </div>
         </div>
       </div>
+
+      {/* CTA × Format Performance */}
+      {ctaTableData.length > 0 && (
+        <div className="glass-panel chart-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>CTA × Format Performance</h3>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>Which call-to-action + creative format drives the best ROAS</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} /> ≥5x
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F59E0B', display: 'inline-block', marginLeft: '6px' }} /> 1–5x
+            </div>
+          </div>
+          <div className="table-container" style={{ overflowX: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>CTA Type</th>
+                  <th>Format</th>
+                  <th># Ads</th>
+                  <th>Spend</th>
+                  <th>Impressions</th>
+                  <th>CPM</th>
+                  <th>Purchases</th>
+                  <th>Purchase Value</th>
+                  <th>ROAS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ctaTableData.map((d, i) => (
+                  <tr key={i}>
+                    <td style={{ fontWeight: 600, fontSize: '0.8rem' }}>{d.ctaLabel}</td>
+                    <td>
+                      <span style={{
+                        fontSize: '0.7rem', fontWeight: 600, padding: '2px 7px', borderRadius: '4px',
+                        color: d.format === 'VIDEO' ? '#6366F1' : '#94A3B8',
+                        background: d.format === 'VIDEO' ? 'rgba(99,102,241,0.1)' : 'rgba(148,163,184,0.1)',
+                      }}>
+                        {d.formatLabel}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{d.ad_count}</td>
+                    <td style={{ fontWeight: 600 }}>{fmtRp(d.spend)}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{fmt(d.impressions)}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{fmtRp(d.cpm)}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{d.purchases ?? '—'}</td>
+                    <td style={{ fontWeight: d.purchase_value ? 600 : 400, color: d.purchase_value ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                      {d.purchase_value ? fmtRp(d.purchase_value) : '—'}
+                    </td>
+                    <td><ROASBadge roas={d.roas} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* All Ads Table */}
       <div className="glass-panel chart-container">
@@ -282,6 +374,7 @@ export const CreativeStudio = ({ start, end, account }) => {
                   { key: 'video_views', label: 'Views' },
                   { key: 'thruplay', label: 'ThruPlay' },
                   { key: 'thruRate', label: 'ThruPlay %' },
+                  { key: 'avg_watch_sec', label: 'Avg Watch (s)' },
                   { key: 'p25', label: '25%' },
                   { key: 'p50', label: '50%' },
                   { key: 'p75', label: '75%' },
@@ -299,6 +392,7 @@ export const CreativeStudio = ({ start, end, account }) => {
             <tbody>
               {pagedVideo.map((d, i) => {
                 const thruRate = d.video_views > 0 ? d.thruplay / d.video_views : 0;
+                const watchColor = d.avg_watch_sec >= 20 ? '#10B981' : d.avg_watch_sec >= 10 ? '#F59E0B' : 'var(--text-secondary)';
                 return (
                   <tr key={i}>
                     <td style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.8rem' }} title={d.fullName}>{d.name}</td>
@@ -316,6 +410,9 @@ export const CreativeStudio = ({ start, end, account }) => {
                     <td style={{ fontWeight: 600 }}>{fmt(d.video_views)}</td>
                     <td>{fmt(d.thruplay)}</td>
                     <td><ThruPlayBadge rate={thruRate} /></td>
+                    <td style={{ fontWeight: d.avg_watch_sec ? 600 : 400, color: d.avg_watch_sec ? watchColor : 'var(--text-tertiary)' }}>
+                      {d.avg_watch_sec != null ? `${d.avg_watch_sec}s` : '—'}
+                    </td>
                     <td style={{ color: 'var(--text-secondary)' }}>{fmt(d.p25)}</td>
                     <td style={{ color: 'var(--text-secondary)' }}>{fmt(d.p50)}</td>
                     <td style={{ color: 'var(--text-secondary)' }}>{fmt(d.p75)}</td>

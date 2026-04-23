@@ -30,7 +30,8 @@ const QUERIES = {
       ROUND(SUM(COST)) as spend,
       SUM(IMPRESSIONS) as impressions,
       SUM(REACH) as reach,
-      SUM(CLICKS) as clicks
+      SUM(CLICKS) as clicks,
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value
     FROM \`bigdata.FBADS_AD\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
     GROUP BY 1
@@ -57,6 +58,39 @@ const QUERIES = {
     GROUP BY 1, 2, 3
     ORDER BY spend DESC
     LIMIT 100`,
+
+  placement: ({ start, end, account }) => `
+    SELECT PLATFORM_POSITION, PUBLISHER_PLATFORM,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE) as purchases,
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND PLATFORM_POSITION != ''
+    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY purchase_value DESC, spend DESC`,
+
+  trend: ({ start, end }) => `
+    SELECT FORMAT_DATE('%Y-%m-%d', DATE) as date, ACCOUNT_NAME,
+      ROUND(SUM(COST)) as spend
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    GROUP BY 1, 2
+    ORDER BY 1`,
+
+  pacing: ({ start, end }) => `
+    SELECT CAMPAIGN_NAME, ACCOUNT_NAME, CAMPAIGN_STATUS,
+      CAMPAIGN_DAILY_BUDGET, CAMPAIGN_BUDGET_REMAINING,
+      ROUND(SUM(COST)) as total_spend
+    FROM \`bigdata.FBADS_CAMPAIGN\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND CAMPAIGN_DAILY_BUDGET > 0
+    GROUP BY 1,2,3,4,5
+    ORDER BY total_spend DESC
+    LIMIT 15`,
 
   ageGender: ({ start, end, account }) => `
     SELECT AGE, GENDER,
@@ -99,7 +133,8 @@ const QUERIES = {
       SUM(VIDEO_P_50_WATCHED_ACTIONS) as p50,
       SUM(VIDEO_P_75_WATCHED_ACTIONS) as p75,
       SUM(VIDEO_P_100_WATCHED_ACTIONS) as p100,
-      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as thruplay
+      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as thruplay,
+      ROUND(AVG(VIDEO_AVERAGE_WATCH_TIME), 1) as avg_watch_sec
     FROM \`bigdata.FBADS_VIDEO\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
     ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
@@ -121,6 +156,22 @@ const QUERIES = {
     ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
     GROUP BY 1
     ORDER BY total_actions DESC`,
+
+  ctaPerformance: ({ start, end, account }) => `
+    SELECT
+      CREATIVE_CALL_TO_ACTION_TYPE as cta,
+      CREATIVE_OBJECT_TYPE as format,
+      COUNT(DISTINCT AD_ID) as ad_count,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE) as purchases,
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND CREATIVE_CALL_TO_ACTION_TYPE != ''
+    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
 };
 
 export default async function handler(req, res) {
