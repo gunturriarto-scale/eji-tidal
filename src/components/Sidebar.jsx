@@ -4,7 +4,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Zap
+  Zap,
+  BarChart2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -58,7 +59,8 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { id: 'tokopediaNco',  name: 'Tokopedia NCO',   icon: <TokopediaIcon size={20} />, color: '#059669' },
 
     { type: 'divider', label: 'Social Analytics' },
-    { id: 'kol',  name: 'KOL System',   icon: <Zap size={20} />, color: '#E11D48' },
+    { id: 'kol',          name: 'KOL System',    icon: <Zap size={20} />,      color: '#E11D48' },
+    { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },
 
     { type: 'divider', label: 'Meta Analytics' },
     { id: 'metaDashboard', name: 'Meta Dashboard', icon: <MetaIcon size={20} />, color: '#1877F2' },
