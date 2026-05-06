@@ -1,6 +1,11 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { BRAND_LABELS } from '../index.jsx';
+
+const BRAND_LABELS = {
+  'EJI // HANASUI // SKINCARE': 'Skincare',
+  'EJI // HANASUI // DECORATIVE': 'Decorative',
+  'EJI // HANASUI // BODYCARE': 'Bodycare',
+};
 
 const fmtRp = (n) => {
   if (!n && n !== 0) return '—';
