@@ -190,6 +190,7 @@ const MetaDashboardInner = () => {
     const i = Number(kpiData.total_impressions) || 0;
     const c = Number(kpiData.total_clicks) || 0;
     const r = Number(kpiData.total_reach) || 0;
+    const pe = Number(kpiData.total_post_engagement) || 0;
     const vv = Number(videoKPIData.total_video_views) || 0;
     const tp = Number(videoKPIData.total_thruplay) || 0;
 
@@ -198,10 +199,12 @@ const MetaDashboardInner = () => {
       impressions: i,
       clicks: c,
       reach: r,
+      postEngagement: pe,
       ctr: i > 0 ? ((c / i) * 100).toFixed(2) : '0.00',
       cpc: c > 0 ? (s / c).toFixed(2) : '0.00',
       cpm: i > 0 ? ((s / i) * 1000).toFixed(2) : '0.00',
       cpv: vv > 0 ? (s / vv).toFixed(2) : '0.00',
+      cpe: pe > 0 ? (s / pe).toFixed(2) : '0.00',
       videoViews: vv,
       thruplay: tp,
       thruplayRate: vv > 0 ? ((tp / vv) * 100).toFixed(1) : '0',

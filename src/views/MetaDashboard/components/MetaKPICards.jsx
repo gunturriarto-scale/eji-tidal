@@ -11,11 +11,11 @@ const fmt = (n) => {
   return Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
-const KPICard = ({ icon, label, value, sub, accent, wide }) => (
+const KPICard = ({ icon, label, value, sub }) => (
   <div className="glass-panel" style={{
     padding: '0.85rem 1rem',
     display: 'flex', flexDirection: 'column', gap: '0.25rem',
-    flex: wide ? 2 : 1,
+    flex: 1,
   }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -23,9 +23,9 @@ const KPICard = ({ icon, label, value, sub, accent, wide }) => (
       </span>
       <div style={{
         padding: '4px',
-        background: accent ? 'rgba(16,185,129,0.1)' : 'rgba(79,70,229,0.1)',
+        background: 'rgba(79,70,229,0.1)',
         borderRadius: '6px',
-        color: accent || 'var(--accent-primary)',
+        color: 'var(--accent-primary)',
         display: 'flex'
       }}>
         {icon}
@@ -40,69 +40,72 @@ const KPICard = ({ icon, label, value, sub, accent, wide }) => (
 
 export const MetaKPICards = ({ kpis }) => {
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-      gap: '0.75rem'
-    }}>
-      <KPICard
-        icon={<DollarSign size={16} />}
-        label="Total Spend"
-        value={fmtRp(kpis.spend)}
-        sub={`${kpis.impressions > 0 ? fmt(Math.round(kpis.spend / (kpis.impressions / 1000))) + '/K impr' : 'No impressions'}`}
-      />
-      <KPICard
-        icon={<Eye size={16} />}
-        label="Impressions"
-        value={fmt(kpis.impressions)}
-        sub={`Reach: ${fmt(kpis.reach)}`}
-      />
-      <KPICard
-        icon={<MousePointerClick size={16} />}
-        label="Clicks"
-        value={fmt(kpis.clicks)}
-        sub={`CTR: ${kpis.ctr}%`}
-      />
-      <KPICard
-        icon={<TrendingUp size={16} />}
-        label="CTR"
-        value={`${kpis.ctr}%`}
-        sub="Click-through rate"
-      />
-      <KPICard
-        icon={<BarChart2 size={16} />}
-        label="CPM"
-        value={fmtRp(kpis.cpm)}
-        sub="Cost per 1K impr."
-      />
-      <KPICard
-        icon={<MousePointerClick size={16} />}
-        label="CPC"
-        value={fmtRp(kpis.cpc)}
-        sub="Cost per click"
-      />
-      <KPICard
-        icon={<Play size={16} />}
-        label="CPV"
-        value={fmtRp(kpis.cpv)}
-        sub="Cost per video view"
-      />
-      <KPICard
-        icon={<Play size={16} />}
-        label="Video Views"
-        value={fmt(kpis.videoViews)}
-        sub={`ThruPlay: ${kpis.thruplayRate}%`}
-      />
-      {/*
-      <KPICard
-        icon={<ShoppingCart size={16} />}
-        label="Purchase Value"
-        value={fmtRp(kpis.purchaseValue)}
-        sub={`${fmt(kpis.purchases)} purchases`}
-        accent="#10B981"
-        wide
-      />
-      */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {/* Row 1: Volume Metrics */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gap: '0.75rem'
+      }}>
+        <KPICard
+          icon={<DollarSign size={16} />}
+          label="Total Spend"
+          value={fmtRp(kpis.spend)}
+        />
+        <KPICard
+          icon={<Eye size={16} />}
+          label="Impressions"
+          value={fmt(kpis.impressions)}
+        />
+        <KPICard
+          icon={<MousePointerClick size={16} />}
+          label="Clicks"
+          value={fmt(kpis.clicks)}
+        />
+        <KPICard
+          icon={<TrendingUp size={16} />}
+          label="Post Engagement"
+          value={fmt(kpis.postEngagement)}
+        />
+        <KPICard
+          icon={<Play size={16} />}
+          label="Video Views"
+          value={fmt(kpis.videoViews)}
+        />
+      </div>
+
+      {/* Row 2: Cost & Rate Metrics */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, 1fr)',
+        gap: '0.75rem'
+      }}>
+        <KPICard
+          icon={<BarChart2 size={16} />}
+          label="CPM"
+          value={fmtRp(kpis.cpm)}
+        />
+        <KPICard
+          icon={<MousePointerClick size={16} />}
+          label="CPC"
+          value={fmtRp(kpis.cpc)}
+        />
+        <KPICard
+          icon={<Play size={16} />}
+          label="CPV"
+          value={fmtRp(kpis.cpv)}
+        />
+        <KPICard
+          icon={<TrendingUp size={16} />}
+          label="CTR"
+          value={`${kpis.ctr}%`}
+        />
+        <KPICard
+          icon={<TrendingUp size={16} />}
+          label="CPE"
+          value={fmtRp(kpis.cpe)}
+        />
+      </div>
     </div>
   );
 };

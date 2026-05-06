@@ -251,8 +251,7 @@ const QUERIES = {
       SUM(IMPRESSIONS) as total_impressions,
       SUM(CLICKS) as total_clicks,
       SUM(REACH) as total_reach,
-      SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE) as total_purchases,
-      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as total_purchase_value
+      SUM(ACTION_POST_ENGAGEMENT) as total_post_engagement
     FROM \`bigdata.FBADS_AD\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
     ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
