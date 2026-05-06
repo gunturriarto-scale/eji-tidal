@@ -3,17 +3,12 @@ import { DollarSign, Eye, MousePointerClick, TrendingUp, Target, BarChart2, Shop
 
 const fmtRp = (n) => {
   if (!n && n !== 0) return '—';
-  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`;
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-  return `$${n}`;
+  return 'Rp ' + Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const fmt = (n) => {
   if (!n && n !== 0) return '—';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(n);
+  return Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const KPICard = ({ icon, label, value, sub, accent, wide }) => (

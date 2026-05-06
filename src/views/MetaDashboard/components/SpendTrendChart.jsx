@@ -5,10 +5,8 @@ import {
 } from 'recharts';
 
 const fmtRp = (n) => {
-  if (!n && n !== 0) return '$0';
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-  return `$${n}`;
+  if (!n && n !== 0) return 'Rp 0';
+  return 'Rp ' + Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const fmtDate = (d) => {
@@ -89,7 +87,7 @@ export const SpendTrendChart = ({ data, brandColors }) => {
             fontSize={10}
             tickLine={false}
             tickFormatter={v => fmtRp(v)}
-            width={62}
+            width={120}
           />
           <Tooltip content={<CustomTooltip />} />
           {brands.map(b => (

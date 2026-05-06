@@ -2,17 +2,13 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
 const fmtRp = (n) => {
-  if (!n && n !== 0) return '$0';
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-  return `$${n}`;
+  if (!n && n !== 0) return 'Rp 0';
+  return 'Rp ' + Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const fmt = (n) => {
   if (!n && n !== 0) return '0';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(n);
+  return Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const PLAT_COLORS = {
@@ -102,7 +98,7 @@ export const PlatformBreakdown = ({ data, trendData }) => {
                   <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: PLAT_COLORS[d.key] || '#4F46E5', flex: 'none' }} />
                   <div>
                     <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{d.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>CPM: ${cpm}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>CPM: {fmtRp(Number(cpm))}</div>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>

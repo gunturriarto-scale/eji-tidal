@@ -66,17 +66,12 @@ const sevenDaysAgo = new Date(Date.now() - 6 * 86400000).toISOString().split('T'
 
 const fmt = (n) => {
   if (!n && n !== 0) return '—';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(n);
+  return Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const fmtRp = (n) => {
   if (!n && n !== 0) return '—';
-  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(2)}B`;
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
-  return `$${n}`;
+  return 'Rp ' + Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 // ─── Custom Tooltip ────────────────────────────────────────────────────────────
@@ -218,7 +213,7 @@ const MetaDashboardInner = () => {
   const trendChartData = useMemo(() => {
     const byDate = {};
     brandTrend.forEach(row => {
-      const d = String(row.DATE || row.date || '');
+      const d = String(row.DATE?.value || row.DATE || row.date || '');
       if (!byDate[d]) byDate[d] = { date: d };
       const label = BRAND_LABELS[row.ACCOUNT_NAME] || row.ACCOUNT_NAME?.split('//').pop()?.trim() || 'Unknown';
       byDate[d][label] = Number(row.spend) || 0;
