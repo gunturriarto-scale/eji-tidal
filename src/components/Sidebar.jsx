@@ -61,7 +61,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { id: 'kol',  name: 'KOL System',   icon: <Zap size={20} />, color: '#E11D48' },
 
     { type: 'divider', label: 'Meta Analytics' },
-    { id: 'metaAnalytics', name: 'Meta Analytics', icon: <MetaIcon size={20} />, color: '#1877F2' },
+    { id: 'metaDashboard', name: 'Meta Dashboard', icon: <MetaIcon size={20} />, color: '#1877F2' },
   ];
 
   return (
