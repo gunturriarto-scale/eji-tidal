@@ -206,8 +206,6 @@ const QUERIES = {
       SUM(IMPRESSIONS) as impressions,
       SUM(REACH) as reach,
       SUM(CLICKS) as clicks,
-      SUM(ACTION_LINK_CLICK) as link_clicks,
-      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as thruplay,
       ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value,
       ROUND(SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE)) as purchases
     FROM \`bigdata.FBADS_AD\`
@@ -253,9 +251,7 @@ const QUERIES = {
       SUM(CLICKS) as total_clicks,
       SUM(REACH) as total_reach,
       SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE) as total_purchases,
-      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as total_purchase_value,
-      SUM(ACTION_VIDEO_VIEW) as total_video_views,
-      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as total_thruplay
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as total_purchase_value
     FROM \`bigdata.FBADS_AD\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
     ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,

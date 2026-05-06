@@ -20,6 +20,35 @@ import { AdTable } from './components/AdTable';
 
 const API = '/api/bigquery';
 
+class MetaDashboardErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          padding: '2rem', margin: '1rem',
+          background: 'rgba(239,68,68,0.08)',
+          border: '1px solid rgba(239,68,68,0.2)',
+          borderRadius: '12px', color: '#ef4444',
+          fontSize: '0.9rem'
+        }}>
+          ⚠️ Dashboard render error: {this.state.error?.message}
+          <pre style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
+            {this.state.error?.stack}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const BRAND_LABELS = {
   'EJI // HANASUI // SKINCARE': 'Skincare',
   'EJI // HANASUI // DECORATIVE': 'Decorative',
@@ -100,7 +129,7 @@ const Section = ({ title, subtitle, children, style = {} }) => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export const MetaDashboard = () => {
+const MetaDashboardInner = () => {
   // ─── Filter State ───────────────────────────────────────────────────────────
   const [startDate, setStartDate] = useState(sevenDaysAgo);
   const [endDate, setEndDate] = useState(today);
@@ -381,3 +410,9 @@ export const MetaDashboard = () => {
     </div>
   );
 };
+
+export const MetaDashboard = () => (
+  <MetaDashboardErrorBoundary>
+    <MetaDashboardInner />
+  </MetaDashboardErrorBoundary>
+);

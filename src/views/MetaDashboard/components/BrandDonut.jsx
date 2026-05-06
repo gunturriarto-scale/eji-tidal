@@ -52,9 +52,17 @@ const renderActiveShape = (props) => {
 export const BrandDonut = ({ data }) => {
   const [activeIndex, setActiveIndex] = useState(0);
 
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+        No brand data available
+      </div>
+    );
+  }
+
   const total = data.reduce((s, d) => s + d.value, 0);
 
-  if (!data || data.length === 0 || total === 0) {
+  if (total === 0) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
         No brand data available
