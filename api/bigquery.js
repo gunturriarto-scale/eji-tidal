@@ -2,15 +2,29 @@ import { BigQuery } from '@google-cloud/bigquery';
 
 function formatPrivateKey(key) {
   if (!key) return '';
-  let k = key.replace(/\\n/g, '\n').replace(/"/g, '');
-  if (k.indexOf('\n') === -1) {
-    const prefix = '-----BEGIN PRIVATE KEY-----';
-    const suffix = '-----END PRIVATE KEY-----';
-    if (k.startsWith(prefix) && k.endsWith(suffix)) {
-      const body = k.substring(prefix.length, k.length - suffix.length).replace(/\s+/g, '');
-      return `${prefix}\n${body.match(/.{1,64}/g).join('\n')}\n${suffix}`;
-    }
+  // Normalize: handle both actual newlines and escaped \n strings
+  let k = key
+    .replace(/\\n/g, '\n')   // escaped \n → actual newline
+    .replace(/\\\\n/g, '\n') // double-escaped \\n → actual newline
+    .replace(/\r\n/g, '\n')  // CRLF → LF
+    .replace(/\r/g, '\n');   // leftover CR → LF
+
+  // Remove surrounding quotes if present
+  k = k.replace(/^["']|["']$/g, '');
+
+  // If still no newlines inside the key body, it's likely a single-line base64
+  // Re-wrap to proper PEM format
+  const prefix = '-----BEGIN PRIVATE KEY-----';
+  const suffix = '-----END PRIVATE KEY-----';
+
+  if (k.includes(prefix) && k.includes(suffix)) {
+    // Already has PEM markers — just normalize the line breaks
+    const start = k.indexOf(prefix);
+    const end = k.lastIndexOf(suffix);
+    const body = k.substring(start + prefix.length, end).trim().replace(/\s+/g, '');
+    return `${prefix}\n${body.match(/.{1,64}/g).join('\n')}\n${suffix}`;
   }
+
   return k;
 }
 
@@ -25,6 +39,7 @@ function getBigQueryClient() {
 }
 
 const QUERIES = {
+  // ─── BRAND / ACCOUNT LEVEL ───────────────────────────────────────────────
   brandOverview: ({ start, end }) => `
     SELECT ACCOUNT_NAME,
       ROUND(SUM(COST)) as spend,
@@ -37,16 +52,19 @@ const QUERIES = {
     GROUP BY 1
     ORDER BY spend DESC`,
 
-  brandPlatform: ({ start, end }) => `
-    SELECT ACCOUNT_NAME, PUBLISHER_PLATFORM,
+  brandTrend: ({ start, end }) => `
+    SELECT DATE,
+      ACCOUNT_NAME,
       ROUND(SUM(COST)) as spend,
-      SUM(IMPRESSIONS) as impressions
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(REACH) as reach
     FROM \`bigdata.FBADS_AD\`
-    WHERE PUBLISHER_PLATFORM IN ('instagram','facebook','audience_network','threads')
-    AND DATE BETWEEN '${start}' AND '${end}'
+    WHERE DATE BETWEEN '${start}' AND '${end}'
     GROUP BY 1, 2
-    ORDER BY spend DESC`,
+    ORDER BY DATE`,
 
+  // ─── CAMPAIGN LEVEL ──────────────────────────────────────────────────────
   campaigns: ({ start, end }) => `
     SELECT ACCOUNT_NAME, CAMPAIGN_NAME, CAMPAIGN_OBJECTIVE,
       ROUND(SUM(COST)) as spend,
@@ -59,39 +77,22 @@ const QUERIES = {
     ORDER BY spend DESC
     LIMIT 100`,
 
-  placement: ({ start, end, account }) => `
-    SELECT PLATFORM_POSITION, PUBLISHER_PLATFORM,
+  topCampaigns: ({ start, end, account }) => `
+    SELECT ACCOUNT_NAME, CAMPAIGN_NAME, CAMPAIGN_OBJECTIVE, CAMPAIGN_STATUS,
       ROUND(SUM(COST)) as spend,
       SUM(IMPRESSIONS) as impressions,
       SUM(REACH) as reach,
-      SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE) as purchases,
-      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value
+      SUM(CLICKS) as clicks,
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value,
+      ROUND(SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE)) as purchases
     FROM \`bigdata.FBADS_AD\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
-    AND PLATFORM_POSITION != ''
-    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
-    GROUP BY 1, 2
-    ORDER BY purchase_value DESC, spend DESC`,
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2, 3, 4
+    ORDER BY spend DESC
+    LIMIT 50`,
 
-  trend: ({ start, end }) => `
-    SELECT FORMAT_DATE('%Y-%m-%d', DATE) as date, ACCOUNT_NAME,
-      ROUND(SUM(COST)) as spend
-    FROM \`bigdata.FBADS_AD\`
-    WHERE DATE BETWEEN '${start}' AND '${end}'
-    GROUP BY 1, 2
-    ORDER BY 1`,
-
-  pacing: ({ start, end }) => `
-    SELECT CAMPAIGN_NAME, ACCOUNT_NAME, CAMPAIGN_STATUS,
-      CAMPAIGN_DAILY_BUDGET, CAMPAIGN_BUDGET_REMAINING,
-      ROUND(SUM(COST)) as total_spend
-    FROM \`bigdata.FBADS_CAMPAIGN\`
-    WHERE DATE BETWEEN '${start}' AND '${end}'
-    AND CAMPAIGN_DAILY_BUDGET > 0
-    GROUP BY 1,2,3,4,5
-    ORDER BY total_spend DESC
-    LIMIT 15`,
-
+  // ─── DEMOGRAPHICS ───────────────────────────────────────────────────────
   ageGender: ({ start, end, account }) => `
     SELECT AGE, GENDER,
       ROUND(SUM(COST)) as spend,
@@ -99,33 +100,25 @@ const QUERIES = {
       SUM(REACH) as reach
     FROM \`bigdata.FBADS_AGE_GENDER\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
-    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
     GROUP BY 1, 2
     ORDER BY spend DESC`,
 
-  platform: ({ start, end, account }) => `
-    SELECT PUBLISHER_PLATFORM,
-      ROUND(SUM(COST)) as spend,
-      SUM(IMPRESSIONS) as impressions,
-      SUM(REACH) as reach
-    FROM \`bigdata.FBADS_AD\`
-    WHERE DATE BETWEEN '${start}' AND '${end}'
-    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
-    GROUP BY 1
-    ORDER BY spend DESC`,
-
+  // ─── GEO ─────────────────────────────────────────────────────────────────
   geo: ({ start, end, account }) => `
     SELECT REGION, COUNTRY_NAME,
       ROUND(SUM(COST)) as spend,
       SUM(IMPRESSIONS) as impressions,
-      SUM(REACH) as reach
+      SUM(REACH) as reach,
+      SUM(CLICKS) as clicks
     FROM \`bigdata.FBADS_GEO\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
-    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
     GROUP BY 1, 2
     ORDER BY spend DESC
-    LIMIT 15`,
+    LIMIT 20`,
 
+  // ─── VIDEO ────────────────────────────────────────────────────────────────
   videoFunnel: ({ start, end, account }) => `
     SELECT AD_NAME, ACCOUNT_NAME,
       SUM(ACTION_VIDEO_VIEW) as video_views,
@@ -137,11 +130,33 @@ const QUERIES = {
       ROUND(AVG(VIDEO_AVERAGE_WATCH_TIME), 1) as avg_watch_sec
     FROM \`bigdata.FBADS_VIDEO\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
-    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
     GROUP BY 1, 2
     ORDER BY video_views DESC
-    LIMIT 10`,
+    LIMIT 20`,
 
+  // ─── PLATFORM ─────────────────────────────────────────────────────────────
+  platform: ({ start, end, account }) => `
+    SELECT PUBLISHER_PLATFORM,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1
+    ORDER BY spend DESC`,
+
+  platformTrend: ({ start, end }) => `
+    SELECT DATE, PUBLISHER_PLATFORM,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    GROUP BY 1, 2
+    ORDER BY 1`,
+
+  // ─── CONVERSION ───────────────────────────────────────────────────────────
   conversions: ({ start, end, account }) => `
     SELECT ACTION_TYPE,
       SUM(ACTIONS) as total_actions,
@@ -153,10 +168,56 @@ const QUERIES = {
       'offsite_conversion.fb_pixel_add_to_cart',
       'offsite_conversion.fb_pixel_purchase'
     )
-    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
     GROUP BY 1
     ORDER BY total_actions DESC`,
 
+  // ─── PLACEMENT ────────────────────────────────────────────────────────────
+  placement: ({ start, end, account }) => `
+    SELECT PLATFORM_POSITION, PUBLISHER_PLATFORM,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE) as purchases,
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND PLATFORM_POSITION != ''
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY purchase_value DESC, spend DESC`,
+
+  // ─── PACING ───────────────────────────────────────���───────────────────────
+  pacing: ({ start, end }) => `
+    SELECT CAMPAIGN_NAME, ACCOUNT_NAME, CAMPAIGN_STATUS,
+      CAMPAIGN_DAILY_BUDGET, CAMPAIGN_BUDGET_REMAINING,
+      ROUND(SUM(COST)) as total_spend
+    FROM \`bigdata.FBADS_CAMPAIGN\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND CAMPAIGN_DAILY_BUDGET > 0
+    GROUP BY 1,2,3,4,5
+    ORDER BY total_spend DESC
+    LIMIT 15`,
+
+  // ─── AD LEVEL ─────────────────────────────────────────────────────────────
+  adsOverview: ({ start, end, account }) => `
+    SELECT AD_NAME, AD_STATUS, ACCOUNT_NAME, CAMPAIGN_NAME,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(CLICKS) as clicks,
+      SUM(ACTION_LINK_CLICK) as link_clicks,
+      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as thruplay,
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as purchase_value,
+      ROUND(SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE)) as purchases
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1,2,3,4
+    ORDER BY spend DESC
+    LIMIT 50`,
+
+  // ─── CTA PERFORMANCE ──────────────────────────────────────────────────────
   ctaPerformance: ({ start, end, account }) => `
     SELECT
       CREATIVE_CALL_TO_ACTION_TYPE as cta,
@@ -169,9 +230,35 @@ const QUERIES = {
     FROM \`bigdata.FBADS_AD\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
     AND CREATIVE_CALL_TO_ACTION_TYPE != ''
-    ${account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
     GROUP BY 1, 2
     ORDER BY spend DESC`,
+
+  // ─── BRAND PLATFORM SPLIT ─────────────────────────────────────────────────
+  brandPlatform: ({ start, end }) => `
+    SELECT ACCOUNT_NAME, PUBLISHER_PLATFORM,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions
+    FROM \`bigdata.FBADS_AD\`
+    WHERE PUBLISHER_PLATFORM IN ('instagram','facebook','audience_network','threads')
+    AND DATE BETWEEN '${start}' AND '${end}'
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
+
+  // ─── KPI SUMMARY ──────────────────────────────────────────────────────────
+  kpiSummary: ({ start, end, account }) => `
+    SELECT
+      ROUND(SUM(COST)) as total_spend,
+      SUM(IMPRESSIONS) as total_impressions,
+      SUM(CLICKS) as total_clicks,
+      SUM(REACH) as total_reach,
+      SUM(OFFSITE_CONVERSIONS_FB_PIXEL_PURCHASE) as total_purchases,
+      ROUND(SUM(OFFSITE_CONVERSION_VALUE_FB_PIXEL_PURCHASE)) as total_purchase_value,
+      SUM(ACTION_VIDEO_VIEW) as total_video_views,
+      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as total_thruplay
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
 };
 
 export default async function handler(req, res) {
@@ -182,7 +269,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { type, start = '2026-01-01', end = '2099-12-31', account = 'all' } = req.query;
+  const { type, start = '2026-01-01', end = '2099-12-31', account } = req.query;
 
   if (!type || !QUERIES[type]) {
     return res.status(400).json({ error: `Unknown query type: ${type}. Valid: ${Object.keys(QUERIES).join(', ')}` });
