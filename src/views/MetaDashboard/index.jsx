@@ -140,6 +140,7 @@ const MetaDashboardInner = () => {
   const [ageGender, setAgeGender] = useState([]);
   const [geo, setGeo] = useState([]);
   const [videoData, setVideoData] = useState([]);
+  const [videoKPIData, setVideoKPIData] = useState({});
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -162,7 +163,8 @@ const MetaDashboardInner = () => {
       fetch(`${API}?type=geo&${params}`).then(r => r.json()),
       fetch(`${API}?type=videoFunnel&${params}`).then(r => r.json()),
       fetch(`${API}?type=adsOverview&${params}`).then(r => r.json()),
-    ]).then(([kpi, brandOv, brandTr, cam, plat, platTr, ag, geoData, vid, adData]) => {
+      fetch(`${API}?type=videoKPISummary&${params}`).then(r => r.json()),
+    ]).then(([kpi, brandOv, brandTr, cam, plat, platTr, ag, geoData, vid, adData, vidKpi]) => {
       setKpiData(kpi.data?.[0] || {});
       setBrandOverview(brandOv.data || []);
       setBrandTrend(brandTr.data || []);
@@ -173,6 +175,7 @@ const MetaDashboardInner = () => {
       setGeo(geoData.data || []);
       setVideoData(vid.data || []);
       setAds(adData.data || []);
+      setVideoKPIData(vidKpi.data?.[0] || {});
       setLoading(false);
     }).catch(e => {
       setError(e.message);
@@ -189,8 +192,8 @@ const MetaDashboardInner = () => {
     const r = Number(kpiData.total_reach) || 0;
     const pv = Number(kpiData.total_purchase_value) || 0;
     const purchases = Number(kpiData.total_purchases) || 0;
-    const vv = Number(kpiData.total_video_views) || 0;
-    const tp = Number(kpiData.total_thruplay) || 0;
+    const vv = Number(videoKPIData.total_video_views) || 0;
+    const tp = Number(videoKPIData.total_thruplay) || 0;
 
     return {
       spend: s,
@@ -207,7 +210,7 @@ const MetaDashboardInner = () => {
       thruplay: tp,
       thruplayRate: vv > 0 ? ((tp / vv) * 100).toFixed(1) : '0',
     };
-  }, [kpiData]);
+  }, [kpiData, videoKPIData]);
 
   // ─── Brand Trend Chart Data ──────────────────────────────────────────────────
   const trendChartData = useMemo(() => {

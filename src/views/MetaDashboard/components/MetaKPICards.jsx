@@ -8,33 +8,36 @@ const fmtRp = (n) => {
 
 const fmt = (n) => {
   if (!n && n !== 0) return '—';
-  return Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const val = Math.round(Number(n));
+  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+  if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const KPICard = ({ icon, label, value, sub, accent, wide }) => (
   <div className="glass-panel" style={{
-    padding: '1.25rem 1.5rem',
-    display: 'flex', flexDirection: 'column', gap: '0.5rem',
+    padding: '0.85rem 1rem',
+    display: 'flex', flexDirection: 'column', gap: '0.25rem',
     flex: wide ? 2 : 1,
   }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {label}
       </span>
       <div style={{
-        padding: '6px',
+        padding: '4px',
         background: accent ? 'rgba(16,185,129,0.1)' : 'rgba(79,70,229,0.1)',
-        borderRadius: '8px',
+        borderRadius: '6px',
         color: accent || 'var(--accent-primary)',
         display: 'flex'
       }}>
         {icon}
       </div>
     </div>
-    <div style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+    <div style={{ fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-primary)', lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
       {value}
     </div>
-    {sub && <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>{sub}</div>}
+    {sub && <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</div>}
   </div>
 );
 
@@ -42,8 +45,8 @@ export const MetaKPICards = ({ kpis }) => {
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-      gap: '1rem'
+      gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+      gap: '0.75rem'
     }}>
       <KPICard
         icon={<DollarSign size={16} />}
@@ -67,12 +70,12 @@ export const MetaKPICards = ({ kpis }) => {
         icon={<TrendingUp size={16} />}
         label="CTR"
         value={`${kpis.ctr}%`}
-        sub={`CPC: $${kpis.cpc}`}
+        sub={`CPC: ${fmtRp(kpis.cpc)}`}
       />
       <KPICard
         icon={<BarChart2 size={16} />}
         label="CPM"
-        value={`$${kpis.cpm}`}
+        value={fmtRp(kpis.cpm)}
         sub="Cost per 1K impr."
       />
       <KPICard
@@ -88,6 +91,7 @@ export const MetaKPICards = ({ kpis }) => {
         value={fmt(kpis.videoViews)}
         sub={`ThruPlay: ${kpis.thruplayRate}%`}
       />
+      {/*
       <KPICard
         icon={<ShoppingCart size={16} />}
         label="Purchase Value"
@@ -96,6 +100,7 @@ export const MetaKPICards = ({ kpis }) => {
         accent="#10B981"
         wide
       />
+      */}
     </div>
   );
 };

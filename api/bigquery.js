@@ -257,6 +257,15 @@ const QUERIES = {
     WHERE DATE BETWEEN '${start}' AND '${end}'
     ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
 
+// ─── VIDEO KPI SUMMARY ───────────────────────────────────────────────────────
+  videoKPISummary: ({ start, end, account }) => `
+    SELECT
+      SUM(ACTION_VIDEO_VIEW) as total_video_views,
+      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as total_thruplay
+    FROM \`bigdata.FBADS_VIDEO\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
+
 };
 
 export default async function handler(req, res) {
