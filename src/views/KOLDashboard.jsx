@@ -17,17 +17,12 @@ const TIER_COLORS = { mega: '#6366F1', makro: '#10B981', mikro: '#F59E0B', nano:
 
 const fmtNum = (n) => {
   if (!n && n !== 0) return '—';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
-  return String(Math.round(n));
+  return Math.round(n).toLocaleString('id-ID');
 };
 
 const fmtRp = (n) => {
   if (!n && n !== 0) return '—';
-  if (n >= 1_000_000_000) return `Rp${(n / 1_000_000_000).toFixed(1)}B`;
-  if (n >= 1_000_000) return `Rp${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `Rp${(n / 1_000).toFixed(0)}K`;
-  return `Rp${n}`;
+  return `Rp${Math.round(n).toLocaleString('id-ID')}`;
 };
 
 const fmtPct = (n) => (n == null ? '—' : `${n.toFixed(1)}%`);
@@ -281,8 +276,6 @@ export const KOLDashboard = () => {
           sub="engagement / views" color="#10B981" />
         <KPICard icon={<DollarSign size={16} />} label="Avg CPV" value={fmtRp(kpis.avgCPV)}
           sub="ratecard / views" color="#F59E0B" />
-        <KPICard icon={<Target size={16} />} label="NCO Achievement" value={kpis.ncoAch != null ? fmtPct(kpis.ncoAch) : '—'}
-          sub="avg views vs target (NCO)" color="#10B981" />
       </div>
 
       {/* Row: Views by Brand + Platform Split */}
