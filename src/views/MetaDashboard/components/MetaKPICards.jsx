@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Eye, MousePointerClick, TrendingUp, Target, BarChart2, ShoppingCart, Play } from 'lucide-react';
+import { DollarSign, Eye, MousePointerClick, TrendingUp, BarChart2, Play } from 'lucide-react';
 
 const fmtRp = (n) => {
   if (!n && n !== 0) return '—';
@@ -8,10 +8,7 @@ const fmtRp = (n) => {
 
 const fmt = (n) => {
   if (!n && n !== 0) return '—';
-  const val = Math.round(Number(n));
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-  if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
-  return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const KPICard = ({ icon, label, value, sub, accent, wide }) => (
@@ -70,7 +67,7 @@ export const MetaKPICards = ({ kpis }) => {
         icon={<TrendingUp size={16} />}
         label="CTR"
         value={`${kpis.ctr}%`}
-        sub={`CPC: ${fmtRp(kpis.cpc)}`}
+        sub="Click-through rate"
       />
       <KPICard
         icon={<BarChart2 size={16} />}
@@ -79,11 +76,16 @@ export const MetaKPICards = ({ kpis }) => {
         sub="Cost per 1K impr."
       />
       <KPICard
-        icon={<Target size={16} />}
-        label="ROAS"
-        value={`${kpis.roas}x`}
-        sub={kpis.purchaseValue > 0 ? `Conv: ${fmt(kpis.purchases)}` : 'No pixel data'}
-        accent={parseFloat(kpis.roas) >= 1 ? '#10B981' : undefined}
+        icon={<MousePointerClick size={16} />}
+        label="CPC"
+        value={fmtRp(kpis.cpc)}
+        sub="Cost per click"
+      />
+      <KPICard
+        icon={<Play size={16} />}
+        label="CPV"
+        value={fmtRp(kpis.cpv)}
+        sub="Cost per video view"
       />
       <KPICard
         icon={<Play size={16} />}

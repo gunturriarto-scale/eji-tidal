@@ -5,3 +5,17 @@ API Response Status: 200
 Fetched 3689 rows from Criteo.
 Upserting 3689 records to Supabase...
 Successfully updated Criteo data in Supabase.
+node:internal/modules/cjs/loader:1147
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/mgrmediaads/Documents/vibe coding/EJI TIDAL/tiktok_mentions_sync.cjs'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1144:15)
+    at Module._load (node:internal/modules/cjs/loader:985:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:135:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v20.11.0
