@@ -3,7 +3,7 @@ import { DollarSign, Eye, MousePointerClick, TrendingUp, BarChart2, Play } from 
 
 const fmtRp = (n) => {
   if (!n && n !== 0) return '—';
-  return 'Rp ' + Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return 'Rp ' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
 const fmt = (n) => {
