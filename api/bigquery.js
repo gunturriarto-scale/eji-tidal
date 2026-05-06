@@ -255,6 +255,8 @@ const QUERIES = {
     FROM \`bigdata.FBADS_AD\`
     WHERE DATE BETWEEN '${start}' AND '${end}'
     ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
+
+  schemaProbe: () => `SELECT * FROM \`bigdata.FBADS_AD\` LIMIT 1`,
 };
 
 export default async function handler(req, res) {
