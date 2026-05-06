@@ -202,6 +202,7 @@ const QUERIES = {
   // ─── AD LEVEL ─────────────────────────────────────────────────────────────
   adsOverview: ({ start, end, account }) => `
     SELECT AD_NAME, AD_STATUS, ACCOUNT_NAME, CAMPAIGN_NAME,
+      MAX(CREATIVE_THUMBNAIL_URL) as thumbnail_url,
       ROUND(SUM(COST)) as spend,
       SUM(IMPRESSIONS) as impressions,
       SUM(REACH) as reach,
@@ -256,7 +257,6 @@ const QUERIES = {
     WHERE DATE BETWEEN '${start}' AND '${end}'
     ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
 
-  schemaProbe: () => `SELECT * FROM \`bigdata.FBADS_AD\` LIMIT 1`,
 };
 
 export default async function handler(req, res) {

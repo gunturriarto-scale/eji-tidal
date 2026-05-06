@@ -55,13 +55,13 @@ export const AdTable = ({ data, brandLabels, brandColors }) => {
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
 
   const COLUMNS = [
+    { key: null, label: 'Creative' },
     { key: null, label: 'Brand' },
     { key: null, label: 'Ad Name', style: { minWidth: 180 } },
     { key: 'spend', label: 'Spend' },
     { key: 'impressions', label: 'Impr.' },
     { key: 'clicks', label: 'Clicks' },
     { key: null, label: 'CTR' },
-    { key: 'thruplay', label: 'ThruPlay' },
     { key: null, label: 'ROAS' },
     { key: null, label: 'Status' },
   ];
@@ -122,6 +122,32 @@ export const AdTable = ({ data, brandLabels, brandColors }) => {
 
               return (
                 <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <td style={{ padding: '0.4rem 0.75rem', width: '52px' }}>
+                    {row.thumbnail_url ? (
+                      <img
+                        src={row.thumbnail_url}
+                        alt=""
+                        onError={e => { e.target.style.display = 'none'; }}
+                        style={{
+                          width: '44px', height: '44px',
+                          objectFit: 'cover',
+                          borderRadius: '6px',
+                          border: `1px solid ${brandColor}30`,
+                          display: 'block',
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '44px', height: '44px', borderRadius: '6px',
+                        background: `${brandColor}15`,
+                        border: `1px solid ${brandColor}20`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.6rem', color: brandColor, fontWeight: 700,
+                      }}>
+                        AD
+                      </div>
+                    )}
+                  </td>
                   <td style={{ padding: '0.55rem 0.75rem' }}>
                     <span style={{
                       fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: '4px',
@@ -138,7 +164,6 @@ export const AdTable = ({ data, brandLabels, brandColors }) => {
                   <td style={{ padding: '0.55rem 0.75rem', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{fmt(row.impressions)}</td>
                   <td style={{ padding: '0.55rem 0.75rem', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{fmt(row.clicks)}</td>
                   <td style={{ padding: '0.55rem 0.75rem', fontSize: '0.78rem', color: parseFloat(ctr) > 1 ? '#10B981' : 'var(--text-secondary)' }}>{ctr}%</td>
-                  <td style={{ padding: '0.55rem 0.75rem', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{fmt(row.thruplay)}</td>
                   <td style={{ padding: '0.55rem 0.75rem' }}><ROASBadge roas={roas} /></td>
                   <td style={{ padding: '0.55rem 0.75rem' }}><StatusBadge status={row.AD_STATUS} /></td>
                 </tr>
