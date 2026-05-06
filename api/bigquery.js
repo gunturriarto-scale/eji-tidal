@@ -265,6 +265,185 @@ const QUERIES = {
     WHERE DATE BETWEEN '${start}' AND '${end}'
     ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
 
+  // ─── CAMPAIGN OBJECTIVE BREAKDOWN ──────────────────────────────────────────
+  campaignObjective: ({ start, end, account }) => `
+    SELECT
+      CASE
+        WHEN CAMPAIGN_NAME LIKE '%REACH%' THEN 'REACH'
+        WHEN CAMPAIGN_NAME LIKE '%ENGAGEMENT%' THEN 'ENGAGEMENT'
+        ELSE 'OTHER'
+      END as objective,
+      ACCOUNT_NAME,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(CLICKS) as clicks,
+      SUM(ACTION_POST_ENGAGEMENT) as post_engagement
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
+
+  // ─── PRODUCT BREAKDOWN ─────────────────────────────────────────────────────
+  productBreakdown: ({ start, end, account }) => `
+    SELECT
+      ACCOUNT_NAME,
+      CASE
+        WHEN CAMPAIGN_NAME LIKE '%Sunscreen%' THEN 'Sunscreen'
+        WHEN CAMPAIGN_NAME LIKE '%Serum%' THEN 'Serum'
+        WHEN CAMPAIGN_NAME LIKE '%Micellar%' THEN 'Micellar Water'
+        WHEN CAMPAIGN_NAME LIKE '%Moisturizer%' THEN 'Moisturizer'
+        WHEN CAMPAIGN_NAME LIKE '%Lipcream%' THEN 'Lipcream'
+        WHEN CAMPAIGN_NAME LIKE '%Cushion%' THEN 'Cushion'
+        WHEN CAMPAIGN_NAME LIKE '%Blush%' THEN 'Blush'
+        WHEN CAMPAIGN_NAME LIKE '%Foundation%' THEN 'Foundation'
+        WHEN CAMPAIGN_NAME LIKE '%Lipstick%' THEN 'Lipstick'
+        WHEN CAMPAIGN_NAME LIKE '%Body Serum%' THEN 'Body Serum'
+        WHEN CAMPAIGN_NAME LIKE '%Body Scrub%' THEN 'Body Scrub'
+        WHEN CAMPAIGN_NAME LIKE '%Vita Smoothies%' THEN 'Vita Smoothies'
+        WHEN CAMPAIGN_NAME LIKE '%Tint%' THEN 'Tint'
+        WHEN CAMPAIGN_NAME LIKE '%Setting%' THEN 'Setting Spray'
+        WHEN CAMPAIGN_NAME LIKE '%Mask%' OR CAMPAIGN_NAME LIKE '%Sheet%' THEN 'Face Sheet Mask'
+        WHEN CAMPAIGN_NAME LIKE '%Eyebrow%' THEN 'Eyebrow'
+        WHEN CAMPAIGN_NAME LIKE '%Glow%' THEN 'Glow Expert'
+        ELSE 'Other'
+      END as product,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(CLICKS) as clicks
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
+
+  // ─── RETAIL CHANNEL BREAKDOWN ──────────────────────────────────────────────
+  retailChannel: ({ start, end, account }) => `
+    SELECT
+      ACCOUNT_NAME,
+      CASE
+        WHEN CAMPAIGN_NAME LIKE '%WATSONS%' THEN 'Watsons'
+        WHEN CAMPAIGN_NAME LIKE '%GUARDIAN%' THEN 'Guardian'
+        WHEN CAMPAIGN_NAME LIKE '%SAT%' THEN 'SAT'
+        WHEN CAMPAIGN_NAME LIKE '%IDM%' THEN 'IDM'
+        ELSE 'General'
+      END as channel,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(CLICKS) as clicks
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
+
+  // ─── PLATFORM POSITION BREAKDOWN ──────────────────────────────────────────
+  platformPosition: ({ start, end, account }) => `
+    SELECT
+      CASE
+        WHEN PLATFORM_POSITION LIKE '%reels%' THEN 'Reels'
+        WHEN PLATFORM_POSITION LIKE '%stories%' THEN 'Stories'
+        WHEN PLATFORM_POSITION LIKE '%feed%' THEN 'Feed'
+        WHEN PLATFORM_POSITION LIKE '%explore%' THEN 'Explore'
+        WHEN PLATFORM_POSITION LIKE '%search%' THEN 'Search'
+        WHEN PLATFORM_POSITION LIKE '%instream%' THEN 'In-Stream'
+        WHEN PLATFORM_POSITION LIKE '%marketplace%' THEN 'Marketplace'
+        WHEN PLATFORM_POSITION LIKE '%threads%' THEN 'Threads'
+        ELSE 'Other'
+      END as position,
+      PUBLISHER_PLATFORM,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(CLICKS) as clicks
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
+
+  // ─── VIDEO FUNNEL DROPOFF ──────────────────────────────────────────────────
+  videoFunnelDropoff: ({ start, end, account }) => `
+    SELECT
+      SUM(ACTION_VIDEO_VIEW) as views,
+      SUM(VIDEO_P_25_WATCHED_ACTIONS) as p25,
+      SUM(VIDEO_P_50_WATCHED_ACTIONS) as p50,
+      SUM(VIDEO_P_75_WATCHED_ACTIONS) as p75,
+      SUM(VIDEO_P_100_WATCHED_ACTIONS) as p100,
+      SUM(VIDEO_THRUPLAY_WATCHED_ACTIONS) as thruplay
+    FROM \`bigdata.FBADS_VIDEO\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}`,
+
+  // ─── FREQUENCY ANALYSIS ────────────────────────────────────────────────────
+  frequency: ({ start, end, account }) => `
+    SELECT
+      ACCOUNT_NAME,
+      ROUND(SUM(IMPRESSIONS) / SUM(REACH), 2) as frequency,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND REACH > 0
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1
+    ORDER BY frequency DESC`,
+
+  // ─── DEVICE BREAKDOWN ──────────────────────────────────────────────────────
+  deviceBreakdown: ({ start, end, account }) => `
+    SELECT
+      CASE
+        WHEN IMPRESSION_DEVICE LIKE '%iphone%' THEN 'iPhone'
+        WHEN IMPRESSION_DEVICE LIKE '%android_smartphone%' THEN 'Android Phone'
+        WHEN IMPRESSION_DEVICE LIKE '%ipad%' THEN 'iPad'
+        WHEN IMPRESSION_DEVICE LIKE '%android_tablet%' THEN 'Android Tablet'
+        WHEN IMPRESSION_DEVICE LIKE '%desktop%' THEN 'Desktop'
+        ELSE 'Other'
+      END as device,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND IMPRESSION_DEVICE IS NOT NULL
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1
+    ORDER BY spend DESC`,
+
+  // ─── DAY OF WEEK TREND ─────────────────────────────────────────────────────
+  dayOfWeek: ({ start, end, account }) => `
+    SELECT
+      FORMAT_DATE('%A', PARSE_DATE('%Y-%m-%d', DATE)) as day_name,
+      EXTRACT(DAYOFWEEK FROM PARSE_DATE('%Y-%m-%d', DATE)) as day_num,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(ACTION_POST_ENGAGEMENT) as post_engagement
+    FROM \`bigdata.FBADS_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY day_num`,
+
+  // ─── DEMOGRAPHICS COST EFFICIENCY ──────────────────────────────────────────
+  demoEfficiency: ({ start, end, account }) => `
+    SELECT
+      AGE, GENDER,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(REACH) as reach,
+      SUM(CLICKS) as clicks,
+      ROUND(SUM(COST) / SUM(IMPRESSIONS) * 1000, 2) as cpm,
+      ROUND((SUM(CLICKS) / SUM(IMPRESSIONS)) * 100, 2) as ctr
+    FROM \`bigdata.FBADS_AGE_GENDER\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ACCOUNT_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
+
 };
 
 export default async function handler(req, res) {

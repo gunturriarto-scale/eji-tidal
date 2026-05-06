@@ -17,6 +17,14 @@ import { GeoPerformance } from './components/GeoPerformance';
 import { VideoPerformance } from './components/VideoPerformance';
 import { PlatformBreakdown } from './components/PlatformBreakdown';
 import { AdTable } from './components/AdTable';
+import { CampaignObjectiveChart } from './components/CampaignObjectiveChart';
+import { VideoFunnelDropoffChart } from './components/VideoFunnelDropoffChart';
+import { RetailChannelChart } from './components/RetailChannelChart';
+import { ProductBreakdownChart } from './components/ProductBreakdownChart';
+import { DeviceBreakdownChart } from './components/DeviceBreakdownChart';
+import { DayOfWeekChart } from './components/DayOfWeekChart';
+import { FrequencyChart } from './components/FrequencyChart';
+import { PlacementChart } from './components/PlacementChart';
 
 const API = '/api/bigquery';
 
@@ -145,6 +153,17 @@ const MetaDashboardInner = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // New data states
+  const [campaignObjective, setCampaignObjective] = useState([]);
+  const [productBreakdown, setProductBreakdown] = useState([]);
+  const [retailChannel, setRetailChannel] = useState([]);
+  const [platformPosition, setPlatformPosition] = useState([]);
+  const [videoFunnelDropoff, setVideoFunnelDropoff] = useState({});
+  const [frequencyData, setFrequencyData] = useState([]);
+  const [deviceBreakdown, setDeviceBreakdown] = useState([]);
+  const [dayOfWeek, setDayOfWeek] = useState([]);
+  const [demoEfficiency, setDemoEfficiency] = useState([]);
+
   // ─── Fetch Data ──────────────────────────────────────────────────────────────
   useEffect(() => {
     setLoading(true);
@@ -164,7 +183,16 @@ const MetaDashboardInner = () => {
       fetch(`${API}?type=videoFunnel&${params}`).then(r => r.json()),
       fetch(`${API}?type=adsOverview&${params}`).then(r => r.json()),
       fetch(`${API}?type=videoKPISummary&${params}`).then(r => r.json()),
-    ]).then(([kpi, brandOv, brandTr, cam, plat, platTr, ag, geoData, vid, adData, vidKpi]) => {
+      fetch(`${API}?type=campaignObjective&${params}`).then(r => r.json()),
+      fetch(`${API}?type=productBreakdown&${params}`).then(r => r.json()),
+      fetch(`${API}?type=retailChannel&${params}`).then(r => r.json()),
+      fetch(`${API}?type=platformPosition&${params}`).then(r => r.json()),
+      fetch(`${API}?type=videoFunnelDropoff&${params}`).then(r => r.json()),
+      fetch(`${API}?type=frequency&${params}`).then(r => r.json()),
+      fetch(`${API}?type=deviceBreakdown&${params}`).then(r => r.json()),
+      fetch(`${API}?type=dayOfWeek&${params}`).then(r => r.json()),
+      fetch(`${API}?type=demoEfficiency&${params}`).then(r => r.json()),
+    ]).then(([kpi, brandOv, brandTr, cam, plat, platTr, ag, geoData, vid, adData, vidKpi, campObj, prod, retail, platPos, vidDropoff, freq, device, dow, demoEff]) => {
       setKpiData(kpi.data?.[0] || {});
       setBrandOverview(brandOv.data || []);
       setBrandTrend(brandTr.data || []);
@@ -176,6 +204,15 @@ const MetaDashboardInner = () => {
       setVideoData(vid.data || []);
       setAds(adData.data || []);
       setVideoKPIData(vidKpi.data?.[0] || {});
+      setCampaignObjective(campObj.data || []);
+      setProductBreakdown(prod.data || []);
+      setRetailChannel(retail.data || []);
+      setPlatformPosition(platPos.data || []);
+      setVideoFunnelDropoff(vidDropoff.data?.[0] || {});
+      setFrequencyData(freq.data || []);
+      setDeviceBreakdown(device.data || []);
+      setDayOfWeek(dow.data || []);
+      setDemoEfficiency(demoEff.data || []);
       setLoading(false);
     }).catch(e => {
       setError(e.message);
@@ -403,6 +440,68 @@ const MetaDashboardInner = () => {
         <Section title="Ad Level Detail" subtitle="Top 50 ads by spend">
           <AdTable data={ads} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
         </Section>
+      )}
+
+      {/* ─── Campaign Objective Breakdown ───────────────────────────────────── */}
+      {!loading && campaignObjective.length > 0 && (
+        <Section title="Campaign Performance by Objective" subtitle="REACH vs ENGAGEMENT split">
+          <CampaignObjectiveChart data={campaignObjective} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
+        </Section>
+      )}
+
+      {/* ─── Video Funnel Dropoff ────────────────────────────────────────────── */}
+      {!loading && videoFunnelDropoff.views > 0 && (
+        <Section title="Video Funnel Drop-off Analysis" subtitle="View → 25% → 50% → 75% → 100% → ThruPlay">
+          <VideoFunnelDropoffChart data={videoFunnelDropoff} />
+        </Section>
+      )}
+
+      {/* ─── Retail Channel + Product Row ───────────────────────────────────── */}
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {retailChannel.length > 0 && (
+            <Section title="Retail Channel Performance" subtitle="Watsons, Guardian, SAT, IDM, General">
+              <RetailChannelChart data={retailChannel} brandColors={BRAND_COLORS} />
+            </Section>
+          )}
+          {productBreakdown.length > 0 && (
+            <Section title="Product Performance" subtitle="Top products by spend">
+              <ProductBreakdownChart data={productBreakdown} brandColors={BRAND_COLORS} />
+            </Section>
+          )}
+        </div>
+      )}
+
+      {/* ─── Device + Day of Week Row ────────────────────────────────────────── */}
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {deviceBreakdown.length > 0 && (
+            <Section title="Device Breakdown" subtitle="Mobile vs Desktop performance">
+              <DeviceBreakdownChart data={deviceBreakdown} />
+            </Section>
+          )}
+          {dayOfWeek.length > 0 && (
+            <Section title="Day of Week Performance" subtitle="Spend by day">
+              <DayOfWeekChart data={dayOfWeek} />
+            </Section>
+          )}
+        </div>
+      )}
+
+      {/* ─── Frequency + Platform Position Row ──────────────────────────────── */}
+      {!loading && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          {frequencyData.length > 0 && (
+            <Section title="Frequency Analysis" subtitle="Impressions / Reach ratio per brand">
+              <FrequencyChart data={frequencyData} brandColors={BRAND_COLORS} />
+            </Section>
+          )}
+          {platformPosition.length > 0 && (
+            <Section title="Placement Performance" subtitle="Feed vs Stories vs Reels vs Explore">
+              <PlacementChart data={platformPosition} brandColors={BRAND_COLORS} />
+            </Section>
+          )}
+        </div>
       )}
     </div>
   );
