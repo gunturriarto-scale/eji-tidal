@@ -46,19 +46,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { type: 'divider', label: 'Management' },
     { id: 'commandCenter', name: 'Command Center', icon: <Target size={20} />, color: '#F59E0B' },
 
-    { type: 'divider', label: 'E-Commerce Hanasui' },
-    { id: 'shopee',     name: 'Shopee',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
-    { id: 'tiktokShop', name: 'TikTok Shop', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
-    { id: 'lazada',     name: 'Lazada',       icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
-    { id: 'tokopedia',  name: 'Tokopedia',    icon: <TokopediaIcon size={20} />, color: '#059669' },
-
-    { type: 'divider', label: 'E-Commerce NCO' },
-    { id: 'shopeeNco',     name: 'Shopee NCO',      icon: <ShopeeIcon size={20} />,    color: '#EE4D2D' },
-    { id: 'tiktokShopNco', name: 'TikTok Shop NCO', icon: <TikTokIcon size={20} />,    color: '#4F46E5' },
-    { id: 'lazadaNco',     name: 'Lazada NCO',      icon: <LazadaIcon size={20} />,    color: '#1E40AF' },
-    { id: 'tokopediaNco',  name: 'Tokopedia NCO',   icon: <TokopediaIcon size={20} />, color: '#059669' },
-
-    { type: 'divider', label: 'Social Analytics' },
+{ type: 'divider', label: 'Social Analytics' },
     { id: 'kol',          name: 'KOL System',    icon: <Zap size={20} />,      color: '#E11D48' },
     { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },
 
