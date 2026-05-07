@@ -32,6 +32,7 @@ const WRITE_DELAY     = 3000;
 const SCRAPE_TIMEOUT  = 35000;
 const SCRAPE_WAIT      = 3500;
 const MAX_RETRIES      = 1;
+const MAX_ROWS_PER_SHEET = 2; // test mode: only first 2 rows per sheet
 
 const SPREADSHEET_ID = process.env.VITE_SPREADSHEET_ID;
 if (!SPREADSHEET_ID) {
@@ -300,11 +301,14 @@ async function main() {
     }
     const { title, rows } = result.value;
     const urlRows = [];
+    let count = 0;
     for (let i = 1; i < rows.length; i++) {
       const link = (rows[i][7] || '').trim();
       if (link && /https?:\/\/(www\.)?(tiktok\.com|instagram\.com)/i.test(link)) {
+        if (MAX_ROWS_PER_SHEET && count >= MAX_ROWS_PER_SHEET) break;
         urlRows.push({ rowIndex: i + 2, url: link });
         allEntries.push({ sheetName: title, rowIndex: i + 2, url: link });
+        count++;
       }
     }
     if (urlRows.length) sheetUrlMap.set(title, urlRows);
