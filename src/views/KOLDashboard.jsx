@@ -7,6 +7,35 @@ import {
   Users, Eye, Heart, TrendingUp, DollarSign, Target, RefreshCw
 } from 'lucide-react';
 
+// ─── Error Boundary ───────────────────────────────────────────────────────────
+class ChartErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          height: this.props.height || 200, color: 'var(--text-secondary)',
+          fontSize: '0.8rem', flexDirection: 'column', gap: '0.5rem'
+        }}>
+          <span>Chart temporarily unavailable</span>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            style={{
+              background: 'var(--accent-primary)', color: '#fff',
+              border: 'none', borderRadius: 6, padding: '0.25rem 0.75rem',
+              cursor: 'pointer', fontSize: '0.72rem'
+            }}>
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const PLATFORM_COLORS = { TT: '#4F46E5', YC: '#F59E0B', IG: '#EC4899' };
@@ -287,7 +316,8 @@ export const KOLDashboard = () => {
           </h3>
           {brandChartData.length === 0
             ? <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', padding: '2rem' }}>Belum ada data views</div>
-            : <ResponsiveContainer width="100%" height={240}>
+            : <ChartErrorBoundary>
+              <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={brandChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="brand" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
@@ -299,6 +329,7 @@ export const KOLDashboard = () => {
                   <Bar dataKey="IG" name="Instagram" fill={PLATFORM_COLORS.IG} radius={[3, 3, 0, 0]} maxBarSize={24} />
                 </BarChart>
               </ResponsiveContainer>
+              </ChartErrorBoundary>
           }
         </div>
 
@@ -309,7 +340,7 @@ export const KOLDashboard = () => {
           </h3>
           {platformData.length === 0
             ? <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', padding: '2rem' }}>No data</div>
-            : <>
+            : <ChartErrorBoundary>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>by KOL Count</div>
                 <ResponsiveContainer width="100%" height={100}>
                   <PieChart>
@@ -341,6 +372,7 @@ export const KOLDashboard = () => {
                   ))}
                 </div>
               </>
+              </ChartErrorBoundary>
           }
         </div>
       </div>
@@ -356,7 +388,8 @@ export const KOLDashboard = () => {
             </h3>
             {ncoAchData.length === 0
               ? <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', padding: '2rem' }}>Belum ada data target NCO</div>
-              : <ResponsiveContainer width="100%" height={Math.max(200, ncoAchData.length * 28)}>
+              : <ChartErrorBoundary height={Math.max(200, ncoAchData.length * 28)}>
+                  <ResponsiveContainer width="100%" height={Math.max(200, ncoAchData.length * 28)}>
                   <BarChart data={ncoAchData} layout="vertical" margin={{ top: 0, right: 60, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
                     <XAxis type="number" tickFormatter={fmtNum} tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} />
@@ -383,19 +416,14 @@ export const KOLDashboard = () => {
                         <Cell key={i} fill={d.pct >= 100 ? '#10B981' : d.pct >= 50 ? '#F59E0B' : '#EF4444'} />
                       ))}
                       <LabelList
-                        content={({ x, y, width, height, index }) => {
-                          const d = ncoAchData[index];
-                          return (
-                            <text x={x + width + 6} y={y + height / 2 + 4} fill={d.pct >= 100 ? '#10B981' : d.pct >= 50 ? '#F59E0B' : '#EF4444'}
-                              fontSize={9} fontWeight={700}>
-                              {fmtPct(d.pct)}
-                            </text>
-                          );
-                        }}
+                        dataKey="pct"
+                        formatter={v => fmtPct(v ?? 0)}
+                        style={{ fontSize: 9, fontWeight: 700 }}
                       />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                </ChartErrorBoundary>
             }
           </div>
         )}
@@ -407,7 +435,8 @@ export const KOLDashboard = () => {
           </h3>
           {tierChartData.length === 0
             ? <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', padding: '2rem' }}>No data</div>
-            : <ResponsiveContainer width="100%" height={220}>
+            : <ChartErrorBoundary>
+              <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={tierChartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="brand" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
@@ -420,6 +449,7 @@ export const KOLDashboard = () => {
                   <Bar dataKey="nano" stackId="a" fill={TIER_COLORS.nano} name="Nano" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+              </ChartErrorBoundary>
           }
         </div>
       </div>
