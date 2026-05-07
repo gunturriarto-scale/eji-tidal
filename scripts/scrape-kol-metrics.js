@@ -32,7 +32,7 @@ const WRITE_DELAY     = 3000;
 const SCRAPE_TIMEOUT  = 35000;
 const SCRAPE_WAIT      = 3500;
 const MAX_RETRIES      = 1;
-const MAX_ROWS_PER_SHEET = 2; // test mode: only first 2 rows per sheet
+const MAX_ROWS_PER_SHEET = 0; // 0 = no limit (scrape all rows)
 
 const SPREADSHEET_ID = process.env.VITE_SPREADSHEET_ID;
 if (!SPREADSHEET_ID) {
