@@ -341,37 +341,38 @@ export const KOLDashboard = () => {
           {platformData.length === 0
             ? <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center', padding: '2rem' }}>No data</div>
             : <ChartErrorBoundary>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>by KOL Count</div>
-                <ResponsiveContainer width="100%" height={100}>
-                  <PieChart>
-                    <Pie data={platformData} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={44} innerRadius={22}>
-                      {platformData.map(d => <Cell key={d.platform} fill={PLATFORM_COLORS[d.platform]} />)}
-                      <LabelList dataKey="count" position="inside" style={{ fontSize: 10, fill: '#fff', fontWeight: 700 }} />
-                    </Pie>
-                    <Tooltip formatter={(v, n) => [v + ' KOLs', n]} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 12 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', margin: '0.5rem 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>by Total Views</div>
-                <ResponsiveContainer width="100%" height={100}>
-                  <PieChart>
-                    <Pie data={platformData} dataKey="views" nameKey="name" cx="50%" cy="50%" outerRadius={44} innerRadius={22}>
-                      {platformData.map(d => <Cell key={d.platform} fill={PLATFORM_COLORS[d.platform]} />)}
-                    </Pie>
-                    <Tooltip formatter={(v, n) => [fmtNum(v), n]} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 12 }} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.5rem' }}>
-                  {platformData.map(d => (
-                    <div key={d.platform} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: PLATFORM_COLORS[d.platform] }} />
-                        <span style={{ color: 'var(--text-secondary)' }}>{d.name}</span>
+                <React.Fragment>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>by KOL Count</div>
+                  <ResponsiveContainer width="100%" height={100}>
+                    <PieChart>
+                      <Pie data={platformData} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={44} innerRadius={22}>
+                        {platformData.map(d => <Cell key={d.platform} fill={PLATFORM_COLORS[d.platform]} />)}
+                        <LabelList dataKey="count" position="inside" style={{ fontSize: 10, fill: '#fff', fontWeight: 700 }} />
+                      </Pie>
+                      <Tooltip formatter={(v, n) => [v + ' KOLs', n]} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', margin: '0.5rem 0', textTransform: 'uppercase', letterSpacing: '0.04em' }}>by Total Views</div>
+                  <ResponsiveContainer width="100%" height={100}>
+                    <PieChart>
+                      <Pie data={platformData} dataKey="views" nameKey="name" cx="50%" cy="50%" outerRadius={44} innerRadius={22}>
+                        {platformData.map(d => <Cell key={d.platform} fill={PLATFORM_COLORS[d.platform]} />)}
+                      </Pie>
+                      <Tooltip formatter={(v, n) => [fmtNum(v), n]} contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 8, fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.5rem' }}>
+                    {platformData.map(d => (
+                      <div key={d.platform} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <div style={{ width: 8, height: 8, borderRadius: '50%', background: PLATFORM_COLORS[d.platform] }} />
+                          <span style={{ color: 'var(--text-secondary)' }}>{d.name}</span>
+                        </div>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{d.count} · {fmtNum(d.views)}</span>
                       </div>
-                      <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{d.count} · {fmtNum(d.views)}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
+                    ))}
+                  </div>
+                </React.Fragment>
               </ChartErrorBoundary>
           }
         </div>
