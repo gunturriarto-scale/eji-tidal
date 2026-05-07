@@ -7,52 +7,71 @@
  * Usage:
  *   node scripts/scrape-kol-metrics.js
  *
- * Env vars (already in .env):
- *   BQ_CLIENT_EMAIL    — Google service account email
- *   BQ_PRIVATE_KEY      — Google service account private key
+ * Auth — two modes:
+ *   VPS (no BQ_CLIENT_EMAIL/BQ_PRIVATE_KEY in .env):
+ *     Uses service account JSON keyFile at /home/digitaldecade/eji-kol/service-account.json
+ *     (bypasses OpenSSL RS256 JWT signing issue on Node 24 / OpenSSL 3.x)
+ *   Dev (env vars present):
+ *     Uses BQ_CLIENT_EMAIL + BQ_PRIVATE_KEY from .env
+ *
+ * Env vars:
  *   VITE_SPREADSHEET_ID — ID of the spreadsheet
+ *   BQ_CLIENT_EMAIL     — Google service account email (dev only)
+ *   BQ_PRIVATE_KEY      — Google service account private key (dev only)
  */
 
-import { chromium } from 'playwright';
 import { google } from 'googleapis';
+import { chromium } from 'playwright';
 import 'dotenv/config';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const CONCURRENCY    = 5;
-const BATCH_WRITE    = 50;
-const WRITE_DELAY   = 3000;
-const SCRAPE_TIMEOUT = 35000;
-const SCRAPE_WAIT    = 3500;
-const MAX_RETRIES    = 1;
-
-// ─── Auth ──────────────────────────────────────────────────────────────────────
-
-function formatPrivateKey(key) {
-  if (!key) return '';
-  let k = key.replace(/\\n/g, '\n').replace(/"/g, '');
-  if (k.indexOf('\n') === -1) {
-    const prefix = '-----BEGIN PRIVATE KEY-----';
-    const suffix = '-----END PRIVATE KEY-----';
-    if (k.startsWith(prefix) && k.endsWith(suffix)) {
-      const body = k.substring(prefix.length, k.length - suffix.length).replace(/\s+/g, '');
-      return `${prefix}\n${body.match(/.{1,64}/g).join('\n')}\n${suffix}`;
-    }
-  }
-  return k;
-}
-
-const CREDENTIALS = {
-  client_email: process.env.BQ_CLIENT_EMAIL,
-  private_key: formatPrivateKey(process.env.BQ_PRIVATE_KEY),
-};
+const CONCURRENCY     = 5;
+const BATCH_WRITE     = 50;
+const WRITE_DELAY     = 3000;
+const SCRAPE_TIMEOUT  = 35000;
+const SCRAPE_WAIT      = 3500;
+const MAX_RETRIES      = 1;
 
 const SPREADSHEET_ID = process.env.VITE_SPREADSHEET_ID;
-
 if (!SPREADSHEET_ID) {
   console.error('[ERROR] VITE_SPREADSHEET_ID is not set in .env');
   process.exit(1);
 }
+
+// ─── Auth ──────────────────────────────────────────────────────────────────────
+//
+// VPS (Node 24 + OpenSSL 3.x): use keyFile to bypass the RS256 JWT signing error.
+// Create + download a service account JSON key from Google Cloud Console,
+// upload it to /home/digitaldecade/eji-kol/service-account.json on the VPS.
+//
+// Dev (local): falls back to BQ_CLIENT_EMAIL + BQ_PRIVATE_KEY from .env.
+
+const SERVICE_ACCOUNT_KEYFILE = '/home/digitaldecade/eji-kol/service-account.json';
+
+const auth = new google.auth.GoogleAuth({
+  ...(process.env.BQ_CLIENT_EMAIL && process.env.BQ_PRIVATE_KEY
+    ? {
+        credentials: {
+          client_email: process.env.BQ_CLIENT_EMAIL,
+          // Normalise key: some env loaders strip newlines
+          private_key: (() => {
+            const raw = process.env.BQ_PRIVATE_KEY;
+            // already multi-line PEM → use as-is
+            if (raw && raw.includes('\n')) return raw;
+            // single-line \n-escaped string → decode
+            if (raw && raw.includes('\\n')) {
+              return raw.replace(/\\n/g, '\n');
+            }
+            return raw || '';
+          })(),
+        },
+      }
+    : { keyFile: SERVICE_ACCOUNT_KEYFILE }),
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+
+const sheets = google.sheets({ version: 'v4', auth });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -251,12 +270,6 @@ async function main() {
   const startTime = Date.now();
 
   console.log('🔐 Authenticating with Google Sheets...');
-  const auth = new google.auth.GoogleAuth({
-    credentials: CREDENTIALS,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  });
-  const sheets = google.sheets({ version: 'v4', auth });
-
   console.log('📋 Fetching sheet list...');
   const meta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
   const allSheets = meta.data.sheets
