@@ -306,8 +306,8 @@ async function main() {
       const link = (rows[i][7] || '').trim();
       if (link && /https?:\/\/(www\.)?(tiktok\.com|instagram\.com)/i.test(link)) {
         if (MAX_ROWS_PER_SHEET && count >= MAX_ROWS_PER_SHEET) break;
-        urlRows.push({ rowIndex: i + 2, url: link });
-        allEntries.push({ sheetName: title, rowIndex: i + 2, url: link });
+        urlRows.push({ rowIndex: i + 1, url: link });
+        allEntries.push({ sheetName: title, rowIndex: i + 1, url: link });
         count++;
       }
     }
