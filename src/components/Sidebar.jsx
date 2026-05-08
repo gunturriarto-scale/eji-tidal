@@ -44,8 +44,9 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
   
   const menuItems = [
     { type: 'divider', label: 'Management' },
-    { id: 'commandCenter',  name: 'Command Center',  icon: <Target size={20} />,   color: '#F59E0B' },
-    { id: 'metaDashboard',  name: 'Meta Dashboard',  icon: <MetaIcon size={20} />, color: '#1877F2' },
+    { id: 'commandCenter',  name: 'Command Center',   icon: <Target size={20} />,    color: '#F59E0B' },
+    { id: 'metaDashboard',   name: 'Meta Dashboard',  icon: <MetaIcon size={20} />, color: '#1877F2' },
+    { id: 'tiktokDashboard', name: 'TikTok Dashboard', icon: <TikTokIcon size={20} />, color: '#FF0050' },
 
     { type: 'divider', label: 'Social Analytics' },
     { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },

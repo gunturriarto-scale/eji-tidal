@@ -13,18 +13,21 @@ const fmt = (n) => {
 
 const renderActiveShape = (props) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload } = props;
+  const isCompact = innerRadius < 55;
 
   return (
     <g>
-      <text x={cx} y={cy - 12} textAnchor="middle" fill="var(--text-primary)" style={{ fontSize: '1.5rem', fontWeight: 800 }}>
+      <text x={cx} y={cy - isCompact ? 8 : 12} textAnchor="middle" fill="var(--text-primary)" style={{ fontSize: isCompact ? '1.1rem' : '1.5rem', fontWeight: 800 }}>
         {fmtRp(payload.value)}
       </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fill="var(--text-tertiary)" style={{ fontSize: '0.75rem' }}>
+      <text x={cx} y={cy + isCompact ? 8 : 12} textAnchor="middle" fill="var(--text-tertiary)" style={{ fontSize: isCompact ? '0.65rem' : '0.75rem' }}>
         {payload.name}
       </text>
-      <text x={cx} y={cy + 28} textAnchor="middle" fill={fill} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
-        {fmt(payload.impressions)} impr
-      </text>
+      {!isCompact && (
+        <text x={cx} y={cy + 28} textAnchor="middle" fill={fill} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+          {fmt(payload.impressions)} impr
+        </text>
+      )}
       <Sector
         cx={cx} cy={cy}
         innerRadius={innerRadius}
@@ -45,8 +48,11 @@ const renderActiveShape = (props) => {
   );
 };
 
-export const BrandDonut = ({ data }) => {
+export const BrandDonut = ({ data, compact }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const chartHeight = compact ? 180 : 220;
+  const innerR = compact ? 45 : 60;
+  const outerR = compact ? 70 : 90;
 
   if (!data || data.length === 0) {
     return (
@@ -68,7 +74,7 @@ export const BrandDonut = ({ data }) => {
 
   return (
     <div>
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <PieChart>
           <Pie
             activeIndex={activeIndex}
@@ -76,8 +82,8 @@ export const BrandDonut = ({ data }) => {
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={60}
-            outerRadius={90}
+            innerRadius={innerR}
+            outerRadius={outerR}
             paddingAngle={3}
             dataKey="value"
             onMouseEnter={(_, index) => setActiveIndex(index)}

@@ -444,6 +444,248 @@ const QUERIES = {
     GROUP BY 1, 2
     ORDER BY spend DESC`,
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // TIKTOK ADS QUERIES
+  // Table: bigdata.TIK_AD, bigdata.TIK_AGE_GENDER, bigdata.TIK_GEO
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // ─── TIKTOK KPI SUMMARY ─────────────────────────────────────────────────────
+  tiktokKpiSummary: ({ start, end, account }) => `
+    SELECT
+      ROUND(SUM(COST)) as total_spend,
+      SUM(IMPRESSIONS) as total_impressions,
+      SUM(CLICKS) as total_clicks,
+      SUM(VIDEO_WATCHED_2S) as total_video_2s,
+      SUM(VIDEO_WATCHED_6S) as total_video_6s,
+      SUM(VIDEO_VIEWS_P25) as total_p25,
+      SUM(VIDEO_VIEWS_P50) as total_p50,
+      SUM(VIDEO_VIEWS_P75) as total_p75,
+      SUM(VIDEO_VIEWS_P100) as total_p100,
+      SUM(VIDEO_PLAY_ACTIONS) as total_video_play,
+      SUM(CONVERSIONS) as total_conversions
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}`,
+
+  // ─── TIKTOK BRAND OVERVIEW ──────────────────────────────────────────────────
+  tiktokBrandOverview: ({ start, end }) => `
+    SELECT
+      ADVERTISER_NAME as account_name,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(VIDEO_WATCHED_6S) as video_6s
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    GROUP BY 1
+    ORDER BY spend DESC`,
+
+  // ─── TIKTOK BRAND TREND ─────────────────────────────────────────────────────
+  tiktokBrandTrend: ({ start, end }) => `
+    SELECT
+      DATE,
+      ADVERTISER_NAME as account_name,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    GROUP BY 1, 2
+    ORDER BY DATE`,
+
+  // ─── TIKTOK CAMPAIGNS ────────────────────────────────────────────────────────
+  tiktokCampaigns: ({ start, end }) => `
+    SELECT
+      ADVERTISER_NAME as account_name,
+      CAMPAIGN_NAME,
+      CAMPAIGN_OBJECTIVE_TYPE,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(CONVERSIONS) as conversions
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    GROUP BY 1, 2, 3
+    ORDER BY spend DESC
+    LIMIT 100`,
+
+  // ─── TIKTOK TOP CAMPAIGNS ───────────────────────────────────────────────────
+  tiktokTopCampaigns: ({ start, end, account }) => `
+    SELECT
+      ADVERTISER_NAME as account_name,
+      CAMPAIGN_NAME,
+      CAMPAIGN_OBJECTIVE_TYPE,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(VIDEO_WATCHED_6S) as video_6s,
+      SUM(CONVERSIONS) as conversions,
+      ROUND(SUM(PURCHASE_VALUE)) as purchase_value
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1, 2, 3
+    ORDER BY spend DESC
+    LIMIT 50`,
+
+  // ─── TIKTOK DEMOGRAPHICS ──────────────────────────────────────────────────────
+  tiktokAgeGender: ({ start, end, account }) => `
+    SELECT
+      AGE,
+      GENDER,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks
+    FROM \`bigdata.TIK_AGE_GENDER\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY spend DESC`,
+
+  // ─── TIKTOK GEO ───────────────────────────────────────────────────────────────
+  tiktokGeo: ({ start, end, account }) => `
+    SELECT
+      COUNTRY_NAME,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks
+    FROM \`bigdata.TIK_GEO\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1
+    ORDER BY spend DESC
+    LIMIT 20`,
+
+  // ─── TIKTOK VIDEO FUNNEL ────────────────────────────────────────────────────
+  tiktokVideoFunnel: ({ start, end, account }) => `
+    SELECT
+      AD_NAME,
+      ADVERTISER_NAME as account_name,
+      CAMPAIGN_NAME,
+      VIDEO_ID,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(VIDEO_WATCHED_6S) as video_6s,
+      SUM(VIDEO_VIEWS_P25) as p25,
+      SUM(VIDEO_VIEWS_P50) as p50,
+      SUM(VIDEO_VIEWS_P75) as p75,
+      SUM(VIDEO_VIEWS_P100) as p100,
+      SUM(VIDEO_PLAY_ACTIONS) as video_plays,
+      ROUND(SUM(COST)) as spend
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND VIDEO_WATCHED_2S > 0
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1, 2, 3, 4
+    ORDER BY video_2s DESC
+    LIMIT 20`,
+
+  // ─── TIKTOK VIDEO KPI SUMMARY ────────────────────────────────────────────────
+  tiktokVideoKPISummary: ({ start, end, account }) => `
+    SELECT
+      SUM(VIDEO_WATCHED_2S) as total_video_2s,
+      SUM(VIDEO_WATCHED_6S) as total_video_6s,
+      SUM(VIDEO_VIEWS_P25) as total_p25,
+      SUM(VIDEO_VIEWS_P50) as total_p50,
+      SUM(VIDEO_VIEWS_P75) as total_p75,
+      SUM(VIDEO_VIEWS_P100) as total_p100,
+      SUM(VIDEO_PLAY_ACTIONS) as total_video_plays
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}`,
+
+  // ─── TIKTOK PLACEMENT ────────────────────────────────────────────────────────
+  tiktokPlacement: ({ start, end, account }) => `
+    SELECT
+      PLACEMENT_TYPE,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(CONVERSIONS) as conversions
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND PLACEMENT_TYPE IS NOT NULL AND PLACEMENT_TYPE != ''
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1
+    ORDER BY spend DESC`,
+
+  // ─── TIKTOK AD OVERVIEW ─────────────────────────────────────────────────────
+  tiktokAdOverview: ({ start, end, account }) => `
+    SELECT
+      AD_NAME,
+      AD_STATUS,
+      ADVERTISER_NAME as account_name,
+      CAMPAIGN_NAME,
+      AD_TEXT,
+      VIDEO_ID,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(VIDEO_WATCHED_6S) as video_6s,
+      SUM(CONVERSIONS) as conversions,
+      ROUND(SUM(PURCHASE_VALUE)) as purchase_value
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1, 2, 3, 4, 5, 6
+    ORDER BY spend DESC
+    LIMIT 50`,
+
+  // ─── TIKTOK CONVERSIONS ─────────────────────────────────────────────────────
+  tiktokConversions: ({ start, end, account }) => `
+    SELECT
+      CAMPAIGN_OBJECTIVE_TYPE as objective,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(CONVERSIONS) as conversions,
+      ROUND(SUM(PURCHASE_VALUE)) as purchase_value
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1
+    ORDER BY conversions DESC`,
+
+  // ─── TIKTOK DAY OF WEEK ──────────────────────────────────────────────────────
+  tiktokDayOfWeek: ({ start, end, account }) => `
+    SELECT
+      FORMAT_DATE('%A', PARSE_DATE('%Y-%m-%d', DATE)) as day_name,
+      EXTRACT(DAYOFWEEK FROM PARSE_DATE('%Y-%m-%d', DATE)) as day_num,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks,
+      SUM(VIDEO_WATCHED_2S) as video_2s,
+      SUM(CONVERSIONS) as conversions
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1, 2
+    ORDER BY day_num`,
+
+  // ─── TIKTOK DEVICE ──────────────────────────────────────────────────────────
+  tiktokDevice: ({ start, end, account }) => `
+    SELECT
+      CASE
+        WHEN TARGET_ANDROID_OSV IS NOT NULL AND TARGET_ANDROID_OSV != '' THEN 'Android'
+        WHEN TARGET_IOS_OSV IS NOT NULL AND TARGET_IOS_OSV != '' THEN 'iOS'
+        ELSE 'Other'
+      END as device,
+      ROUND(SUM(COST)) as spend,
+      SUM(IMPRESSIONS) as impressions,
+      SUM(CLICKS) as clicks
+    FROM \`bigdata.TIK_AD\`
+    WHERE DATE BETWEEN '${start}' AND '${end}'
+    AND (TARGET_ANDROID_OSV IS NOT NULL OR TARGET_IOS_OSV IS NOT NULL)
+    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1
+    ORDER BY spend DESC`,
+
 };
 
 export default async function handler(req, res) {

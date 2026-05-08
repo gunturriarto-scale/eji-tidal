@@ -14,6 +14,7 @@ import { GmvMaxView } from './views/GmvMaxView'
 import { KolView } from './views/KOLView'
 import { KOLDashboard } from './views/KOLDashboard'
 import { MetaDashboard } from './views/MetaDashboard'
+import { TikTokDashboard } from './views/TikTokDashboard'
 
 const Header = ({ 
   dateFilter, setDateFilter, 
@@ -79,7 +80,7 @@ const Header = ({
           </div>
         </div>
 
-        {!['creativehub', 'commandCenter', 'gmvMax', 'kol', 'kolDashboard', 'metaDashboard'].includes(activeView) && (
+        {!['creativehub', 'commandCenter', 'gmvMax', 'kol', 'kolDashboard', 'metaDashboard', 'tiktokDashboard'].includes(activeView) && (
           <div className="filter-deck" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
             <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-end' }}>
               <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
@@ -300,7 +301,7 @@ function App() {
   }, [tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData, loading, dateRange, currentFilters]);
 
   const viewNames = {
-    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)', kol: '⚡ KOL APIFY System', kolDashboard: '📊 KOL Dashboard', metaDashboard: '📊 Meta Dashboard'
+    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)', kol: '⚡ KOL APIFY System', kolDashboard: '📊 KOL Dashboard', metaDashboard: '📊 Meta Dashboard', tiktokDashboard: '🎵 TikTok Dashboard'
   };
 
   const renderView = () => {
@@ -320,6 +321,7 @@ function App() {
       case 'kol': return <KolView />;
       case 'kolDashboard': return <KOLDashboard />;
       case 'metaDashboard': return <MetaDashboard />;
+      case 'tiktokDashboard': return <TikTokDashboard />;
       default: return <CommandCenterView {...commonProps} />;
     }
   };

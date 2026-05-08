@@ -31,7 +31,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export const CampaignObjectiveChart = ({ data, brandLabels, brandColors }) => {
+export const CampaignObjectiveChart = ({ data, brandColors = {}, compact }) => {
   // Aggregate by objective + brand
   const chartData = {};
   data.forEach(d => {

@@ -1,36 +1,32 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  BarChart, Bar, AreaChart, Area, ScatterChart, Scatter, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ZAxis,
+  BarChart, Bar, AreaChart, Area, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie, Sector
 } from 'recharts';
 import {
-  DollarSign, Eye, TrendingUp, MousePointerClick, BarChart2,
-  Target, Play, Clock, ShoppingCart, Users, MapPin, Instagram, Zap
+  DollarSign, Eye, TrendingUp, MousePointerClick, Play,
+  Clock, ShoppingCart, Users, Zap, Video
 } from 'lucide-react';
-import { MetaKPICards } from './components/MetaKPICards';
-import { SpendTrendChart } from './components/SpendTrendChart';
-import { BrandDonut } from './components/BrandDonut';
-import { CampaignTable } from './components/CampaignTable';
-import { DemographicsChart } from './components/DemographicsChart';
-import { GeoPerformance } from './components/GeoPerformance';
-import { VideoPerformance } from './components/VideoPerformance';
-import { PlatformBreakdown } from './components/PlatformBreakdown';
-import { AdTable } from './components/AdTable';
-import { CampaignObjectiveChart } from './components/CampaignObjectiveChart';
-import { VideoFunnelDropoffChart } from './components/VideoFunnelDropoffChart';
-import { RetailChannelChart } from './components/RetailChannelChart';
-import { ProductBreakdownChart } from './components/ProductBreakdownChart';
-import { DeviceBreakdownChart } from './components/DeviceBreakdownChart';
-import { DayOfWeekChart } from './components/DayOfWeekChart';
-import { FrequencyChart } from './components/FrequencyChart';
-import { PlacementChart } from './components/PlacementChart';
+import { TikTokKPICards } from './components/TikTokKPICards';
+import { TikTokSpendTrend } from './components/TikTokSpendTrend';
+import { TikTokBrandDonut } from './components/TikTokBrandDonut';
+import { TikTokCampaignTable } from './components/TikTokCampaignTable';
+import { TikTokDemographics } from './components/TikTokDemographics';
+import { TikTokGeoPerformance } from './components/TikTokGeoPerformance';
+import { TikTokVideoFunnel } from './components/TikTokVideoFunnel';
+import { TikTokAdCreativePreview } from './components/TikTokAdCreativePreview';
+import { TikTokPlacementChart } from './components/TikTokPlacementChart';
+import { TikTokCampaignObjective } from './components/TikTokCampaignObjective';
+import { TikTokDeviceChart } from './components/TikTokDeviceChart';
+import { TikTokDayOfWeek } from './components/TikTokDayOfWeek';
+import { TikTokFrequency } from './components/TikTokFrequency';
+import { TikTokQuickInsights } from './components/TikTokQuickInsights';
 import { SectionTabs } from './components/SectionTabs';
-import { QuickInsightsGrid } from './components/QuickInsightsGrid';
 
 const API = '/api/bigquery';
 
-class MetaDashboardErrorBoundary extends React.Component {
+class TikTokDashboardErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -60,12 +56,12 @@ class MetaDashboardErrorBoundary extends React.Component {
 }
 
 const BRAND_LABELS = {
-  'EJI // HANASUI // SKINCARE': 'Skincare',
-  'EJI // HANASUI // DECORATIVE': 'Decorative',
-  'EJI // HANASUI // BODYCARE': 'Bodycare',
+  'EJI // Hanasui // SKINCARE': 'Skincare',
+  'EJI // Hanasui // DECORATIVE': 'Decorative',
+  'EJI // Hanasui // BODYCARE': 'Bodycare',
 };
 const BRAND_COLORS = {
-  Skincare: '#4F46E5',
+  Skincare: '#FF0050',
   Decorative: '#10B981',
   Bodycare: '#F59E0B',
 };
@@ -90,13 +86,13 @@ const CustomTooltip = ({ active, payload, label }) => {
   return (
     <div className="glass-panel" style={{
       padding: '0.75rem 1rem',
-      border: '1px solid rgba(79,70,229,0.25)',
+      border: '1px solid rgba(255,0,80,0.25)',
       background: 'rgba(20,20,29,0.95)',
       borderRadius: '8px'
     }}>
       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontWeight: 600 }}>{label}</p>
       {payload.map((p, i) => (
-        <div key={i} style={{ fontSize: '0.85rem', color: p.color || 'var(--accent-primary)', fontWeight: 600 }}>
+        <div key={i} style={{ fontSize: '0.85rem', color: p.color || '#FF0050', fontWeight: 600 }}>
           {p.name}: {p.name?.includes('spend') || p.name?.includes('Spend') ? fmtRp(p.value) : fmt(p.value)}
         </div>
       ))}
@@ -106,10 +102,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 // ─── Loading State ─────────────────────────────────────────────────────────────
 const LoadingState = () => (
-  <div style={{
-    display: 'flex', flexDirection: 'column', gap: '1rem',
-    padding: '2rem'
-  }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '2rem' }}>
     {[1, 2, 3, 4].map(i => (
       <div key={i} style={{
         height: '80px', borderRadius: '12px',
@@ -134,47 +127,37 @@ const Section = ({ title, subtitle, children, style = {} }) => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const MetaDashboardInner = () => {
+const TikTokDashboardInner = () => {
   // ─── Filter State ───────────────────────────────────────────────────────────
   const [startDate, setStartDate] = useState(sevenDaysAgo);
   const [endDate, setEndDate] = useState(today);
   const [brandFilter, setBrandFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('audience');
+  const [activeTab, setActiveTab] = useState('overview');
 
   // ─── Data State ─────────────────────────────────────────────────────────────
   const [kpiData, setKpiData] = useState(null);
   const [prevKpiData, setPrevKpiData] = useState(null);
-  const [prevVideoKPIData, setPrevVideoKPIData] = useState({});
   const [brandOverview, setBrandOverview] = useState([]);
   const [brandTrend, setBrandTrend] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
-  const [platformData, setPlatformData] = useState([]);
-  const [platformTrend, setPlatformTrend] = useState([]);
   const [ageGender, setAgeGender] = useState([]);
   const [geo, setGeo] = useState([]);
-  const [videoData, setVideoData] = useState([]);
+  const [videoFunnel, setVideoFunnel] = useState([]);
   const [videoKPIData, setVideoKPIData] = useState({});
+  const [placement, setPlacement] = useState([]);
   const [ads, setAds] = useState([]);
+  const [conversions, setConversions] = useState([]);
+  const [deviceData, setDeviceData] = useState([]);
+  const [dayOfWeek, setDayOfWeek] = useState([]);
+  const [frequencyData, setFrequencyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // New data states
-  const [campaignObjective, setCampaignObjective] = useState([]);
-  const [productBreakdown, setProductBreakdown] = useState([]);
-  const [retailChannel, setRetailChannel] = useState([]);
-  const [platformPosition, setPlatformPosition] = useState([]);
-  const [videoFunnelDropoff, setVideoFunnelDropoff] = useState({});
-  const [frequencyData, setFrequencyData] = useState([]);
-  const [deviceBreakdown, setDeviceBreakdown] = useState([]);
-  const [dayOfWeek, setDayOfWeek] = useState([]);
-  const [demoEfficiency, setDemoEfficiency] = useState([]);
 
   // ─── Fetch Data ──────────────────────────────────────────────────────────────
   useEffect(() => {
     setLoading(true);
     setError(null);
 
-    // Compute previous period (same length, ending the day before startDate)
     const start = new Date(startDate);
     const end = new Date(endDate);
     const periodDays = Math.round((end - start) / 86400000) + 1;
@@ -183,55 +166,40 @@ const MetaDashboardInner = () => {
     const prevStartStr = prevStart.toISOString().split('T')[0];
     const prevEndStr = prevEnd.toISOString().split('T')[0];
     const prevParams = `start=${prevStartStr}&end=${prevEndStr}${brandFilter !== 'all' ? `&account=${encodeURIComponent(brandFilter)}` : ''}`;
-
     const params = `start=${startDate}&end=${endDate}${brandFilter !== 'all' ? `&account=${encodeURIComponent(brandFilter)}` : ''}`;
 
     Promise.all([
-      fetch(`${API}?type=kpiSummary&${params}`).then(r => r.json()),
-      fetch(`${API}?type=kpiSummary&${prevParams}`).then(r => r.json()),
-      fetch(`${API}?type=videoKPISummary&${params}`).then(r => r.json()),
-      fetch(`${API}?type=videoKPISummary&${prevParams}`).then(r => r.json()),
-      fetch(`${API}?type=brandOverview&start=${startDate}&end=${endDate}`).then(r => r.json()),
-      fetch(`${API}?type=brandTrend&start=${startDate}&end=${endDate}`).then(r => r.json()),
-      fetch(`${API}?type=topCampaigns&${params}`).then(r => r.json()),
-      fetch(`${API}?type=platform&${params}`).then(r => r.json()),
-      fetch(`${API}?type=platformTrend&start=${startDate}&end=${endDate}`).then(r => r.json()),
-      fetch(`${API}?type=ageGender&${params}`).then(r => r.json()),
-      fetch(`${API}?type=geo&${params}`).then(r => r.json()),
-      fetch(`${API}?type=videoFunnel&${params}`).then(r => r.json()),
-      fetch(`${API}?type=adsOverview&${params}`).then(r => r.json()),
-      fetch(`${API}?type=campaignObjective&${params}`).then(r => r.json()),
-      fetch(`${API}?type=productBreakdown&${params}`).then(r => r.json()),
-      fetch(`${API}?type=retailChannel&${params}`).then(r => r.json()),
-      fetch(`${API}?type=platformPosition&${params}`).then(r => r.json()),
-      fetch(`${API}?type=videoFunnelDropoff&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokKpiSummary&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokKpiSummary&${prevParams}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokVideoKPISummary&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokBrandOverview&start=${startDate}&end=${endDate}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokBrandTrend&start=${startDate}&end=${endDate}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokTopCampaigns&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokAgeGender&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokGeo&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokVideoFunnel&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokPlacement&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokAdOverview&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokConversions&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokDayOfWeek&${params}`).then(r => r.json()),
+      fetch(`${API}?type=tiktokDevice&${params}`).then(r => r.json()),
       fetch(`${API}?type=frequency&${params}`).then(r => r.json()),
-      fetch(`${API}?type=deviceBreakdown&${params}`).then(r => r.json()),
-      fetch(`${API}?type=dayOfWeek&${params}`).then(r => r.json()),
-      fetch(`${API}?type=demoEfficiency&${params}`).then(r => r.json()),
-    ]).then(([kpi, prevKpi, vidKpi, prevVidKpi, brandOv, brandTr, cam, plat, platTr, ag, geoData, vid, adData, campObj, prod, retail, platPos, vidDropoff, freq, device, dow, demoEff]) => {
+    ]).then(([kpi, prevKpi, vidKpi, brandOv, brandTr, cam, ag, geoData, vidFn, plcmt, adData, conv, dow, device, freq]) => {
       setKpiData(kpi.data?.[0] || {});
       setPrevKpiData(prevKpi.data?.[0] || null);
       setVideoKPIData(vidKpi.data?.[0] || {});
-      setPrevVideoKPIData(prevVidKpi.data?.[0] || {});
       setBrandOverview(brandOv.data || []);
       setBrandTrend(brandTr.data || []);
       setCampaigns(cam.data || []);
-      setPlatformData(plat.data || []);
-      setPlatformTrend(platTr.data || []);
       setAgeGender(ag.data || []);
       setGeo(geoData.data || []);
-      setVideoData(vid.data || []);
+      setVideoFunnel(vidFn.data || []);
+      setPlacement(plcmt.data || []);
       setAds(adData.data || []);
-      setCampaignObjective(campObj.data || []);
-      setProductBreakdown(prod.data || []);
-      setRetailChannel(retail.data || []);
-      setPlatformPosition(platPos.data || []);
-      setVideoFunnelDropoff(vidDropoff.data?.[0] || {});
-      setFrequencyData(freq.data || []);
-      setDeviceBreakdown(device.data || []);
+      setConversions(conv.data || []);
       setDayOfWeek(dow.data || []);
-      setDemoEfficiency(demoEff.data || []);
+      setDeviceData(device.data || []);
+      setFrequencyData(freq.data || []);
       setLoading(false);
     }).catch(e => {
       setError(e.message);
@@ -239,60 +207,63 @@ const MetaDashboardInner = () => {
     });
   }, [startDate, endDate, brandFilter]);
 
-  // ─── Derived KPIs (current period) ──────────────────────────────────────────
+  // ─── Derived KPIs ────────────────────────────────────────────────────────────
   const kpis = useMemo(() => {
     if (!kpiData) return null;
     const s = Number(kpiData.total_spend) || 0;
     const i = Number(kpiData.total_impressions) || 0;
     const c = Number(kpiData.total_clicks) || 0;
-    const r = Number(kpiData.total_reach) || 0;
-    const pe = Number(kpiData.total_post_engagement) || 0;
-    const vv = Number(videoKPIData.total_video_views) || 0;
-    const tp = Number(videoKPIData.total_thruplay) || 0;
+    const v2s = Number(kpiData.total_video_2s) || 0;
+    const v6s = Number(kpiData.total_video_6s) || 0;
+    const vplays = Number(kpiData.total_video_play) || 0;
+    const conv = Number(kpiData.total_conversions) || 0;
+    const p25 = Number(kpiData.total_p25) || 0;
+    const p50 = Number(kpiData.total_p50) || 0;
+    const p75 = Number(kpiData.total_p75) || 0;
+    const p100 = Number(kpiData.total_p100) || 0;
 
     return {
       spend: s,
       impressions: i,
       clicks: c,
-      reach: r,
-      postEngagement: pe,
       ctr: i > 0 ? ((c / i) * 100).toFixed(2) : '0.00',
       cpc: c > 0 ? (s / c).toFixed(2) : '0.00',
       cpm: i > 0 ? ((s / i) * 1000).toFixed(2) : '0.00',
-      cpv: vv > 0 ? (s / vv).toFixed(2) : '0.00',
-      cpe: pe > 0 ? (s / pe).toFixed(2) : '0.00',
-      videoViews: vv,
-      thruplay: tp,
-      thruplayRate: vv > 0 ? ((tp / vv) * 100).toFixed(1) : '0',
+      video2s: v2s,
+      video6s: v6s,
+      videoPlays: vplays,
+      video6sRate: v2s > 0 ? ((v6s / v2s) * 100).toFixed(1) : '0.0',
+      p25, p50, p75, p100,
+      conversions: conv,
+      conversionRate: i > 0 ? ((conv / i) * 100).toFixed(3) : '0.000',
     };
-  }, [kpiData, videoKPIData]);
+  }, [kpiData]);
 
-  // ─── Derived KPIs (previous period) ��─────────────────────────────────────────
   const prevKpis = useMemo(() => {
     if (!prevKpiData) return null;
-    const vv = Number(prevVideoKPIData.total_video_views) || 0;
-    const tp = Number(prevVideoKPIData.total_thruplay) || 0;
     const s = Number(prevKpiData.total_spend) || 0;
     const i = Number(prevKpiData.total_impressions) || 0;
     const c = Number(prevKpiData.total_clicks) || 0;
-    const pe = Number(prevKpiData.total_post_engagement) || 0;
+    const v2s = Number(prevKpiData.total_video_2s) || 0;
+    const v6s = Number(prevKpiData.total_video_6s) || 0;
+    const vplays = Number(prevKpiData.total_video_play) || 0;
+    const conv = Number(prevKpiData.total_conversions) || 0;
 
     return {
       spend: s,
       impressions: i,
       clicks: c,
-      reach: Number(prevKpiData.total_reach) || 0,
-      postEngagement: pe,
       ctr: i > 0 ? ((c / i) * 100).toFixed(2) : '0.00',
       cpc: c > 0 ? (s / c).toFixed(2) : '0.00',
       cpm: i > 0 ? ((s / i) * 1000).toFixed(2) : '0.00',
-      cpv: vv > 0 ? (s / vv).toFixed(2) : '0.00',
-      cpe: pe > 0 ? (s / pe).toFixed(2) : '0.00',
-      videoViews: vv,
-      thruplay: tp,
-      thruplayRate: vv > 0 ? ((tp / vv) * 100).toFixed(1) : '0',
+      video2s: v2s,
+      video6s: v6s,
+      videoPlays: vplays,
+      video6sRate: v2s > 0 ? ((v6s / v2s) * 100).toFixed(1) : '0.0',
+      conversions: conv,
+      conversionRate: i > 0 ? ((conv / i) * 100).toFixed(3) : '0.000',
     };
-  }, [prevKpiData, prevVideoKPIData]);
+  }, [prevKpiData]);
 
   // ─── Brand Trend Chart Data ──────────────────────────────────────────────────
   const trendChartData = useMemo(() => {
@@ -313,14 +284,26 @@ const MetaDashboardInner = () => {
       return {
         name: label,
         value: Number(d.spend) || 0,
-        color: BRAND_COLORS[label] || '#4F46E5',
+        color: BRAND_COLORS[label] || '#FF0050',
         impressions: Number(d.impressions) || 0,
         clicks: Number(d.clicks) || 0,
-        reach: Number(d.reach) || 0,
-        purchaseValue: Number(d.purchase_value) || 0,
+        video2s: Number(d.video_2s) || 0,
       };
     });
   }, [brandOverview]);
+
+  // ─── Video Funnel Chart Data ─────────────────────────────────────────────────
+  const videoFunnelChartData = useMemo(() => {
+    if (!videoKPIData) return [];
+    return [
+      { name: '2s Views', value: Number(videoKPIData.total_video_2s) || 0, color: '#FF0050' },
+      { name: '6s Views', value: Number(videoKPIData.total_video_6s) || 0, color: '#E11D48' },
+      { name: '25% Play', value: Number(videoKPIData.total_p25) || 0, color: '#DB2777' },
+      { name: '50% Play', value: Number(videoKPIData.total_p50) || 0, color: '#BE185D' },
+      { name: '75% Play', value: Number(videoKPIData.total_p75) || 0, color: '#9D174D' },
+      { name: '100% Play', value: Number(videoKPIData.total_p100) || 0, color: '#831843' },
+    ];
+  }, [videoKPIData]);
 
   // ─── Error State ─────────────────────────────────────────────────────────────
   if (error) return (
@@ -339,7 +322,6 @@ const MetaDashboardInner = () => {
     </div>
   );
 
-  // ─── Empty State ─────────────────────────────────────────────────────────────
   const EmptyState = ({ message }) => (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -375,14 +357,20 @@ const MetaDashboardInner = () => {
           <label style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: '6px' }}>Brand</label>
           <select value={brandFilter} onChange={e => setBrandFilter(e.target.value)} className="glass-select" style={{ height: '38px', minWidth: '200px' }}>
             <option value="all">All Brands</option>
-            <option value="EJI // HANASUI // SKINCARE">Skincare</option>
-            <option value="EJI // HANASUI // DECORATIVE">Decorative</option>
-            <option value="EJI // HANASUI // BODYCARE">Bodycare</option>
+            <option value="EJI // Hanasui // SKINCARE">Skincare</option>
+            <option value="EJI // Hanasui // DECORATIVE">Decorative</option>
+            <option value="EJI // Hanasui // BODYCARE">Bodycare</option>
           </select>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {[{ label: '7D', days: 7 }, { label: '14D', days: 14 }, { label: '30D', days: 30 }].map(q => (
-            <button key={q.label} onClick={() => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - q.days + 1); setEndDate(end.toISOString().split('T')[0]); setStartDate(start.toISOString().split('T')[0]); }}
+            <button key={q.label} onClick={() => {
+              const end = new Date();
+              const start = new Date();
+              start.setDate(end.getDate() - q.days + 1);
+              setEndDate(end.toISOString().split('T')[0]);
+              setStartDate(start.toISOString().split('T')[0]);
+            }}
               style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
               {q.label}
             </button>
@@ -394,16 +382,15 @@ const MetaDashboardInner = () => {
       {loading && <LoadingState />}
 
       {/* ─── KPI Cards ────────────────────────────────────────────────────────── */}
-      {!loading && kpis && <MetaKPICards kpis={kpis} prevKpis={prevKpis} />}
+      {!loading && kpis && <TikTokKPICards kpis={kpis} prevKpis={prevKpis} />}
 
       {/* ─── Quick Insights 2x2 Grid ───────────────────────────────────────────── */}
       {!loading && (
-        <QuickInsightsGrid
+        <TikTokQuickInsights
           trendData={trendChartData}
           brandDonutData={brandDonutData}
-          platformData={platformData}
-          platformTrend={platformTrend}
-          campaignObjective={campaignObjective}
+          placement={placement}
+          conversions={conversions}
           brandColors={BRAND_COLORS}
         />
       )}
@@ -412,51 +399,35 @@ const MetaDashboardInner = () => {
       {!loading && (
         <SectionTabs activeTab={activeTab} onTabChange={setActiveTab}>
 
-          {/* Audience tab */}
-          {activeTab === 'audience' && (
+          {/* Overview tab */}
+          {activeTab === 'overview' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              {ageGender.length > 0 ? (
-                <Section title="Audience Demographics" subtitle="Age x Gender breakdown by spend">
-                  <DemographicsChart data={ageGender} />
+              {trendChartData.length > 0 ? (
+                <Section title="Spend Trend" subtitle="Daily spend over time">
+                  <TikTokSpendTrend data={trendChartData} brandColors={BRAND_COLORS} />
                 </Section>
-              ) : <EmptyState message="No demographics data for this period" />}
-              {frequencyData.length > 0 ? (
-                <Section title="Frequency Analysis" subtitle="Impressions / Reach ratio per brand">
-                  <FrequencyChart data={frequencyData} brandColors={BRAND_COLORS} />
+              ) : <EmptyState message="No trend data for this period" />}
+              {brandDonutData.length > 0 ? (
+                <Section title="Brand Distribution" subtitle="Spend by brand">
+                  <TikTokBrandDonut data={brandDonutData} />
                 </Section>
-              ) : <EmptyState message="No frequency data for this period" />}
+              ) : <EmptyState message="No brand data for this period" />}
             </div>
           )}
 
           {/* Video tab */}
           {activeTab === 'video' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              {videoFunnelDropoff.views > 0 ? (
-                <Section title="Video Funnel Drop-off" subtitle="View -> 25% -> 50% -> 75% -> 100% -> ThruPlay">
-                  <VideoFunnelDropoffChart data={videoFunnelDropoff} />
+              {videoFunnelChartData.some(d => d.value > 0) ? (
+                <Section title="Video Funnel" subtitle="2s → 6s → 25% → 50% → 75% → 100%">
+                  <TikTokVideoFunnel data={videoFunnelChartData} />
                 </Section>
-              ) : <EmptyState message="No video funnel data for this period" />}
-              {videoData.length > 0 ? (
-                <Section title="Top Video Creatives" subtitle="By video views">
-                  <VideoPerformance data={videoData} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
+              ) : <EmptyState message="No video data for this period" />}
+              {videoFunnel.length > 0 ? (
+                <Section title="Top Video Creatives" subtitle="By 2-second views">
+                  <TikTokVideoTopTable data={videoFunnel} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
                 </Section>
-              ) : <EmptyState message="No video performance data for this period" />}
-            </div>
-          )}
-
-          {/* Channel tab */}
-          {activeTab === 'channel' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              {retailChannel.length > 0 ? (
-                <Section title="Retail Channel Performance" subtitle="Watsons, Guardian, SAT, IDM, General">
-                  <RetailChannelChart data={retailChannel} brandColors={BRAND_COLORS} />
-                </Section>
-              ) : <EmptyState message="No channel data for this period" />}
-              {productBreakdown.length > 0 ? (
-                <Section title="Product Performance" subtitle="Top products by spend">
-                  <ProductBreakdownChart data={productBreakdown} brandColors={BRAND_COLORS} />
-                </Section>
-              ) : <EmptyState message="No product data for this period" />}
+              ) : <EmptyState message="No video creatives for this period" />}
             </div>
           )}
 
@@ -465,44 +436,72 @@ const MetaDashboardInner = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {campaigns.length > 0 ? (
                 <Section title="Campaign Performance" subtitle={`${campaigns.length} campaigns`}>
-                  <CampaignTable data={campaigns} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
+                  <TikTokCampaignTable data={campaigns} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
                 </Section>
               ) : <EmptyState message="No campaign data for this period" />}
-              {ads.length > 0 && (
-                <Section title="Ad Level Detail" subtitle="Top 50 ads by spend">
-                  <AdTable data={ads} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
+              {ads.length > 0 ? (
+                <Section title="Ad Creative Preview" subtitle="Top ads with thumbnail & ad text">
+                  <TikTokAdCreativePreview data={ads.slice(0, 20)} brandLabels={BRAND_LABELS} />
                 </Section>
-              )}
-              {campaignObjective.length > 0 && (
-                <Section title="Campaign Objective Breakdown" subtitle="REACH vs ENGAGEMENT split">
-                  <CampaignObjectiveChart data={campaignObjective} brandLabels={BRAND_LABELS} brandColors={BRAND_COLORS} />
+              ) : <EmptyState message="No ad data for this period" />}
+              {conversions.length > 0 ? (
+                <Section title="Campaign Objective Breakdown" subtitle="By campaign objective">
+                  <TikTokCampaignObjective data={conversions} brandColors={BRAND_COLORS} />
                 </Section>
-              )}
+              ) : <EmptyState message="No objective data for this period" />}
+            </div>
+          )}
+
+          {/* Audience tab */}
+          {activeTab === 'audience' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              {ageGender.length > 0 ? (
+                <Section title="Audience Demographics" subtitle="Age x Gender breakdown by spend">
+                  <TikTokDemographics data={ageGender} />
+                </Section>
+              ) : <EmptyState message="No demographics data for this period" />}
+              {frequencyData.length > 0 ? (
+                <Section title="Frequency Analysis" subtitle="By advertiser">
+                  <TikTokFrequency data={frequencyData} />
+                </Section>
+              ) : <EmptyState message="No frequency data for this period" />}
             </div>
           )}
 
           {/* Geo tab */}
           {activeTab === 'geo' && (
-            geo.length > 0 ? (
-              <Section title="Top Regions" subtitle="Top 20 by spend">
-                <GeoPerformance data={geo} />
-              </Section>
-            ) : <EmptyState message="No geo data for this period" />
-          )}
-
-          {/* Device tab */}
-          {activeTab === 'device' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              {deviceBreakdown.length > 0 ? (
-                <Section title="Device Breakdown" subtitle="Mobile vs Desktop performance">
-                  <DeviceBreakdownChart data={deviceBreakdown} />
+              {geo.length > 0 ? (
+                <Section title="Top Regions" subtitle="Top 20 by spend">
+                  <TikTokGeoPerformance data={geo} />
+                </Section>
+              ) : <EmptyState message="No geo data for this period" />}
+              {deviceData.length > 0 ? (
+                <Section title="Device Breakdown" subtitle="iOS vs Android performance">
+                  <TikTokDeviceChart data={deviceData} />
                 </Section>
               ) : <EmptyState message="No device data for this period" />}
+              {placement.length > 0 && (
+                <Section title="Placement Breakdown" subtitle="In-feed, search, etc.">
+                  <TikTokPlacementChart data={placement} />
+                </Section>
+              )}
+            </div>
+          )}
+
+          {/* Day of week */}
+          {activeTab === 'dayofweek' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
               {dayOfWeek.length > 0 ? (
                 <Section title="Day of Week Performance" subtitle="Spend by day">
-                  <DayOfWeekChart data={dayOfWeek} />
+                  <TikTokDayOfWeek data={dayOfWeek} />
                 </Section>
               ) : <EmptyState message="No day-of-week data for this period" />}
+              {placement.length > 0 ? (
+                <Section title="Placement Performance" subtitle="By placement type">
+                  <TikTokPlacementChart data={placement} />
+                </Section>
+              ) : <EmptyState message="No placement data for this period" />}
             </div>
           )}
 
@@ -512,8 +511,44 @@ const MetaDashboardInner = () => {
   );
 };
 
-export const MetaDashboard = () => (
-  <MetaDashboardErrorBoundary>
-    <MetaDashboardInner />
-  </MetaDashboardErrorBoundary>
+// ─── Tiny inline table for top video creatives (Video tab) ──────────────────
+const TikTokVideoTopTable = ({ data, brandLabels, brandColors }) => {
+  const fmt = (n) => n ? Math.round(Number(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '—';
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+            {['Ad', '2s Views', '6s Views', 'Video Plays', 'Spend'].map(h => (
+              <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.65rem', letterSpacing: '0.05em' }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.slice(0, 10).map((row, i) => {
+            const label = brandLabels[row.ACCOUNT_NAME] || row.ACCOUNT_NAME?.split('//').pop()?.trim() || 'Unknown';
+            return (
+              <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-primary)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '0.65rem', color: brandColors[label] || '#FF0050', fontWeight: 700 }}>{label}</span>
+                  <br />
+                  <span style={{ color: 'var(--text-secondary)' }}>{row.AD_NAME}</span>
+                </td>
+                <td style={{ padding: '0.5rem 0.75rem', color: '#FF0050', fontWeight: 700 }}>{fmt(row.video_2s)}</td>
+                <td style={{ padding: '0.5rem 0.75rem', color: '#E11D48' }}>{fmt(row.video_6s)}</td>
+                <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-primary)' }}>{fmt(row.video_plays)}</td>
+                <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-secondary)' }}>{fmt(row.spend)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export const TikTokDashboard = () => (
+  <TikTokDashboardErrorBoundary>
+    <TikTokDashboardInner />
+  </TikTokDashboardErrorBoundary>
 );

@@ -45,7 +45,39 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export const PlatformBreakdown = ({ data, trendData }) => {
+const PlatformCards = ({ chartData, data, total }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
+    {chartData.map((d) => {
+      const orig = data.find(r => r.PUBLISHER_PLATFORM === d.key) || {};
+      const cpm = Number(orig.impressions) > 0 ? ((Number(orig.spend) || 0) / Number(orig.impressions) * 1000).toFixed(0) : 0;
+      const share = total > 0 ? (((Number(orig.spend) || 0) / total) * 100).toFixed(1) : '0.0';
+      const color = PLAT_COLORS[d.key] || '#4F46E5';
+      return (
+        <div key={d.key} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0.6rem 1rem',
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: '8px',
+          border: `1px solid ${color}20`
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color, flex: 'none' }} />
+            <div>
+              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{d.name}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>CPM: {fmtRp(Number(cpm))}</div>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>{fmtRp(Number(orig.spend) || 0)}</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{share}%</div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+export const PlatformBreakdown = ({ data, trendData, compact }) => {
   const chartData = data
     .filter(d => d.PUBLISHER_PLATFORM !== 'unknown')
     .map(d => ({
@@ -59,12 +91,13 @@ export const PlatformBreakdown = ({ data, trendData }) => {
 
   if (!data || data.length === 0) return null;
 
+  const isCompact = compact === true;
+
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-        {/* Bar chart */}
+      {isCompact ? (
         <div>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={140}>
             <BarChart data={chartData} layout="vertical" barCategoryGap="28%">
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
               <XAxis type="number" stroke="var(--text-tertiary)" fontSize={10} tickLine={false} tickFormatter={v => fmtRp(v)} />
@@ -79,37 +112,27 @@ export const PlatformBreakdown = ({ data, trendData }) => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-        {/* Platform cards */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', justifyContent: 'center' }}>
-          {chartData.map((d) => {
-            const orig = data.find(r => r.PUBLISHER_PLATFORM === d.key) || {};
-            const cpm = Number(orig.impressions) > 0 ? ((Number(orig.spend) || 0) / Number(orig.impressions) * 1000).toFixed(0) : 0;
-            const share = total > 0 ? (((Number(orig.spend) || 0) / total) * 100).toFixed(1) : '0.0';
-            return (
-              <div key={d.key} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '0.6rem 1rem',
-                background: 'rgba(255,255,255,0.03)',
-                borderRadius: '8px',
-                border: `1px solid ${PLAT_COLORS[d.key] || '#4F46E5'}20`
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: PLAT_COLORS[d.key] || '#4F46E5', flex: 'none' }} />
-                  <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{d.name}</div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>CPM: {fmtRp(Number(cpm))}</div>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>{fmtRp(Number(orig.spend) || 0)}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{share}%</div>
-                </div>
-              </div>
-            );
-          })}
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={chartData} layout="vertical" barCategoryGap="28%">
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                <XAxis type="number" stroke="var(--text-tertiary)" fontSize={10} tickLine={false} tickFormatter={v => fmtRp(v)} />
+                <YAxis type="category" dataKey="name" stroke="var(--text-tertiary)" fontSize={11} tickLine={false} width={100} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '0.75rem', paddingTop: '8px' }} />
+                <Bar dataKey="Spend" name="Spend" radius={[0, 4, 4, 0]}>
+                  {chartData.map((d, i) => (
+                    <Cell key={i} fill={PLAT_COLORS[d.key] || '#4F46E5'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <PlatformCards chartData={chartData} data={data} total={total} />
         </div>
-      </div>
+      )}
     </div>
   );
 };
