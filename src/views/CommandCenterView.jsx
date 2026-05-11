@@ -940,88 +940,104 @@ export const CommandCenterView = ({ filteredData }) => {
           </div>
         </div>
       </div>
-      {/* ── CHANNEL TRENDLINES ── */}
-
-      {/* Row 1: Spent % Trend — full width */}
+      {/* ── CHANNEL TRENDLINES — single ComposedChart full width ── */}
       <div className="cc2-card" style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <span style={{ fontSize: '15px', fontWeight: 600 }}>Spent Trend by Channel</span>
-          <Activity size={18} color="#8b8b9e" />
+          <span style={{ fontSize: '15px', fontWeight: 600 }}>Channel Performance Trend</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <span style={{ fontSize: '11px', color: '#8b8b9e' }}>Bars = Impression &nbsp;·&nbsp; Solid = Spent % &nbsp;·&nbsp; Dashed = CPM</span>
+            <Activity size={18} color="#8b8b9e" />
+          </div>
         </div>
-        <div style={{ height: '220px' }}>
+        <div style={{ height: '280px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={channelTrend.map(d => {
-              const total = (d.meta||0)+(d.tiktok||0)+(d.google||0)+(d.criteo||0)+(d.segumento||0);
-              return { month: d.month, meta: total>0?(d.meta/total)*100:0, tiktok: total>0?(d.tiktok/total)*100:0, google: total>0?(d.google/total)*100:0, criteo: total>0?(d.criteo/total)*100:0, segumento: total>0?(d.segumento/total)*100:0 };
-            })} margin={{ top: 5, right: 24, left: 0, bottom: 0 }}>
+            <ComposedChart data={channelTrend.map(d => {
+              const spentTotal = (d.meta||0)+(d.tiktok||0)+(d.google||0)+(d.criteo||0)+(d.segumento||0);
+              return {
+                month: d.month,
+                imp_meta:      d.metaImp,
+                imp_tiktok:    d.tiktokImp,
+                imp_google:    d.googleImp,
+                imp_criteo:    d.criteoImp,
+                imp_segumento: d.segumentoImp,
+                pct_meta:      spentTotal>0 ? (d.meta/spentTotal)*100 : 0,
+                pct_tiktok:    spentTotal>0 ? (d.tiktok/spentTotal)*100 : 0,
+                pct_google:    spentTotal>0 ? (d.google/spentTotal)*100 : 0,
+                pct_criteo:    spentTotal>0 ? (d.criteo/spentTotal)*100 : 0,
+                pct_segumento: spentTotal>0 ? (d.segumento/spentTotal)*100 : 0,
+                cpm_meta:      d.metaCpm,
+                cpm_tiktok:    d.tiktokCpm,
+                cpm_google:    d.googleCpm,
+                cpm_criteo:    d.criteoCpm,
+                cpm_segumento: d.segumentoCpm,
+              };
+            })} margin={{ top: 5, right: 56, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
               <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} />
-              <RechartsTooltip content={(props) => <TrendTooltip {...props} isPct />} />
-              <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+              {/* Left axis: Impression */}
+              <YAxis yAxisId="imp" orientation="left" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
+                tickFormatter={v => v>=1e9?`${(v/1e9).toFixed(1)}B`:v>=1e6?`${(v/1e6).toFixed(0)}M`:v>=1e3?`${(v/1e3).toFixed(0)}k`:v} />
+              {/* Right axis: Spent % */}
+              <YAxis yAxisId="pct" orientation="right" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
+                domain={[0, 100]} tickFormatter={v => `${v}%`} />
+              {/* Hidden axis: CPM (same scale, no ticks shown) */}
+              <YAxis yAxisId="cpm" orientation="right" hide />
+              <RechartsTooltip content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const bars  = payload.filter(e => e.dataKey.startsWith('imp_'));
+                const lines = payload.filter(e => e.dataKey.startsWith('pct_'));
+                const cpms  = payload.filter(e => e.dataKey.startsWith('cpm_'));
+                const impTotal = bars.reduce((s, e) => s + (e.value||0), 0);
+                const nameMap = { imp_meta:'Meta', imp_tiktok:'TikTok', imp_google:'Google', imp_criteo:'Criteo', imp_segumento:'Segumento', pct_meta:'Meta', pct_tiktok:'TikTok', pct_google:'Google', pct_criteo:'Criteo', pct_segumento:'Segumento', cpm_meta:'Meta', cpm_tiktok:'TikTok', cpm_google:'Google', cpm_criteo:'Criteo', cpm_segumento:'Segumento' };
+                return (
+                  <div className="glass-panel" style={{ padding:'10px 14px', border:'1px solid rgba(255,255,255,0.1)', background:'rgba(18,18,26,0.95)', fontSize:'12px', borderRadius:'8px', minWidth:'200px' }}>
+                    <p style={{ margin:'0 0 6px', fontWeight:600, color:'var(--text-secondary)', fontSize:'11px' }}>{label}</p>
+                    {bars.length > 0 && <p style={{ margin:'0 0 3px', fontSize:'10px', color:'#8b8b9e', textTransform:'uppercase', letterSpacing:'0.5px' }}>Impression</p>}
+                    {bars.map((e,i) => (
+                      <div key={i} style={{ color:e.fill||e.color, display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'2px' }}>
+                        <span>{nameMap[e.dataKey]}:</span>
+                        <span style={{ fontWeight:600 }}>{formatNumber(e.value)} <span style={{ color:'#8b8b9e', fontSize:'10px' }}>({impTotal>0?((e.value/impTotal)*100).toFixed(1):0}%)</span></span>
+                      </div>
+                    ))}
+                    {lines.length > 0 && <><div style={{ borderTop:'1px solid #2a2a3a', margin:'6px 0 3px' }} /><p style={{ margin:'0 0 3px', fontSize:'10px', color:'#8b8b9e', textTransform:'uppercase', letterSpacing:'0.5px' }}>Spent Share</p></>}
+                    {lines.map((e,i) => (
+                      <div key={i} style={{ color:e.stroke||e.color, display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'2px' }}>
+                        <span>{nameMap[e.dataKey]}:</span>
+                        <span style={{ fontWeight:600 }}>{(e.value||0).toFixed(1)}%</span>
+                      </div>
+                    ))}
+                    {cpms.length > 0 && <><div style={{ borderTop:'1px solid #2a2a3a', margin:'6px 0 3px' }} /><p style={{ margin:'0 0 3px', fontSize:'10px', color:'#8b8b9e', textTransform:'uppercase', letterSpacing:'0.5px' }}>CPM</p></>}
+                    {cpms.map((e,i) => (
+                      <div key={i} style={{ color:e.stroke||e.color, display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'2px' }}>
+                        <span>{nameMap[e.dataKey]}:</span>
+                        <span style={{ fontWeight:600 }}>Rp {Math.round(e.value||0).toLocaleString('id-ID')}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
+                formatter={(value) => {
+                  const name = value.replace(/^(imp_|pct_|cpm_)/,'').replace(/^\w/, c => c.toUpperCase());
+                  if (value.startsWith('cpm_')) return `${name} (CPM)`;
+                  if (value.startsWith('pct_')) return `${name} (%)`;
+                  return name;
+                }} />
+              {/* Stacked bars: Impression */}
               {platformMatrix.map(p => (
-                <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                <Bar key={`imp_${p.id}`} yAxisId="imp" dataKey={`imp_${p.id}`} name={`imp_${p.id}`} stackId="imp" fill={p.color} fillOpacity={0.35} />
               ))}
-            </LineChart>
+              {/* Solid lines: Spent % */}
+              {platformMatrix.map(p => (
+                <Line key={`pct_${p.id}`} yAxisId="pct" type="monotone" dataKey={`pct_${p.id}`} name={`pct_${p.id}`} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+              ))}
+              {/* Dashed lines: CPM */}
+              {platformMatrix.map(p => (
+                <Line key={`cpm_${p.id}`} yAxisId="cpm" type="monotone" dataKey={`cpm_${p.id}`} name={`cpm_${p.id}`} stroke={p.color} strokeWidth={1.5} strokeDasharray="5 3" dot={false} activeDot={{ r: 3 }} />
+              ))}
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
-      </div>
-
-      {/* Row 2: Total Impression (stacked) + Avg CPM (line) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '20px', marginBottom: '20px' }}>
-
-        {/* Total Impression Stacked Area */}
-        <div className="cc2-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Total Impression by Channel</span>
-            <Activity size={18} color="#8b8b9e" />
-          </div>
-          <div style={{ height: '220px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={channelTrend.map(d => ({ month: d.month, meta: d.metaImp, tiktok: d.tiktokImp, google: d.googleImp, criteo: d.criteoImp, segumento: d.segumentoImp }))} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  {platformMatrix.map(p => (
-                    <linearGradient key={p.id} id={`grad-${p.id}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={p.color} stopOpacity={0.4} />
-                      <stop offset="95%" stopColor={p.color} stopOpacity={0.05} />
-                    </linearGradient>
-                  ))}
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
-                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => v>=1e9?`${(v/1e9).toFixed(1)}B`:v>=1e6?`${(v/1e6).toFixed(0)}M`:v>=1e3?`${(v/1e3).toFixed(0)}k`:v} />
-                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={formatNumber} />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                {platformMatrix.map(p => (
-                  <Area key={p.id} type="monotone" dataKey={p.id} name={p.name} stackId="1" stroke={p.color} fill={`url(#grad-${p.id})`} strokeWidth={1.5} />
-                ))}
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Avg CPM Line */}
-        <div className="cc2-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Avg CPM by Channel</span>
-            <Activity size={18} color="#8b8b9e" />
-          </div>
-          <div style={{ height: '220px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={channelTrend.map(d => ({ month: d.month, meta: d.metaCpm, tiktok: d.tiktokCpm, google: d.googleCpm, criteo: d.criteoCpm, segumento: d.segumentoCpm }))} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
-                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => v>=1e3?`${(v/1e3).toFixed(1)}k`:Math.round(v)} />
-                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={v => `Rp ${Math.round(v).toLocaleString('id-ID')}`} />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                {platformMatrix.map(p => (
-                  <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
       </div>
 
       {/* ── PERFORMANCE BY CHANNEL ── */}
