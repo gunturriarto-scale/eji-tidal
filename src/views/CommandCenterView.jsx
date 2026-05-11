@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  BarChart, Bar, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   ComposedChart, Legend, PieChart, Pie, Cell
 } from 'recharts';
 import { Search, Download, AlertCircle, Users, BarChart2, Briefcase, Activity, Facebook, Video, Layout, MessageSquare, Target } from 'lucide-react';
@@ -256,7 +256,14 @@ export const CommandCenterView = ({ filteredData }) => {
       map[key].criteoImp    += d.actualImpCriteo || 0;
       map[key].segumentoImp += d.actualImpSegumento || 0;
     });
-    return Object.values(map).sort((a, b) => a.monthNum - b.monthNum);
+    return Object.values(map).sort((a, b) => a.monthNum - b.monthNum).map(d => ({
+      ...d,
+      metaCpm:      d.metaImp > 0      ? (d.meta / d.metaImp) * 1000           : 0,
+      tiktokCpm:    d.tiktokImp > 0    ? (d.tiktok / d.tiktokImp) * 1000       : 0,
+      googleCpm:    d.googleImp > 0    ? (d.google / d.googleImp) * 1000       : 0,
+      criteoCpm:    d.criteoImp > 0    ? (d.criteo / d.criteoImp) * 1000       : 0,
+      segumentoCpm: d.segumentoImp > 0 ? (d.segumento / d.segumentoImp) * 1000 : 0,
+    }));
   }, [rawData, brandFilter]);
 
   // ── Budget Pacing by Brand (and Category & Product if filtered) ──
@@ -934,23 +941,78 @@ export const CommandCenterView = ({ filteredData }) => {
         </div>
       </div>
       {/* ── CHANNEL TRENDLINES ── */}
+
+      {/* Row 1: Spent % Trend — full width */}
+      <div className="cc2-card" style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <span style={{ fontSize: '15px', fontWeight: 600 }}>Spent Trend by Channel</span>
+          <Activity size={18} color="#8b8b9e" />
+        </div>
+        <div style={{ height: '220px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={channelTrend.map(d => {
+              const total = (d.meta||0)+(d.tiktok||0)+(d.google||0)+(d.criteo||0)+(d.segumento||0);
+              return { month: d.month, meta: total>0?(d.meta/total)*100:0, tiktok: total>0?(d.tiktok/total)*100:0, google: total>0?(d.google/total)*100:0, criteo: total>0?(d.criteo/total)*100:0, segumento: total>0?(d.segumento/total)*100:0 };
+            })} margin={{ top: 5, right: 24, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
+              <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+              <RechartsTooltip content={(props) => <TrendTooltip {...props} isPct />} />
+              <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+              {platformMatrix.map(p => (
+                <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Row 2: Total Impression (stacked) + Avg CPM (line) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '20px', marginBottom: '20px' }}>
-        {/* Spent Trend */}
+
+        {/* Total Impression Stacked Area */}
         <div className="cc2-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Spent Trend by Channel</span>
+            <span style={{ fontSize: '15px', fontWeight: 600 }}>Total Impression by Channel</span>
             <Activity size={18} color="#8b8b9e" />
           </div>
           <div style={{ height: '220px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={channelTrend.map(d => {
-                const total = (d.meta||0)+(d.tiktok||0)+(d.google||0)+(d.criteo||0)+(d.segumento||0);
-                return { month: d.month, meta: total>0?(d.meta/total)*100:0, tiktok: total>0?(d.tiktok/total)*100:0, google: total>0?(d.google/total)*100:0, criteo: total>0?(d.criteo/total)*100:0, segumento: total>0?(d.segumento/total)*100:0 };
-              })} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
+              <AreaChart data={channelTrend.map(d => ({ month: d.month, meta: d.metaImp, tiktok: d.tiktokImp, google: d.googleImp, criteo: d.criteoImp, segumento: d.segumentoImp }))} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  {platformMatrix.map(p => (
+                    <linearGradient key={p.id} id={`grad-${p.id}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={p.color} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={p.color} stopOpacity={0.05} />
+                    </linearGradient>
+                  ))}
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
                 <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} />
-                <RechartsTooltip content={(props) => <TrendTooltip {...props} isPct />} />
+                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => v>=1e9?`${(v/1e9).toFixed(1)}B`:v>=1e6?`${(v/1e6).toFixed(0)}M`:v>=1e3?`${(v/1e3).toFixed(0)}k`:v} />
+                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={formatNumber} />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                {platformMatrix.map(p => (
+                  <Area key={p.id} type="monotone" dataKey={p.id} name={p.name} stackId="1" stroke={p.color} fill={`url(#grad-${p.id})`} strokeWidth={1.5} />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Avg CPM Line */}
+        <div className="cc2-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 600 }}>Avg CPM by Channel</span>
+            <Activity size={18} color="#8b8b9e" />
+          </div>
+          <div style={{ height: '220px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={channelTrend.map(d => ({ month: d.month, meta: d.metaCpm, tiktok: d.tiktokCpm, google: d.googleCpm, criteo: d.criteoCpm, segumento: d.segumentoCpm }))} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
+                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => v>=1e3?`${(v/1e3).toFixed(1)}k`:Math.round(v)} />
+                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={v => `Rp ${Math.round(v).toLocaleString('id-ID')}`} />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                 {platformMatrix.map(p => (
                   <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
@@ -960,30 +1022,6 @@ export const CommandCenterView = ({ filteredData }) => {
           </div>
         </div>
 
-        {/* Impression Trend */}
-        <div className="cc2-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Impression Trend by Channel</span>
-            <Activity size={18} color="#8b8b9e" />
-          </div>
-          <div style={{ height: '220px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={channelTrend.map(d => {
-                const total = (d.metaImp||0)+(d.tiktokImp||0)+(d.googleImp||0)+(d.criteoImp||0)+(d.segumentoImp||0);
-                return { month: d.month, meta: total>0?(d.metaImp/total)*100:0, tiktok: total>0?(d.tiktokImp/total)*100:0, google: total>0?(d.googleImp/total)*100:0, criteo: total>0?(d.criteoImp/total)*100:0, segumento: total>0?(d.segumentoImp/total)*100:0 };
-              })} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
-                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} />
-                <RechartsTooltip content={(props) => <TrendTooltip {...props} isPct />} />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
-                {platformMatrix.map(p => (
-                  <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
 
       {/* ── PERFORMANCE BY CHANNEL ── */}
