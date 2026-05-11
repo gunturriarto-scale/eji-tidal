@@ -56,6 +56,28 @@ const DonutTooltip = ({ active, payload, formatFn, total }) => {
   );
 };
 
+const TrendTooltip = ({ active, payload, label, formatFn }) => {
+  if (!active || !payload?.length) return null;
+  const total = payload.reduce((s, e) => s + (e.value || 0), 0);
+  return (
+    <div className="glass-panel" style={{ padding: '10px 14px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(18,18,26,0.95)', fontSize: '12px', borderRadius: '8px', minWidth: '160px' }}>
+      <p style={{ margin: '0 0 6px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '11px' }}>{label}</p>
+      {payload.map((e, i) => {
+        const pct = total > 0 ? (e.value / total) * 100 : 0;
+        return (
+          <div key={i} style={{ color: e.color, display: 'flex', justifyContent: 'space-between', gap: '12px', marginBottom: '3px' }}>
+            <span>{e.name}:</span>
+            <span style={{ fontWeight: 600 }}>
+              {(formatFn || formatNumber)(e.value)}
+              <span style={{ color: '#8b8b9e', fontSize: '10px', marginLeft: '5px' }}>({pct.toFixed(1)}%)</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 // Mini Sparkline SVG component to avoid heavy Recharts instances for small lines
 const Sparkline = ({ data, color, width = 120, height = 40 }) => {
   if (!data || !data.length) return null;
@@ -221,10 +243,11 @@ export const CommandCenterView = ({ filteredData }) => {
     }).filter(p => p.budget > 0 || p.spent > 0);
   }, [data]);
 
-  // ── Channel Trend (per-month breakdown per channel) ──
+  // ── Channel Trend (all months, brand-filtered only) ──
   const channelTrend = useMemo(() => {
     const map = {};
-    data.forEach(d => {
+    rawData.forEach(d => {
+      if (brandFilter !== 'all' && d.brand !== brandFilter) return;
       const key = d.monthNum ?? 0;
       if (!map[key]) map[key] = { month: d.month || '', monthNum: key, meta: 0, tiktok: 0, google: 0, criteo: 0, segumento: 0, metaImp: 0, tiktokImp: 0, googleImp: 0, criteoImp: 0, segumentoImp: 0 };
       map[key].meta       += d.spentMeta || 0;
@@ -239,7 +262,7 @@ export const CommandCenterView = ({ filteredData }) => {
       map[key].segumentoImp += d.actualImpSegumento || 0;
     });
     return Object.values(map).sort((a, b) => a.monthNum - b.monthNum);
-  }, [data]);
+  }, [rawData, brandFilter]);
 
   // ── Budget Pacing by Brand (and Category & Product if filtered) ──
   const brandPacing = useMemo(() => {
@@ -930,7 +953,7 @@ export const CommandCenterView = ({ filteredData }) => {
                 <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
                   tickFormatter={v => v >= 1e9 ? `${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k` : v} />
-                <RechartsTooltip content={<CustomTooltip />} />
+                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={formatCurrency} />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                 {platformMatrix.map(p => (
                   <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
@@ -953,7 +976,7 @@ export const CommandCenterView = ({ filteredData }) => {
                 <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
                   tickFormatter={v => v >= 1e9 ? `${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k` : v} />
-                <RechartsTooltip content={<CustomTooltip />} />
+                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={formatNumber} />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                 {platformMatrix.map(p => (
                   <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
