@@ -221,6 +221,26 @@ export const CommandCenterView = ({ filteredData }) => {
     }).filter(p => p.budget > 0 || p.spent > 0);
   }, [data]);
 
+  // ── Channel Trend (per-month breakdown per channel) ──
+  const channelTrend = useMemo(() => {
+    const map = {};
+    data.forEach(d => {
+      const key = d.monthNum ?? 0;
+      if (!map[key]) map[key] = { month: d.month || '', monthNum: key, meta: 0, tiktok: 0, google: 0, criteo: 0, segumento: 0, metaImp: 0, tiktokImp: 0, googleImp: 0, criteoImp: 0, segumentoImp: 0 };
+      map[key].meta       += d.spentMeta || 0;
+      map[key].tiktok     += d.spentTiktok || 0;
+      map[key].google     += d.spentGoogle || 0;
+      map[key].criteo     += d.spentCriteo || 0;
+      map[key].segumento  += d.spentSegumento || 0;
+      map[key].metaImp      += d.actualImpMeta || 0;
+      map[key].tiktokImp    += d.actualImpTiktok || 0;
+      map[key].googleImp    += d.actualImpGoogle || 0;
+      map[key].criteoImp    += d.actualImpCriteo || 0;
+      map[key].segumentoImp += d.actualImpSegumento || 0;
+    });
+    return Object.values(map).sort((a, b) => a.monthNum - b.monthNum);
+  }, [data]);
+
   // ── Budget Pacing by Brand (and Category & Product if filtered) ──
   const brandPacing = useMemo(() => {
     const map = {};
@@ -895,6 +915,55 @@ export const CommandCenterView = ({ filteredData }) => {
           </div>
         </div>
       </div>
+      {/* ── CHANNEL TRENDLINES ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '20px', marginBottom: '20px' }}>
+        {/* Spent Trend */}
+        <div className="cc2-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 600 }}>Spent Trend by Channel</span>
+            <Activity size={18} color="#8b8b9e" />
+          </div>
+          <div style={{ height: '220px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={channelTrend} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
+                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
+                  tickFormatter={v => v >= 1e9 ? `${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k` : v} />
+                <RechartsTooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                {platformMatrix.map(p => (
+                  <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Impression Trend */}
+        <div className="cc2-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 600 }}>Impression Trend by Channel</span>
+            <Activity size={18} color="#8b8b9e" />
+          </div>
+          <div style={{ height: '220px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={channelTrend.map(d => ({ ...d, meta: d.metaImp, tiktok: d.tiktokImp, google: d.googleImp, criteo: d.criteoImp, segumento: d.segumentoImp }))} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
+                <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
+                  tickFormatter={v => v >= 1e9 ? `${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k` : v} />
+                <RechartsTooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+                {platformMatrix.map(p => (
+                  <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
       {/* ── PERFORMANCE BY CHANNEL ── */}
       <div style={{ marginBottom: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
