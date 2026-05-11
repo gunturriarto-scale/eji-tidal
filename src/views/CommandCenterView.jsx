@@ -56,24 +56,19 @@ const DonutTooltip = ({ active, payload, formatFn, total }) => {
   );
 };
 
-const TrendTooltip = ({ active, payload, label, formatFn }) => {
+const TrendTooltip = ({ active, payload, label, isPct }) => {
   if (!active || !payload?.length) return null;
-  const total = payload.reduce((s, e) => s + (e.value || 0), 0);
   return (
     <div className="glass-panel" style={{ padding: '10px 14px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(18,18,26,0.95)', fontSize: '12px', borderRadius: '8px', minWidth: '160px' }}>
       <p style={{ margin: '0 0 6px', fontWeight: 600, color: 'var(--text-secondary)', fontSize: '11px' }}>{label}</p>
-      {payload.map((e, i) => {
-        const pct = total > 0 ? (e.value / total) * 100 : 0;
-        return (
-          <div key={i} style={{ color: e.color, display: 'flex', justifyContent: 'space-between', gap: '12px', marginBottom: '3px' }}>
-            <span>{e.name}:</span>
-            <span style={{ fontWeight: 600 }}>
-              {(formatFn || formatNumber)(e.value)}
-              <span style={{ color: '#8b8b9e', fontSize: '10px', marginLeft: '5px' }}>({pct.toFixed(1)}%)</span>
-            </span>
-          </div>
-        );
-      })}
+      {payload.map((e, i) => (
+        <div key={i} style={{ color: e.color, display: 'flex', justifyContent: 'space-between', gap: '12px', marginBottom: '3px' }}>
+          <span>{e.name}:</span>
+          <span style={{ fontWeight: 600 }}>
+            {isPct ? `${e.value.toFixed(1)}%` : formatNumber(e.value)}
+          </span>
+        </div>
+      ))}
     </div>
   );
 };
@@ -948,12 +943,14 @@ export const CommandCenterView = ({ filteredData }) => {
           </div>
           <div style={{ height: '220px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={channelTrend} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
+              <LineChart data={channelTrend.map(d => {
+                const total = (d.meta||0)+(d.tiktok||0)+(d.google||0)+(d.criteo||0)+(d.segumento||0);
+                return { month: d.month, meta: total>0?(d.meta/total)*100:0, tiktok: total>0?(d.tiktok/total)*100:0, google: total>0?(d.google/total)*100:0, criteo: total>0?(d.criteo/total)*100:0, segumento: total>0?(d.segumento/total)*100:0 };
+              })} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
                 <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
-                  tickFormatter={v => v >= 1e9 ? `${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k` : v} />
-                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={formatCurrency} />} />
+                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+                <RechartsTooltip content={(props) => <TrendTooltip {...props} isPct />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                 {platformMatrix.map(p => (
                   <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
@@ -971,12 +968,14 @@ export const CommandCenterView = ({ filteredData }) => {
           </div>
           <div style={{ height: '220px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={channelTrend.map(d => ({ ...d, meta: d.metaImp, tiktok: d.tiktokImp, google: d.googleImp, criteo: d.criteoImp, segumento: d.segumentoImp }))} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
+              <LineChart data={channelTrend.map(d => {
+                const total = (d.metaImp||0)+(d.tiktokImp||0)+(d.googleImp||0)+(d.criteoImp||0)+(d.segumentoImp||0);
+                return { month: d.month, meta: total>0?(d.metaImp/total)*100:0, tiktok: total>0?(d.tiktokImp/total)*100:0, google: total>0?(d.googleImp/total)*100:0, criteo: total>0?(d.criteoImp/total)*100:0, segumento: total>0?(d.segumentoImp/total)*100:0 };
+              })} margin={{ top: 5, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
                 <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
-                  tickFormatter={v => v >= 1e9 ? `${(v/1e9).toFixed(1)}B` : v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}k` : v} />
-                <RechartsTooltip content={(props) => <TrendTooltip {...props} formatFn={formatNumber} />} />
+                <YAxis stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} tickFormatter={v => `${v}%`} />
+                <RechartsTooltip content={(props) => <TrendTooltip {...props} isPct />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                 {platformMatrix.map(p => (
                   <Line key={p.id} type="monotone" dataKey={p.id} name={p.name} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
