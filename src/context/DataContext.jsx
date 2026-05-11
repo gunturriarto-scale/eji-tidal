@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Papa from 'papaparse';
-import { supabase } from '../lib/supabase';
 
 const DataContext = createContext();
 
@@ -153,15 +152,9 @@ export const DataProvider = ({ children }) => {
           const t = await res.text();
           return Papa.parse(t, { header: true, skipEmptyLines: true }).data.map(cleanNumbers);
         };
-        const fetchSupabaseAll = async (table) => {
-          let { data, error } = await supabase.from(table).select('*').limit(4000);
-          return error ? [] : data;
-        };
 
-        const [offsite, kol, ordersCSV, ncoCSV, gmvMaxRaw, metaSup, googleSup, tiktokSup, criteoSup] = await Promise.all([
+        const [offsite, kol, ordersCSV, ncoCSV, gmvMaxRaw] = await Promise.all([
           fetchCSV(urls.OFFSITE), fetchCSV(urls.KOL), fetchCSV(urls.DAILY_ORDERS), fetchCSV(urls.NCO_ORDERS), fetchCSV(urls.GMV_MAX),
-          fetchSupabaseAll('meta_ads_performance'), fetchSupabaseAll('google_ads_performance'),
-          fetchSupabaseAll('tiktok_ads_performance'), fetchSupabaseAll('criteo_ads_performance')
         ]);
 
         const resCC = await fetch(`https://docs.google.com/spreadsheets/d/${command_center_sheet_id}/gviz/tq?tqx=out:csv&gid=0`);
@@ -207,21 +200,14 @@ export const DataProvider = ({ children }) => {
           };
         });
 
-        const normAds = (list) => list.map(d => ({ ...d, normDate: (d.day || '').substring(0, 10), Day: (d.day || '').substring(0, 10), Campaign: d.campaign_name || d['Campaign name'], Cost: d.spend || d['Amount spent (IDR)'] || d.Cost, Reach: d.reach || d.Reach, Impressions: d.impressions || d.Impressions || d['Impr.'], BRAND: d.brand }));
-
-        const metaMap = normAds(metaSup);
-        const googleMap = normAds(googleSup);
-        const tiktokMap = normAds(tiktokSup);
-        const criteoMap = normAds(criteoSup);
-
         setData({
-          tiktokAdsData: tiktokMap,
-          metaAdsData: metaMap,
-          metaAdsSupabaseData: metaMap,
-          googleAdsData: googleMap,
+          tiktokAdsData: [],
+          metaAdsData: [],
+          metaAdsSupabaseData: [],
+          googleAdsData: [],
           offsiteData: offsite,
           kolData: kol,
-          criteoData: criteoMap,
+          criteoData: [],
           ordersData,
           ncoOrdersData,
           commandCenterData: mapPositionalData(ccRows),
