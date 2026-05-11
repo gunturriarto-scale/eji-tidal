@@ -39,6 +39,23 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+const DonutTooltip = ({ active, payload, formatFn }) => {
+  if (!active || !payload?.length) return null;
+  const entry = payload[0];
+  const pct = entry.payload?.percent;
+  return (
+    <div className="glass-panel" style={{ padding: '10px 14px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(18, 18, 26, 0.95)', fontSize: '13px', borderRadius: '8px' }}>
+      <div style={{ color: entry.color, display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ fontWeight: 600 }}>{entry.name}:</span>
+        <span style={{ fontWeight: 700 }}>{(formatFn || formatNumber)(entry.value)}</span>
+        {pct !== undefined && (
+          <span style={{ color: '#8b8b9e', fontSize: '11px' }}>({(pct * 100).toFixed(1)}%)</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Mini Sparkline SVG component to avoid heavy Recharts instances for small lines
 const Sparkline = ({ data, color, width = 120, height = 40 }) => {
   if (!data || !data.length) return null;
@@ -752,7 +769,7 @@ export const CommandCenterView = ({ filteredData }) => {
                       <Pie data={platformMatrix} dataKey="imp" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} stroke="none">
                         {platformMatrix.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                       </Pie>
-                      <RechartsTooltip content={<CustomTooltip />} />
+                      <RechartsTooltip content={(props) => <DonutTooltip {...props} formatFn={formatNumber} />} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -768,7 +785,7 @@ export const CommandCenterView = ({ filteredData }) => {
                       <Pie data={platformMatrix} dataKey="spent" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} stroke="none">
                         {platformMatrix.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                       </Pie>
-                      <RechartsTooltip content={<CustomTooltip />} />
+                      <RechartsTooltip content={(props) => <DonutTooltip {...props} formatFn={formatCurrency} />} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                     </PieChart>
                   </ResponsiveContainer>
