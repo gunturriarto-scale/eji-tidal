@@ -953,52 +953,49 @@ export const CommandCenterView = ({ filteredData }) => {
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={channelTrend.map(d => {
               const spentTotal = (d.meta||0)+(d.tiktok||0)+(d.google||0)+(d.criteo||0)+(d.segumento||0);
+              const impTotal   = (d.metaImp||0)+(d.tiktokImp||0)+(d.googleImp||0)+(d.criteoImp||0)+(d.segumentoImp||0);
               return {
                 month: d.month,
-                imp_meta:      d.metaImp,
-                imp_tiktok:    d.tiktokImp,
-                imp_google:    d.googleImp,
-                imp_criteo:    d.criteoImp,
-                imp_segumento: d.segumentoImp,
+                imp_total:     impTotal,
                 pct_meta:      spentTotal>0 ? (d.meta/spentTotal)*100 : 0,
                 pct_tiktok:    spentTotal>0 ? (d.tiktok/spentTotal)*100 : 0,
                 pct_google:    spentTotal>0 ? (d.google/spentTotal)*100 : 0,
                 pct_criteo:    spentTotal>0 ? (d.criteo/spentTotal)*100 : 0,
                 pct_segumento: spentTotal>0 ? (d.segumento/spentTotal)*100 : 0,
-                cpm_meta:      d.metaCpm,
-                cpm_tiktok:    d.tiktokCpm,
-                cpm_google:    d.googleCpm,
-                cpm_criteo:    d.criteoCpm,
-                cpm_segumento: d.segumentoCpm,
+                cpm_blended:   impTotal>0 ? (spentTotal/impTotal)*1000 : 0,
               };
             })} margin={{ top: 5, right: 56, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
               <XAxis dataKey="month" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false} />
-              {/* Left axis: Impression */}
+              {/* Left axis: Total Impression */}
               <YAxis yAxisId="imp" orientation="left" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
                 tickFormatter={v => v>=1e9?`${(v/1e9).toFixed(1)}B`:v>=1e6?`${(v/1e6).toFixed(0)}M`:v>=1e3?`${(v/1e3).toFixed(0)}k`:v} />
               {/* Right axis: Spent % */}
               <YAxis yAxisId="pct" orientation="right" stroke="#8b8b9e" fontSize={11} tickLine={false} axisLine={false}
                 domain={[0, 100]} tickFormatter={v => `${v}%`} />
-              {/* Hidden axis: CPM (same scale, no ticks shown) */}
+              {/* Hidden axis: Blended CPM */}
               <YAxis yAxisId="cpm" orientation="right" hide />
               <RechartsTooltip content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
-                const bars  = payload.filter(e => e.dataKey.startsWith('imp_'));
-                const lines = payload.filter(e => e.dataKey.startsWith('pct_'));
-                const cpms  = payload.filter(e => e.dataKey.startsWith('cpm_'));
-                const impTotal = bars.reduce((s, e) => s + (e.value||0), 0);
-                const nameMap = { imp_meta:'Meta', imp_tiktok:'TikTok', imp_google:'Google', imp_criteo:'Criteo', imp_segumento:'Segumento', pct_meta:'Meta', pct_tiktok:'TikTok', pct_google:'Google', pct_criteo:'Criteo', pct_segumento:'Segumento', cpm_meta:'Meta', cpm_tiktok:'TikTok', cpm_google:'Google', cpm_criteo:'Criteo', cpm_segumento:'Segumento' };
+                const impEntry  = payload.find(e => e.dataKey === 'imp_total');
+                const lines     = payload.filter(e => e.dataKey.startsWith('pct_'));
+                const cpmEntry  = payload.find(e => e.dataKey === 'cpm_blended');
+                const nameMap   = { pct_meta:'Meta', pct_tiktok:'TikTok', pct_google:'Google', pct_criteo:'Criteo', pct_segumento:'Segumento' };
                 return (
                   <div className="glass-panel" style={{ padding:'10px 14px', border:'1px solid rgba(255,255,255,0.1)', background:'rgba(18,18,26,0.95)', fontSize:'12px', borderRadius:'8px', minWidth:'200px' }}>
                     <p style={{ margin:'0 0 6px', fontWeight:600, color:'var(--text-secondary)', fontSize:'11px' }}>{label}</p>
-                    {bars.length > 0 && <p style={{ margin:'0 0 3px', fontSize:'10px', color:'#8b8b9e', textTransform:'uppercase', letterSpacing:'0.5px' }}>Impression</p>}
-                    {bars.map((e,i) => (
-                      <div key={i} style={{ color:e.fill||e.color, display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'2px' }}>
-                        <span>{nameMap[e.dataKey]}:</span>
-                        <span style={{ fontWeight:600 }}>{formatNumber(e.value)} <span style={{ color:'#8b8b9e', fontSize:'10px' }}>({impTotal>0?((e.value/impTotal)*100).toFixed(1):0}%)</span></span>
+                    {impEntry && (
+                      <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'4px' }}>
+                        <span style={{ color:'#8b8b9e' }}>Total Impression:</span>
+                        <span style={{ fontWeight:600, color:'#e2e8f0' }}>{formatNumber(impEntry.value)}</span>
                       </div>
-                    ))}
+                    )}
+                    {cpmEntry && (
+                      <div style={{ display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'4px' }}>
+                        <span style={{ color:'#8b8b9e' }}>Blended CPM:</span>
+                        <span style={{ fontWeight:600, color:'#f59e0b' }}>Rp {Math.round(cpmEntry.value||0).toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
                     {lines.length > 0 && <><div style={{ borderTop:'1px solid #2a2a3a', margin:'6px 0 3px' }} /><p style={{ margin:'0 0 3px', fontSize:'10px', color:'#8b8b9e', textTransform:'uppercase', letterSpacing:'0.5px' }}>Spent Share</p></>}
                     {lines.map((e,i) => (
                       <div key={i} style={{ color:e.stroke||e.color, display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'2px' }}>
@@ -1006,35 +1003,23 @@ export const CommandCenterView = ({ filteredData }) => {
                         <span style={{ fontWeight:600 }}>{(e.value||0).toFixed(1)}%</span>
                       </div>
                     ))}
-                    {cpms.length > 0 && <><div style={{ borderTop:'1px solid #2a2a3a', margin:'6px 0 3px' }} /><p style={{ margin:'0 0 3px', fontSize:'10px', color:'#8b8b9e', textTransform:'uppercase', letterSpacing:'0.5px' }}>CPM</p></>}
-                    {cpms.map((e,i) => (
-                      <div key={i} style={{ color:e.stroke||e.color, display:'flex', justifyContent:'space-between', gap:'12px', marginBottom:'2px' }}>
-                        <span>{nameMap[e.dataKey]}:</span>
-                        <span style={{ fontWeight:600 }}>Rp {Math.round(e.value||0).toLocaleString('id-ID')}</span>
-                      </div>
-                    ))}
                   </div>
                 );
               }} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
                 formatter={(value) => {
-                  const name = value.replace(/^(imp_|pct_|cpm_)/,'').replace(/^\w/, c => c.toUpperCase());
-                  if (value.startsWith('cpm_')) return `${name} (CPM)`;
-                  if (value.startsWith('pct_')) return `${name} (%)`;
-                  return name;
+                  if (value === 'imp_total') return 'Total Impression';
+                  if (value === 'cpm_blended') return 'Blended CPM';
+                  return value.replace('pct_','').replace(/^\w/, c => c.toUpperCase()) + ' (%)';
                 }} />
-              {/* Stacked bars: Impression */}
-              {platformMatrix.map(p => (
-                <Bar key={`imp_${p.id}`} yAxisId="imp" dataKey={`imp_${p.id}`} name={`imp_${p.id}`} stackId="imp" fill={p.color} fillOpacity={0.35} />
-              ))}
-              {/* Solid lines: Spent % */}
+              {/* Bar: Total Impression */}
+              <Bar yAxisId="imp" dataKey="imp_total" name="imp_total" fill="#6366f1" fillOpacity={0.3} radius={[3,3,0,0]} />
+              {/* Solid lines: Spent % per channel */}
               {platformMatrix.map(p => (
                 <Line key={`pct_${p.id}`} yAxisId="pct" type="monotone" dataKey={`pct_${p.id}`} name={`pct_${p.id}`} stroke={p.color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
               ))}
-              {/* Dashed lines: CPM */}
-              {platformMatrix.map(p => (
-                <Line key={`cpm_${p.id}`} yAxisId="cpm" type="monotone" dataKey={`cpm_${p.id}`} name={`cpm_${p.id}`} stroke={p.color} strokeWidth={1.5} strokeDasharray="5 3" dot={false} activeDot={{ r: 3 }} />
-              ))}
+              {/* Dashed line: Blended CPM */}
+              <Line yAxisId="cpm" type="monotone" dataKey="cpm_blended" name="cpm_blended" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 3" dot={false} activeDot={{ r: 4 }} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
