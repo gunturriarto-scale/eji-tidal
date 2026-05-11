@@ -1293,7 +1293,7 @@ export const CommandCenterView = ({ filteredData }) => {
                           <td style={{ textAlign: 'right', color: '#8b8b9e' }}>{formatCurrency(prod.estCpm)}</td>
                           <td style={{ textAlign: 'right', fontWeight: 600, color: prod.spent > prod.budget ? '#ef4444' : '#f59e0b' }}>{formatCurrency(prod.spent)}</td>
                           <td style={{ textAlign: 'right' }}>{formatNumber(prod.imp)}</td>
-                          <td style={{ textAlign: 'right', color: '#8b8b9e' }}>{formatCurrency(prod.actCpm)}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 600, color: prod.actCpm > 0 && prod.estCpm > 0 ? (prod.actCpm > prod.estCpm ? '#ef4444' : '#10b981') : '#8b8b9e' }}>{formatCurrency(prod.actCpm)}</td>
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{ color: prod.pacing > 100 ? '#ef4444' : prod.pacing > 85 ? '#f59e0b' : '#10b981', fontWeight: 600, width: '45px' }}>
