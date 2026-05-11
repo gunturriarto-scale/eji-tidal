@@ -39,17 +39,17 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-const DonutTooltip = ({ active, payload, formatFn }) => {
+const DonutTooltip = ({ active, payload, formatFn, total }) => {
   if (!active || !payload?.length) return null;
   const entry = payload[0];
-  const pct = entry.payload?.percent;
+  const pct = total > 0 ? (entry.value / total) * 100 : null;
   return (
     <div className="glass-panel" style={{ padding: '10px 14px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(18, 18, 26, 0.95)', fontSize: '13px', borderRadius: '8px' }}>
       <div style={{ color: entry.color, display: 'flex', alignItems: 'center', gap: '12px' }}>
         <span style={{ fontWeight: 600 }}>{entry.name}:</span>
         <span style={{ fontWeight: 700 }}>{(formatFn || formatNumber)(entry.value)}</span>
-        {pct !== undefined && (
-          <span style={{ color: '#8b8b9e', fontSize: '11px' }}>({(pct * 100).toFixed(1)}%)</span>
+        {pct !== null && (
+          <span style={{ color: '#8b8b9e', fontSize: '11px' }}>({pct.toFixed(1)}%)</span>
         )}
       </div>
     </div>
@@ -769,7 +769,7 @@ export const CommandCenterView = ({ filteredData }) => {
                       <Pie data={platformMatrix} dataKey="imp" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} stroke="none">
                         {platformMatrix.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                       </Pie>
-                      <RechartsTooltip content={(props) => <DonutTooltip {...props} formatFn={formatNumber} />} />
+                      <RechartsTooltip content={(props) => <DonutTooltip {...props} formatFn={formatNumber} total={platformMatrix.reduce((s, p) => s + p.imp, 0)} />} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -785,7 +785,7 @@ export const CommandCenterView = ({ filteredData }) => {
                       <Pie data={platformMatrix} dataKey="spent" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={70} stroke="none">
                         {platformMatrix.map((entry, index) => <Cell key={index} fill={entry.color} />)}
                       </Pie>
-                      <RechartsTooltip content={(props) => <DonutTooltip {...props} formatFn={formatCurrency} />} />
+                      <RechartsTooltip content={(props) => <DonutTooltip {...props} formatFn={formatCurrency} total={platformMatrix.reduce((s, p) => s + p.spent, 0)} />} />
                       <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
                     </PieChart>
                   </ResponsiveContainer>
