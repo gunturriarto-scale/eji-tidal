@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GMV Max Intelligence + P&L Modeler — Hanasui TikTok</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#060810}
+  input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:#1c2333;border-radius:2px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#00d4aa;cursor:pointer;border:2px solid #060810;box-shadow:0 0 6px rgba(0,212,170,.5)}
+  .tab{padding:7px 16px;border:1px solid #21262d;background:transparent;color:#6e7681;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.07em;transition:all .2s}
+  .tab.on{background:#00d4aa15;border-color:#00d4aa;color:#00d4aa}
+  .tab:first-child{border-radius:6px 0 0 6px}.tab:last-child{border-radius:0 6px 6px 0}
+  .itab{padding:6px 14px;border:1px solid #21262d;background:transparent;color:#6e7681;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.07em;transition:all .2s}
+  .itab.on{background:#8b5cf615;border-color:#8b5cf6;color:#a78bfa}
+  .itab:first-child{border-radius:5px 0 0 5px}.itab:last-child{border-radius:0 5px 5px 0}
+  .qb{padding:3px 9px;border-radius:5px;border:1px solid #21262d;background:transparent;color:#6e7681;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:10px;transition:all .15s}
+  .qb.on,.qb:hover{border-color:#00d4aa40;color:#00d4aa;background:#00d4aa0d}
+  .mb{background:#060810;border:1px solid #1c2333;border-radius:8px;padding:12px 14px}
+  .sec{font-size:9px;color:#6e7681;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px}
+  .xl{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.02em}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .card{background:#0d1117;border:1px solid #1c2333;border-radius:10px;padding:16px}
+  .card-a{background:#0d1117;border:1px solid #1c2333;border-radius:10px;padding:16px;position:relative;overflow:hidden}
+  .card-a::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#00d4aa,#0ea5e9,#8b5cf6)}
+  .fade{animation:fu .2s ease}
+  @keyframes fu{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  input[type=number]::-webkit-inner-spin-button{opacity:.3}
+  .pnl-section{background:#0d1117;border-radius:8px;overflow:hidden;border:1px solid #1c2333}
+  .pnl-header{padding:10px 14px;background:#131a24;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center}
+  input[type=month]{color-scheme:dark}
+  @media(max-width:800px){
+    .main-grid{grid-template-columns:1fr!important}
+    .g3{grid-template-columns:1fr 1fr!important}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const ANCHORS = [
+  { roi:2.0,  spend:1060, gmv:2254, n:7  },
+  { roi:2.75, spend:645,  gmv:1709, n:5  },
+  { roi:3.25, spend:379,  gmv:1239, n:10 },
+  { roi:3.75, spend:332,  gmv:1260, n:62 },
+  { roi:4.25, spend:286,  gmv:1207, n:74 },
+  { roi:4.75, spend:225,  gmv:1062, n:38 },
+  { roi:5.25, spend:235,  gmv:1235, n:24 },
+  { roi:6.0,  spend:152,  gmv:897,  n:31 },
+  { roi:7.0,  spend:83,   gmv:643,  n:20 },
+];
+const VIDEO_BASELINE = 10000;
+const VIDEO_BETA = 0.107;
+
+function videoMult(v) { return v > 0 ? Math.pow(v / VIDEO_BASELINE, VIDEO_BETA) : 1; }
+function lerp(x, x0, x1, y0, y1) { return y0 + (y1 - y0) * (x - x0) / (x1 - x0); }
+
+function interp(roiVal, key) {
+  const s = [...ANCHORS].sort((a,b) => a.roi - b.roi);
+  if (roiVal <= s[0].roi) return s[0][key];
+  if (roiVal >= s[s.length-1].roi) return s[s.length-1][key];
+  for (let i = 0; i < s.length-1; i++)
+    if (roiVal >= s[i].roi && roiVal <= s[i+1].roi)
+      return lerp(roiVal, s[i].roi, s[i+1].roi, s[i][key], s[i+1][key]);
+}
+
+function findROIFromGMV(tgt, vm) {
+  const adj = ANCHORS.map(a => ({...a, gmv:a.gmv*vm, spend:a.spend*vm})).sort((a,b)=>a.gmv-b.gmv);
+  if (tgt <= adj[0].gmv) return { roi:adj[0].roi, spend:adj[0].spend };
+  if (tgt >= adj[adj.length-1].gmv) return { roi:adj[adj.length-1].roi, spend:adj[adj.length-1].spend };
+  for (let i = 0; i < adj.length-1; i++) {
+    if (tgt >= adj[i].gmv && tgt <= adj[i+1].gmv) {
+      const t = (tgt - adj[i].gmv) / (adj[i+1].gmv - adj[i].gmv);
+      return { roi:adj[i].roi + t*(adj[i+1].roi-adj[i].roi), spend:adj[i].spend + t*(adj[i+1].spend-adj[i].spend) };
+    }
+  }
+}
+
+function confLevel(roi) {
+  const s = [...ANCHORS].sort((a,b)=>Math.abs(a.roi-roi)-Math.abs(b.roi-roi));
+  const n = s[0].n;
+  return n>=50?{pct:12,cls:'high'}:n>=20?{pct:18,cls:'mid'}:{pct:28,cls:'low'};
+}
+
+function calcPnL(dailyGMV, dailySpend, pnl, days, basketSize) {
+  const { cancelRate, asp, cogsPerUnit, platformFee, affiliateFee, voucherSubsidy, logisticsPerOrder, fixedCostMonthly } = pnl;
+  const g = dailyGMV * 1e6;
+  const s = dailySpend * 1e6;
+  const netGMV        = g * (1 - cancelRate/100);
+  const voucherCost   = netGMV * (voucherSubsidy/100);
+  const platformCost  = netGMV * (platformFee/100);
+  const affiliateCost = netGMV * (affiliateFee/100);
+  const netRevenue    = netGMV - voucherCost - platformCost - affiliateCost;
+  const units         = asp > 0 ? netGMV / asp : 0;
+  const orders        = basketSize > 0 ? netGMV / basketSize : 0;
+  const cogs          = units * cogsPerUnit;
+  const grossProfit   = netRevenue - cogs;
+  const fulfillment   = orders * logisticsPerOrder;
+  const contribProfit = grossProfit - s - fulfillment;
+  const fixedDaily    = g * (fixedCostMonthly / 100);
+  const operatingProfit = contribProfit - fixedDaily;
+  const pct = v => g > 0 ? (v/g*100) : 0;
+  return {
+    grossGMV:g, netGMV, voucherCost, platformCost, affiliateCost,
+    netRevenue, cogs, grossProfit, fulfillment, adSpend:s,
+    contribProfit, fixedDaily, operatingProfit, units, orders,
+    pNetGMV:pct(netGMV), pNetRev:pct(netRevenue), pGrossProfit:pct(grossProfit),
+    pContrib:pct(contribProfit), pOperating:pct(operatingProfit),
+    pCOGS:pct(cogs), pAds:pct(s), pFulfill:pct(fulfillment),
+    pPlatform:pct(platformCost), pAffiliate:pct(affiliateCost), pVoucher:pct(voucherCost),
+    totalGMV:g*days, totalContrib:contribProfit*days,
+    totalOperating:operatingProfit*days, totalAdSpend:s*days,
+  };
+}
+
+function fmtM(v) {
+  const m = v / 1e6;
+  if (m >= 1000) return `${(m/1000).toFixed(2)}B`;
+  return `${m.toFixed(0)}M`;
+}
+function fmtIDR(v) {
+  if (Math.abs(v) >= 1e12) return `Rp ${(v/1e12).toFixed(2)}T`;
+  if (Math.abs(v) >= 1e9)  return `Rp ${(v/1e9).toFixed(2)}B`;
+  if (Math.abs(v) >= 1e6)  return `Rp ${(v/1e6).toFixed(0)}M`;
+  return `Rp ${v.toLocaleString()}`;
+}
+function fmtPct(v) { return `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`; }
+const C = r => r<=3?'#f87171':r<=4?'#fb923c':r<=5?'#facc15':r<=6?'#4ade80':'#34d399';
+const L = r => r<=2.5?'Ultra Agresif':r<=3.5?'Agresif':r<=4.5?'Balanced':r<=5.5?'Efisien':r<=6.5?'Sangat Efisien':'Konservatif';
+
+function NumInput({ label, value, onChange, min=0, max=9999999, step=1, prefix='', suffix='', hint='' }) {
+  return (
+    <div style={{marginBottom:10}}>
+      <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+        <span style={{fontSize:10,color:'#8b949e',letterSpacing:'.04em'}}>{label}</span>
+        {hint && <span style={{fontSize:9,color:'#4b5563'}}>{hint}</span>}
+      </div>
+      <div style={{display:'flex',alignItems:'center',background:'#060810',border:'1px solid #21262d',borderRadius:6,overflow:'hidden'}}>
+        {prefix && <span style={{padding:'0 10px',color:'#6e7681',fontSize:12,borderRight:'1px solid #21262d',whiteSpace:'nowrap'}}>{prefix}</span>}
+        <input type="number" min={min} max={max} step={step} value={value}
+          onChange={e => onChange(parseFloat(e.target.value)||0)}
+          style={{flex:1,background:'transparent',border:'none',color:'#e6edf3',padding:'8px 10px',fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:'none',width:'100%'}}/>
+        {suffix && <span style={{padding:'0 10px',color:'#6e7681',fontSize:11,borderLeft:'1px solid #21262d',whiteSpace:'nowrap'}}>{suffix}</span>}
+      </div>
+    </div>
+  );
+}
+
+function WaterfallRow({ label, value, pct, color='#c9d1d9', isTotal=false, indent=false, bar=true }) {
+  const barWidth = Math.min(100, Math.abs(pct));
+  const barColor = value >= 0 ? '#4ade80' : '#f87171';
+  return (
+    <div style={{padding:isTotal?'10px 14px':'7px 14px',background:isTotal?'#131a24':'transparent',borderTop:isTotal?'1px solid #21262d':'none',borderRadius:isTotal?6:0,marginTop:isTotal?4:0}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <span style={{fontSize:isTotal?11:10,color:isTotal?'#e6edf3':'#8b949e',paddingLeft:indent?12:0,fontWeight:isTotal?700:400,fontFamily:isTotal?'Syne,sans-serif':'inherit'}}>
+          {indent?'↳ ':''}{label}
+        </span>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontSize:isTotal?13:11,color,fontWeight:isTotal?800:500,fontFamily:isTotal?'Syne,sans-serif':'inherit',minWidth:90,textAlign:'right'}}>{fmtIDR(value)}</span>
+          <span style={{fontSize:9,color:'#4b5563',minWidth:42,textAlign:'right'}}>{fmtPct(pct)}</span>
+        </div>
+      </div>
+      {bar && !isTotal && (
+        <div style={{height:2,background:'#1c2333',borderRadius:1,marginTop:4,overflow:'hidden'}}>
+          <div style={{height:'100%',width:`${barWidth}%`,background:barColor,borderRadius:1,opacity:0.6,transition:'width .3s'}}/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+function buildMonthlyPlan(dailyGMV, dailySpend, pnl, days, startMonthStr) {
+  const [sy, sm] = startMonthStr.split('-').map(Number);
+  const months = [];
+  let remaining = days;
+  let year = sy, month = sm;
+  while (remaining > 0) {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const daysUsed = Math.min(remaining, daysInMonth);
+    const res = calcPnL(dailyGMV, dailySpend, pnl, daysUsed);
+    months.push({
+      label:`${MONTH_NAMES[month-1]} ${year}`,
+      days:daysUsed,
+      gmv:         res.totalGMV,
+      netGMV:      res.netGMV      * daysUsed,
+      netRevenue:  res.netRevenue  * daysUsed,
+      grossProfit: res.grossProfit * daysUsed,
+      adSpend:     res.adSpend     * daysUsed,
+      fulfillment: res.fulfillment * daysUsed,
+      contribProfit:res.contribProfit * daysUsed,
+      operatingProfit:res.operatingProfit * daysUsed,
+      fixedCost:   res.fixedDaily  * daysUsed,
+      cogs:        res.cogs        * daysUsed,
+      units:       Math.round(res.units  * daysUsed),
+      orders:      Math.round(res.orders * daysUsed),
+      pContrib:    res.pContrib,
+      pGrossProfit:res.pGrossProfit,
+    });
+    remaining -= daysUsed;
+    month++;
+    if (month > 12) { month = 1; year++; }
+  }
+  return months;
+}
+
+function MonthlyWaterfall({ dailyGMV, dailySpend, pnl, days, startMonth, setStartMonth }) {
+  const months = useMemo(
+    () => buildMonthlyPlan(dailyGMV, dailySpend, pnl, days, startMonth),
+    [dailyGMV, dailySpend, pnl, days, startMonth]
+  );
+
+  const totals = useMemo(() => months.reduce((acc, m) => ({
+    gmv:            (acc.gmv||0)            + m.gmv,
+    netRevenue:     (acc.netRevenue||0)     + m.netRevenue,
+    grossProfit:    (acc.grossProfit||0)    + m.grossProfit,
+    adSpend:        (acc.adSpend||0)        + m.adSpend,
+    fulfillment:    (acc.fulfillment||0)    + m.fulfillment,
+    contribProfit:  (acc.contribProfit||0)  + m.contribProfit,
+    operatingProfit:(acc.operatingProfit||0)+ m.operatingProfit,
+    fixedCost:      (acc.fixedCost||0)      + m.fixedCost,
+    cogs:           (acc.cogs||0)           + m.cogs,
+    units:          (acc.units||0)          + m.units,
+    orders:         (acc.orders||0)         + m.orders,
+  }), {}), [months]);
+
+  const rows = [
+    { key:'gmv',            label:'Gross GMV',             color:'#e6edf3', bold:true  },
+    { key:'netRevenue',     label:'Net Revenue to Brand',  color:'#94a3b8', bold:false },
+    { key:'cogs',           label:'↳ COGS / HPP',          color:'#f87171', bold:false, neg:true },
+    { key:'grossProfit',    label:'Gross Profit',          color:'#facc15', bold:true  },
+    { key:'adSpend',        label:'↳ Ads Spend GMV Max',   color:'#fb923c', bold:false, neg:true },
+    { key:'fulfillment',    label:'↳ Fulfillment',         color:'#fb923c', bold:false, neg:true },
+    { key:'contribProfit',  label:'Contribution Profit ★', color:'#4ade80', bold:true, highlight:true },
+    { key:'fixedCost',      label:'↳ Fixed Cost',          color:'#6e7681', bold:false, neg:true, showIf: pnl.fixedCostMonthly > 0 },
+    { key:'operatingProfit',label:'Operating Profit',      color:'#34d399', bold:true,  showIf: pnl.fixedCostMonthly > 0 },
+  ].filter(r => r.showIf !== false);
+
+  const colW = months.length <= 3 ? 160 : months.length <= 6 ? 130 : 110;
+
+  return (
+    <div style={{background:'#0d1117',border:'1px solid #1c2333',borderRadius:10,overflow:'hidden'}}>
+      <div style={{padding:'12px 16px',background:'#131a24',borderBottom:'1px solid #21262d',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+        <div>
+          <div style={{fontFamily:'Syne',fontWeight:700,fontSize:13,color:'#e6edf3'}}>📅 P&L Waterfall — Bulanan</div>
+          <div style={{fontSize:9,color:'#6e7681',marginTop:2}}>{months.length} bulan · {days} hari total campaign</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <span style={{fontSize:10,color:'#6e7681'}}>Start:</span>
+          <input type="month" value={startMonth} onChange={e=>setStartMonth(e.target.value)}
+            style={{background:'#060810',border:'1px solid #21262d',color:'#e6edf3',borderRadius:6,padding:'5px 10px',fontFamily:"'IBM Plex Mono',monospace",fontSize:11,outline:'none'}}/>
+        </div>
+      </div>
+
+      <div style={{overflowX:'auto'}}>
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:10,fontFamily:"'IBM Plex Mono',monospace"}}>
+          <thead>
+            <tr style={{borderBottom:'1px solid #21262d'}}>
+              <th style={{textAlign:'left',padding:'8px 16px',color:'#6e7681',fontSize:9,letterSpacing:'.1em',fontWeight:500,minWidth:160,position:'sticky',left:0,background:'#0d1117',zIndex:2}}>LINE ITEM</th>
+              {months.map((m,i) => (
+                <th key={i} style={{textAlign:'right',padding:'8px 12px',color:'#8b949e',fontSize:9,fontWeight:500,minWidth:colW,whiteSpace:'nowrap'}}>
+                  <div>{m.label}</div>
+                  <div style={{color:'#4b5563',fontWeight:400}}>{m.days}h · {m.units.toLocaleString()}u</div>
+                </th>
+              ))}
+              <th style={{textAlign:'right',padding:'8px 14px',color:'#00d4aa',fontSize:9,fontWeight:700,minWidth:colW,background:'#0a1a14',whiteSpace:'nowrap',borderLeft:'1px solid #1c2333'}}>
+                <div>TOTAL</div>
+                <div style={{color:'#4b5563',fontWeight:400}}>{days}h</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, ri) => (
+              <tr key={row.key} style={{borderBottom:'1px solid #1c233360',background:row.highlight?'#0a2318':ri%2===0?'transparent':'#0d111760'}}>
+                <td style={{
+                  padding:row.bold?'10px 16px':'7px 16px',
+                  color:row.highlight?'#4ade80':row.bold?'#e6edf3':'#6e7681',
+                  fontFamily:row.bold?'Syne,sans-serif':'inherit',
+                  fontWeight:row.bold?700:400, fontSize:row.bold?11:10,
+                  position:'sticky',left:0,
+                  background:row.highlight?'#0a2318':'#0d1117',
+                  zIndex:1,borderRight:'1px solid #1c2333',whiteSpace:'nowrap',
+                }}>{row.label}</td>
+                {months.map((m, mi) => {
+                  const raw = m[row.key] || 0;
+                  const color = row.highlight ? (raw>=0?'#4ade80':'#f87171')
+                    : row.neg ? '#f87171'
+                    : row.bold ? (raw>=0?row.color:'#f87171')
+                    : row.color;
+                  const pct = m.gmv > 0 ? Math.abs(raw)/m.gmv*100 : 0;
+                  return (
+                    <td key={mi} style={{textAlign:'right',padding:'7px 12px',verticalAlign:'top'}}>
+                      <div style={{color,fontFamily:row.bold?'Syne,sans-serif':'inherit',fontWeight:row.bold?700:400,fontSize:row.highlight?12:10}}>
+                        {row.neg && raw>0?'-':''}{fmtIDR(Math.abs(raw))}
+                      </div>
+                      {row.highlight && <div style={{fontSize:8,color:'#4b5563',marginTop:1}}>{(raw/m.gmv*100).toFixed(1)}%</div>}
+                      {!row.bold && (
+                        <div style={{height:2,background:'#1c2333',borderRadius:1,marginTop:3,overflow:'hidden'}}>
+                          <div style={{height:'100%',width:`${Math.min(100,pct*2)}%`,background:row.neg?'#f8711860':'#00d4aa40',borderRadius:1}}/>
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+                {(() => {
+                  const raw = totals[row.key] || 0;
+                  const color = row.highlight ? (raw>=0?'#4ade80':'#f87171')
+                    : row.neg ? '#f87171'
+                    : row.bold ? (raw>=0?row.color:'#f87171')
+                    : row.color;
+                  return (
+                    <td style={{textAlign:'right',padding:'7px 14px',background:'#0a1a14',borderLeft:'1px solid #1c2333',verticalAlign:'top'}}>
+                      <div style={{color,fontFamily:row.bold?'Syne,sans-serif':'inherit',fontWeight:row.bold?700:400,fontSize:row.highlight?13:11}}>
+                        {row.neg && raw>0?'-':''}{fmtIDR(Math.abs(raw))}
+                      </div>
+                      {row.highlight && (
+                        <div style={{fontSize:8,color:'#4b5563',marginTop:1}}>
+                          {totals.gmv>0?(raw/totals.gmv*100).toFixed(1):'-'}% dari GMV
+                        </div>
+                      )}
+                    </td>
+                  );
+                })()}
+              </tr>
+            ))}
+            <tr style={{background:'#060810',borderTop:'2px solid #21262d'}}>
+              <td style={{padding:'10px 16px',color:'#a78bfa',fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:11,position:'sticky',left:0,background:'#060810',zIndex:1,borderRight:'1px solid #1c2333',whiteSpace:'nowrap'}}>
+                Cumulative Contrib. Profit
+              </td>
+              {months.reduce((acc, m, i) => {
+                const cum = (acc.prev||0) + (m.contribProfit||0);
+                acc.cells.push(
+                  <td key={i} style={{textAlign:'right',padding:'10px 12px'}}>
+                    <div style={{color:cum>=0?'#a78bfa':'#f87171',fontFamily:'Syne,sans-serif',fontWeight:700,fontSize:11}}>{fmtIDR(cum)}</div>
+                    <div style={{fontSize:8,color:'#4b5563',marginTop:1}}>kumulatif</div>
+                  </td>
+                );
+                acc.prev = cum;
+                return acc;
+              }, {cells:[],prev:0}).cells}
+              <td style={{textAlign:'right',padding:'10px 14px',background:'#0a1a14',borderLeft:'1px solid #1c2333'}}>
+                <div style={{color:totals.contribProfit>=0?'#a78bfa':'#f87171',fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:13}}>{fmtIDR(totals.contribProfit)}</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{padding:'14px 16px',borderTop:'1px solid #21262d'}}>
+        <div style={{fontSize:9,color:'#6e7681',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:10}}>CONTRIBUTION MARGIN % PER BULAN</div>
+        <div style={{display:'flex',gap:6,alignItems:'flex-end',height:60}}>
+          {months.map((m,i) => {
+            const pct = m.pContrib;
+            const barH = Math.min(56, Math.max(2, Math.abs(pct)*2.5));
+            const color = pct>=15?'#4ade80':pct>=5?'#facc15':pct>=0?'#fb923c':'#f87171';
+            return (
+              <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                <div style={{fontSize:8,color,fontWeight:700,fontFamily:'Syne'}}>{pct.toFixed(0)}%</div>
+                <div style={{width:'100%',background:'#1c2333',borderRadius:3,overflow:'hidden',height:56,display:'flex',alignItems:'flex-end'}}>
+                  <div style={{width:'100%',height:`${barH}px`,background:color,opacity:.8,transition:'height .4s',borderRadius:3}}/>
+                </div>
+                <div style={{fontSize:8,color:'#4b5563',textAlign:'center',whiteSpace:'nowrap'}}>{m.label.split(' ')[0]}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:'flex',gap:16,marginTop:10,fontSize:9,color:'#4b5563'}}>
+          <span style={{color:'#4ade80'}}>■ &gt;15% Sehat</span>
+          <span style={{color:'#facc15'}}>■ 5-15% Cukup</span>
+          <span style={{color:'#fb923c'}}>■ 0-5% Tipis</span>
+          <span style={{color:'#f87171'}}>■ &lt;0% Rugi</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [mode, setMode]           = useState('fwd');
+  const [roi, setRoi]             = useState(4.0);
+  const [videos, setVideos]       = useState(10000);
+  const [days, setDays]           = useState(30);
+  const [tgtB, setTgtB]           = useState(30);
+  const [activeTab, setActiveTab] = useState('gmvmax');
+  const [startMonth, setStartMonth] = useState('2026-05');
+  const [basketSize, setBasketSize] = useState(55000);
+  const [avgGMVPerContent, setAvgGMVPerContent] = useState(231000);
+  const [effectiveRate, setEffectiveRate] = useState(21.7);
+
+  const [pnl, setPnl] = useState({
+    cancelRate:5, asp:36000, cogsPerUnit:12600,
+    platformFee:3.5, affiliateFee:8.0, voucherSubsidy:3.0,
+    logisticsPerOrder:12000, fixedCostMonthly:3,
+  });
+  const setPnlField = (key, val) => setPnl(p => ({...p, [key]:val}));
+
+  const vm = useMemo(() => videoMult(videos), [videos]);
+  const cf = useMemo(() => confLevel(roi), [roi]);
+
+  const gmvResult = useMemo(() => {
+    let dailySpend, dailyGMV, recROI;
+    if (mode === 'fwd') {
+      dailySpend = interp(roi, 'spend') * vm;
+      dailyGMV   = interp(roi, 'gmv')   * vm;
+      recROI = roi;
+    } else {
+      const dg = (tgtB * 1000) / days;
+      const f  = findROIFromGMV(dg, vm);
+      dailySpend = f ? f.spend : 0;
+      dailyGMV   = dg;
+      recROI = f ? f.roi : 0;
+    }
+    const dailyOrders = basketSize > 0 ? (dailyGMV * 1e6) / basketSize : 0;
+    const totalGMVval = dailyGMV * days;
+    const requiredContent = avgGMVPerContent > 0 ? Math.round((totalGMVval * 1e6) / avgGMVPerContent) : 0;
+    const totalPoolNeeded = effectiveRate > 0 ? Math.round(requiredContent / (effectiveRate / 100)) : 0;
+    const effectiveEstimate = Math.round(requiredContent * 0.361);
+    return { dailySpend, dailyGMV, recROI, totalSpend:dailySpend*days, totalGMV:totalGMVval, dailyOrders, totalOrders:dailyOrders*days, requiredContent, totalPoolNeeded, effectiveEstimate };
+  }, [mode, roi, vm, days, tgtB, basketSize, avgGMVPerContent, effectiveRate]);
+
+  const pnlResult = useMemo(() => calcPnL(gmvResult.dailyGMV, gmvResult.dailySpend, pnl, days, basketSize), [gmvResult, pnl, days, basketSize]);
+  const scens = [2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.5, 7.0];
+
+  return (
+    <div style={{fontFamily:"'IBM Plex Mono',monospace",background:'#060810',minHeight:'100vh',color:'#c9d1d9'}}>
+
+      {/* HEADER */}
+      <div style={{borderBottom:'1px solid #1c2333',padding:'11px 22px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'#0d1117'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:26,height:26,background:'linear-gradient(135deg,#00d4aa,#8b5cf6)',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>⚡</div>
+          <div>
+            <div style={{fontFamily:'Syne',fontWeight:800,fontSize:13,color:'#e6edf3'}}>GMV Max Intelligence + P&L Modeler</div>
+            <div style={{fontSize:9,color:'#6e7681',letterSpacing:'.1em',textTransform:'uppercase'}}>Hanasui TikTok · 271 hari data · Jul 2025–Mar 2026 · Customizable P&L</div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:14,fontSize:9,color:'#4b5563'}}>
+          <span>R²=<span style={{color:'#00d4aa'}}>77.2%</span></span>
+          <span>n=<span style={{color:'#00d4aa'}}>271</span> hari</span>
+        </div>
+      </div>
+
+      <div style={{padding:'16px 22px',maxWidth:1100,margin:'0 auto'}}>
+
+        <div style={{display:'flex',justifyContent:'center',marginBottom:16}}>
+          <button className={`tab ${mode==='fwd'?'on':''}`} onClick={()=>setMode('fwd')}>▸ ROI → FORECAST GMV</button>
+          <button className={`tab ${mode==='rev'?'on':''}`} onClick={()=>setMode('rev')}>▸ TARGET GMV → ROI & BUDGET</button>
+        </div>
+
+        <div className="main-grid" style={{display:'grid',gridTemplateColumns:'340px 1fr',gap:14}}>
+
+          {/* LEFT */}
+          <div style={{display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{display:'flex',justifyContent:'center'}}>
+              <button className={`itab ${activeTab==='gmvmax'?'on':''}`} onClick={()=>setActiveTab('gmvmax')}>⚡ GMV MAX</button>
+              <button className={`itab ${activeTab==='pnl'?'on':''}`} onClick={()=>setActiveTab('pnl')}>📊 P&L SETTINGS</button>
+            </div>
+
+            {activeTab==='gmvmax' && (
+              <div className="fade" style={{display:'flex',flexDirection:'column',gap:10}}>
+
+                {mode==='fwd' ? (
+                  <div className="card-a">
+                    <div className="sec">ROI Achieved Setting</div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:12}}>
+                      <span className="xl" style={{color:C(roi)}}>{roi.toFixed(1)}x</span>
+                      <span style={{fontSize:9,padding:'2px 8px',borderRadius:20,background:C(roi)+'20',color:C(roi),fontFamily:'Syne',fontWeight:700}}>{L(roi)}</span>
+                    </div>
+                    <input type="range" min="2.0" max="7.5" step="0.1" value={roi} onChange={e=>setRoi(parseFloat(e.target.value))}/>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'#4b5563',marginTop:4,marginBottom:10}}>
+                      <span>2x Agresif</span><span>7.5x Konservatif</span>
+                    </div>
+                    <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                      {[2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,7.0].map(r=>(
+                        <button key={r} className={`qb ${Math.abs(roi-r)<.05?'on':''}`} onClick={()=>setRoi(r)}>{r}x</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="card-a">
+                    <div className="sec">Target GMV TikTok</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                      <input type="number" min="1" max="500" step="1" value={tgtB} onChange={e=>setTgtB(parseFloat(e.target.value)||1)}
+                        style={{flex:1,background:'#060810',border:'1px solid #21262d',color:'#e6edf3',borderRadius:6,padding:'8px 12px',fontFamily:"'IBM Plex Mono',monospace",fontSize:15,outline:'none'}}/>
+                      <span style={{fontSize:12,color:'#6e7681',whiteSpace:'nowrap'}}>Miliar IDR</span>
+                    </div>
+                    <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                      {[10,20,30,40,50,75,100].map(v=>(
+                        <button key={v} className={`qb ${tgtB===v?'on':''}`} onClick={()=>setTgtB(v)}>{v}B</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="card">
+                  <div className="sec">Durasi Campaign</div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                    <input type="number" min="1" max="365" value={days} onChange={e=>setDays(parseInt(e.target.value)||1)}
+                      style={{flex:1,background:'#060810',border:'1px solid #21262d',color:'#e6edf3',borderRadius:6,padding:'8px 12px',fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:'none'}}/>
+                    <span style={{fontSize:12,color:'#6e7681'}}>hari</span>
+                  </div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                    {[7,14,30,60,90].map(d=>(
+                      <button key={d} className={`qb ${days===d?'on':''}`} onClick={()=>setDays(d)}>{d}h</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Basket Size */}
+                <div className="card">
+                  <div className="sec">🛒 Basket Size / AOV</div>
+                  <div style={{display:'flex',alignItems:'center',gap:0,marginBottom:8}}>
+                    <span style={{fontSize:12,color:'#6e7681',padding:'8px 10px',background:'#060810',border:'1px solid #21262d',borderRadius:'6px 0 0 6px',borderRight:'none',whiteSpace:'nowrap'}}>Rp</span>
+                    <input type="number" min="1000" max="2000000" step="1000" value={basketSize}
+                      onChange={e=>setBasketSize(parseInt(e.target.value)||1)}
+                      style={{flex:1,background:'#060810',border:'1px solid #21262d',borderLeft:'none',color:'#e6edf3',borderRadius:'0 6px 6px 0',padding:'8px 12px',fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:'none'}}/>
+                  </div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:10}}>
+                    {[30000,45000,55000,70000,90000,120000].map(v=>(
+                      <button key={v} className={`qb ${basketSize===v?'on':''}`} onClick={()=>setBasketSize(v)}>{(v/1000).toFixed(0)}K</button>
+                    ))}
+                  </div>
+                  <div style={{background:'#060810',borderRadius:6,padding:'8px 12px',display:'flex',justifyContent:'space-between'}}>
+                    <span style={{fontSize:10,color:'#6e7681'}}>Est. Orders / hari</span>
+                    <span style={{fontSize:12,fontWeight:700,color:'#a78bfa',fontFamily:'Syne'}}>{Math.round(gmvResult.dailyOrders).toLocaleString('id-ID')}</span>
+                  </div>
+                </div>
+
+                {/* Avg GMV per Content */}
+                <div className="card">
+                  <div className="sec">🎬 Avg GMV per Content</div>
+                  <div style={{display:'flex',alignItems:'center',gap:0,marginBottom:8}}>
+                    <span style={{fontSize:12,color:'#6e7681',padding:'8px 10px',background:'#060810',border:'1px solid #21262d',borderRadius:'6px 0 0 6px',borderRight:'none',whiteSpace:'nowrap'}}>Rp</span>
+                    <input type="number" min="1000" max="10000000" step="1000" value={avgGMVPerContent}
+                      onChange={e=>setAvgGMVPerContent(parseInt(e.target.value)||1)}
+                      style={{flex:1,background:'#060810',border:'1px solid #21262d',borderLeft:'none',color:'#e6edf3',borderRadius:'0 6px 6px 0',padding:'8px 12px',fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:'none'}}/>
+                  </div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:10}}>
+                    {[94000,134000,147000,224000,250000,310000,491000,578000].map(v=>(
+                      <button key={v} className={`qb ${avgGMVPerContent===v?'on':''}`} onClick={()=>setAvgGMVPerContent(v)}>
+                        {v>=1000?(v/1000).toFixed(0)+'K':v}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{fontSize:9,color:'#4b5563',lineHeight:1.7,marginBottom:8}}>
+                    Referensi dari data plan: Sunscreen ~94K · Serum ~141K · Next Level ~224K · Mattedorable ~250K · Peel Off ~491K
+                  </div>
+
+                  {/* Layer 1: Required Delivering */}
+                  <div style={{background:'#060810',borderRadius:6,padding:'10px 12px',marginBottom:6}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <div>
+                        <div style={{fontSize:9,color:'#6e7681',letterSpacing:'.06em',textTransform:'uppercase'}}>Required Delivering</div>
+                        <div style={{fontSize:9,color:'#4b5563',marginTop:1}}>Target GMV ÷ Avg GMV per Content</div>
+                      </div>
+                      <div style={{textAlign:'right'}}>
+                        <span style={{fontSize:15,fontWeight:700,color:'#f59e0b',fontFamily:'Syne'}}>{gmvResult.requiredContent.toLocaleString('id-ID')}</span>
+                        <span style={{fontSize:9,color:'#4b5563',marginLeft:4}}>video</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Layer 2: Estimated Effective */}
+                  <div style={{background:'#060810',borderRadius:6,padding:'10px 12px',marginBottom:10}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <div>
+                        <div style={{fontSize:9,color:'#6e7681',letterSpacing:'.06em',textTransform:'uppercase'}}>Est. Effective Video</div>
+                        <div style={{fontSize:9,color:'#4b5563',marginTop:1}}>Delivering × 36.1% (dari data Hanasui)</div>
+                      </div>
+                      <div style={{textAlign:'right'}}>
+                        <span style={{fontSize:15,fontWeight:700,color:'#4ade80',fontFamily:'Syne'}}>{gmvResult.effectiveEstimate.toLocaleString('id-ID')}</span>
+                        <span style={{fontSize:9,color:'#4b5563',marginLeft:4}}>video</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{height:1,background:'#1c2333',margin:'4px 0 10px'}}/>
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:6,letterSpacing:'.06em'}}>SELECTION RATE (POOL → DELIVERING)</div>
+                  <div style={{display:'flex',alignItems:'center',gap:0,marginBottom:6}}>
+                    <input type="number" min="0.1" max="100" step="0.1" value={effectiveRate}
+                      onChange={e=>setEffectiveRate(parseFloat(e.target.value)||0.1)}
+                      style={{flex:1,background:'#060810',border:'1px solid #21262d',borderRadius:'6px 0 0 6px',color:'#e6edf3',padding:'7px 10px',fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:'none'}}/>
+                    <span style={{fontSize:12,color:'#6e7681',padding:'7px 10px',background:'#060810',border:'1px solid #21262d',borderLeft:'none',borderRadius:'0 6px 6px 0',whiteSpace:'nowrap'}}>% selected</span>
+                  </div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:8}}>
+                    {[15,21.7,30,40,50].map(v=>(
+                      <button key={v} className={`qb ${effectiveRate===v?'on':''}`} onClick={()=>setEffectiveRate(v)}>
+                        {v}%{v===21.7?' ←data':''}
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{fontSize:9,color:'#4b5563',marginBottom:10,lineHeight:1.6}}>
+                    Default 21.7% = dari data Hanasui (36,423 delivering / 168,060 pool)
+                  </div>
+
+                  {/* Layer 3: Pool hero */}
+                  <div style={{background:'#0d1a10',border:'1px solid #22c55e40',borderRadius:8,padding:'12px 14px'}}>
+                    <div style={{fontSize:9,color:'#6e7681',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>
+                      🎯 Total Pool yang Harus Direkrut
+                    </div>
+                    <div style={{fontFamily:'Syne',fontWeight:800,fontSize:22,color:'#4ade80'}}>
+                      {gmvResult.totalPoolNeeded.toLocaleString('id-ID')}
+                      <span style={{fontSize:11,color:'#4b5563',fontFamily:'IBM Plex Mono',fontWeight:400,marginLeft:6}}>video total</span>
+                    </div>
+                    <div style={{height:1,background:'#1c2333',margin:'10px 0 8px'}}/>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                      {[
+                        {label:'Pool Rekrut',          val:gmvResult.totalPoolNeeded,    color:'#4ade80'},
+                        {label:`→ Delivering (${effectiveRate}%)`, val:gmvResult.requiredContent, color:'#f59e0b'},
+                        {label:'→ Effective (36.1%)',  val:gmvResult.effectiveEstimate,  color:'#38bdf8'},
+                      ].map(row=>(
+                        <div key={row.label} style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                          <span style={{fontSize:9,color:'#6e7681'}}>{row.label}</span>
+                          <span style={{fontSize:10,fontWeight:700,color:row.color,fontFamily:'Syne'}}>{row.val.toLocaleString('id-ID')}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Funnel bar */}
+                    <div style={{marginTop:8,display:'flex',gap:2,height:6,borderRadius:3,overflow:'hidden'}}>
+                      <div style={{flex: Math.max(0, gmvResult.totalPoolNeeded - gmvResult.requiredContent), background:'#1c2333'}}/>
+                      <div style={{flex: Math.max(0, gmvResult.requiredContent - gmvResult.effectiveEstimate), background:'#f59e0b80'}}/>
+                      <div style={{flex: Math.max(1, gmvResult.effectiveEstimate), background:'#4ade80'}}/>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',fontSize:8,color:'#4b5563',marginTop:3}}>
+                      <span>Non-selected</span><span>Delivering</span><span>Effective</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="sec">📹 Video Affiliator Delivering</div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                    <input type="number" min="100" max="100000" step="100" value={videos} onChange={e=>setVideos(parseInt(e.target.value)||1)}
+                      style={{flex:1,background:'#060810',border:'1px solid #21262d',color:'#e6edf3',borderRadius:6,padding:'8px 12px',fontFamily:"'IBM Plex Mono',monospace",fontSize:13,outline:'none'}}/>
+                    <span style={{fontSize:11,color:'#6e7681'}}>videos</span>
+                  </div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:10}}>
+                    {[1000,3000,5000,10000,15000,20000].map(v=>(
+                      <button key={v} className={`qb ${videos===v?'on':''}`} onClick={()=>setVideos(v)}>{v>=1000?v/1000+'K':v}</button>
+                    ))}
+                  </div>
+                  <div style={{background:'#060810',borderRadius:6,padding:'8px 12px',display:'flex',justifyContent:'space-between'}}>
+                    <span style={{fontSize:10,color:'#6e7681'}}>Video multiplier</span>
+                    <span style={{fontSize:11,fontWeight:700,color:vm>=1?'#4ade80':'#f87171'}}>{vm.toFixed(3)}x ({vm>=1?'+':''}{((vm-1)*100).toFixed(1)}%)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab==='pnl' && (
+              <div className="fade" style={{display:'flex',flexDirection:'column',gap:10}}>
+                <div className="card">
+                  <div className="sec" style={{color:'#a78bfa'}}>📦 PRODUK & HARGA</div>
+                  <NumInput label="ASP — Average Selling Price" value={pnl.asp} onChange={v=>setPnlField('asp',v)} min={1000} max={500000} step={500} prefix="Rp" hint="per unit"/>
+                  <NumInput label="COGS / HPP per Unit" value={pnl.cogsPerUnit} onChange={v=>setPnlField('cogsPerUnit',v)} min={0} max={500000} step={500} prefix="Rp" hint="per unit"/>
+                  <div style={{background:'#060810',borderRadius:6,padding:'8px 12px',display:'flex',justifyContent:'space-between'}}>
+                    <span style={{fontSize:10,color:'#6e7681'}}>Implied Gross Margin</span>
+                    <span style={{fontSize:11,fontWeight:700,color:'#4ade80'}}>{pnl.asp>0?((1-pnl.cogsPerUnit/pnl.asp)*100).toFixed(1):'-'}%</span>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="sec" style={{color:'#fb923c'}}>🏪 PLATFORM & CHANNEL FEE</div>
+                  <NumInput label="TikTok Platform Commission" value={pnl.platformFee} onChange={v=>setPnlField('platformFee',v)} min={0} max={30} step={0.1} suffix="% GMV" hint="biaya platform TikTok Shop"/>
+                  <NumInput label="Affiliate Creator Commission" value={pnl.affiliateFee} onChange={v=>setPnlField('affiliateFee',v)} min={0} max={50} step={0.1} suffix="% GMV" hint="komisi kreator affiliator"/>
+                  <NumInput label="Voucher Subsidi" value={pnl.voucherSubsidy} onChange={v=>setPnlField('voucherSubsidy',v)} min={0} max={30} step={0.1} suffix="% GMV" hint="diskon voucher ditanggung brand"/>
+                  <div style={{background:'#060810',borderRadius:6,padding:'8px 12px',display:'flex',justifyContent:'space-between'}}>
+                    <span style={{fontSize:10,color:'#6e7681'}}>Total channel deductions</span>
+                    <span style={{fontSize:11,fontWeight:700,color:'#fb923c'}}>{(pnl.platformFee+pnl.affiliateFee+pnl.voucherSubsidy).toFixed(1)}% GMV</span>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div className="sec" style={{color:'#38bdf8'}}>🚚 LOGISTIK & OPERASIONAL</div>
+                  <NumInput label="Fulfillment / Logistik per Order" value={pnl.logisticsPerOrder} onChange={v=>setPnlField('logisticsPerOrder',v)} min={0} max={100000} step={500} prefix="Rp" hint="ongkir + handling per order"/>
+                  <NumInput label="Cancel / Return Rate" value={pnl.cancelRate} onChange={v=>setPnlField('cancelRate',v)} min={0} max={50} step={0.1} suffix="% GMV" hint="% GMV yang cancel/return"/>
+                  <NumInput label="Fixed Cost (Overhead, Gaji, dll)" value={pnl.fixedCostMonthly} onChange={v=>setPnlField('fixedCostMonthly',v)} min={0} max={50} step={0.1} suffix="% GMV" hint="gaji, warehouse, overhead"/>
+                </div>
+
+                <div className="card">
+                  <div className="sec">⚡ PRESET CEPAT</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                    {[
+                      { label:'Skincare Premium', asp:55000, cogs:16500, affil:10, platform:4, voucher:4, logis:15000, basket:75000 },
+                      { label:'Lip Color Mid',    asp:35000, cogs:10500, affil:8,  platform:3.5,voucher:3, logis:12000, basket:52000 },
+                      { label:'Mass Market',      asp:22000, cogs:7700,  affil:6,  platform:3,  voucher:2, logis:10000, basket:35000 },
+                    ].map(p=>(
+                      <button key={p.label}
+                        onClick={()=>{ setPnl(prev=>({...prev,asp:p.asp,cogsPerUnit:p.cogs,affiliateFee:p.affil,platformFee:p.platform,voucherSubsidy:p.voucher,logisticsPerOrder:p.logis})); setBasketSize(p.basket); }}
+                        style={{padding:'8px 12px',background:'#060810',border:'1px solid #21262d',borderRadius:6,color:'#8b949e',cursor:'pointer',fontSize:10,textAlign:'left',fontFamily:"'IBM Plex Mono',monospace",transition:'all .15s'}}>
+                        <span style={{color:'#a78bfa',marginRight:8}}>▸</span>{p.label}
+                        <span style={{color:'#4b5563',float:'right'}}>ASP {(p.asp/1000).toFixed(0)}K · BS {(p.basket/1000).toFixed(0)}K · GM {((1-p.cogs/p.asp)*100).toFixed(0)}%</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT */}
+          <div className="fade" style={{display:'flex',flexDirection:'column',gap:12}}>
+
+            {/* GMV FORECAST HERO */}
+            <div className="card-a">
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                <div className="sec" style={{color:'#00d4aa',margin:0}}>GMV MAX FORECAST — HARIAN</div>
+                <div style={{display:'flex',gap:6,fontSize:9,color:'#4b5563'}}>
+                  <span>conf ±{cf.pct}%</span>
+                  <span style={{padding:'1px 6px',borderRadius:3,background:cf.cls==='high'?'#0ea5e920':cf.cls==='mid'?'#facc1520':'#f8711820',color:cf.cls==='high'?'#38bdf8':cf.cls==='mid'?'#facc15':'#fb923c'}}>{cf.cls==='high'?'Tinggi':cf.cls==='mid'?'Sedang':'Rendah'}</span>
+                </div>
+              </div>
+              <div className="g3" style={{marginBottom:10}}>
+                <div className="mb">
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:4,letterSpacing:'.08em',textTransform:'uppercase'}}>GMV / Hari</div>
+                  <div className="xl" style={{color:'#00d4aa'}}>Rp {fmtM(gmvResult.dailyGMV*1e6)}</div>
+                  <div style={{fontSize:9,color:'#4b5563',marginTop:3}}>{days} hari → Rp {fmtM(gmvResult.totalGMV*1e6)}</div>
+                </div>
+                <div className="mb">
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:4,letterSpacing:'.08em',textTransform:'uppercase'}}>Ads Spend / Hari</div>
+                  <div className="xl" style={{color:'#fb923c'}}>Rp {fmtM(gmvResult.dailySpend*1e6)}</div>
+                  <div style={{fontSize:9,color:'#4b5563',marginTop:3}}>{days} hari → Rp {fmtM(gmvResult.totalSpend*1e6)}</div>
+                </div>
+                <div className="mb">
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:4,letterSpacing:'.08em',textTransform:'uppercase'}}>Est. Orders / Hari</div>
+                  <div className="xl" style={{color:'#a78bfa'}}>{Math.round(gmvResult.dailyOrders).toLocaleString('id-ID')}</div>
+                  <div style={{fontSize:9,color:'#4b5563',marginTop:3}}>{days} hari → {Math.round(gmvResult.totalOrders).toLocaleString('id-ID')} orders</div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:6,marginTop:8,marginBottom:10}}>
+                <div className="mb" style={{flex:1}}>
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:2,letterSpacing:'.07em',textTransform:'uppercase'}}>{mode==='fwd'?'ROI Setting':'Rec. ROI'}</div>
+                  <div style={{fontFamily:'Syne',fontSize:13,fontWeight:700,color:C(gmvResult.recROI)}}>{gmvResult.recROI.toFixed(1)}x <span style={{fontSize:9,color:'#4b5563',fontFamily:"'IBM Plex Mono'"}}>{L(gmvResult.recROI)}</span></div>
+                </div>
+                <div className="mb" style={{flex:1}}>
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:2,letterSpacing:'.07em',textTransform:'uppercase'}}>Basket Size</div>
+                  <div style={{fontFamily:'Syne',fontSize:13,fontWeight:700,color:'#a78bfa'}}>Rp {(basketSize/1000).toFixed(0)}K</div>
+                </div>
+                <div className="mb" style={{flex:1}}>
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:2,letterSpacing:'.07em',textTransform:'uppercase'}}>Total Orders</div>
+                  <div style={{fontFamily:'Syne',fontSize:13,fontWeight:700,color:'#a78bfa'}}>{Math.round(gmvResult.totalOrders).toLocaleString('id-ID')}</div>
+                </div>
+                <div className="mb" style={{flex:1}}>
+                  <div style={{fontSize:9,color:'#6e7681',marginBottom:2,letterSpacing:'.07em',textTransform:'uppercase'}}>Eff. Content</div>
+                  <div style={{fontFamily:'Syne',fontSize:13,fontWeight:700,color:'#f59e0b'}}>{gmvResult.requiredContent.toLocaleString('id-ID')}</div>
+                  <div style={{fontSize:8,color:'#4b5563',marginTop:1}}>Pool: {gmvResult.totalPoolNeeded.toLocaleString()}</div>
+                </div>
+              </div>
+
+              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                {[3.0,3.5,4.0,4.5,5.0,5.5,6.5].map(r=>{
+                  const sg=interp(r,'gmv')*vm, ss=interp(r,'spend')*vm;
+                  const on=Math.abs(r-gmvResult.recROI)<.35&&mode==='fwd';
+                  return (
+                    <div key={r} onClick={()=>{setRoi(r);setMode('fwd');}} style={{flex:'1 1 80px',padding:'6px 8px',borderRadius:5,border:`1px solid ${on?C(r)+'60':'#21262d'}`,background:on?C(r)+'10':'#060810',cursor:'pointer',transition:'all .15s'}}>
+                      <div style={{fontSize:9,color:on?C(r):'#6e7681',fontWeight:700}}>{r}x</div>
+                      <div style={{fontSize:10,color:'#c9d1d9',fontWeight:600,marginTop:2}}>Rp {fmtM(sg*1e6)}</div>
+                      <div style={{fontSize:8,color:'#4b5563'}}>spend {fmtM(ss*1e6)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* P&L WATERFALL DAILY */}
+            <div className="pnl-section">
+              <div className="pnl-header">
+                <div style={{fontFamily:'Syne',fontWeight:700,fontSize:12,color:'#e6edf3'}}>📊 P&L Waterfall — Per Hari</div>
+                <div style={{fontSize:9,color:'#6e7681'}}>
+                  ASP Rp {pnl.asp.toLocaleString()} · GM {pnl.asp>0?((1-pnl.cogsPerUnit/pnl.asp)*100).toFixed(0):'-'}% · Video {videos>=1000?videos/1000+'K':videos}
+                </div>
+              </div>
+              <div style={{padding:'6px 0'}}>
+                <WaterfallRow label="Gross GMV" value={pnlResult.grossGMV} pct={100} color='#e6edf3' isTotal bar={false}/>
+                <WaterfallRow label={`Cancel / Return (${pnl.cancelRate}%)`} value={-(pnlResult.grossGMV-pnlResult.netGMV)} pct={-100+pnlResult.pNetGMV} color='#f87171' indent/>
+                <WaterfallRow label="Net GMV" value={pnlResult.netGMV} pct={pnlResult.pNetGMV} color='#c9d1d9' isTotal bar={false}/>
+                <WaterfallRow label={`Platform Fee TikTok (${pnl.platformFee}%)`} value={-pnlResult.platformCost} pct={-pnlResult.pPlatform} color='#f87171' indent/>
+                <WaterfallRow label={`Affiliate Commission (${pnl.affiliateFee}%)`} value={-pnlResult.affiliateCost} pct={-pnlResult.pAffiliate} color='#f87171' indent/>
+                <WaterfallRow label={`Voucher Subsidi (${pnl.voucherSubsidy}%)`} value={-pnlResult.voucherCost} pct={-pnlResult.pVoucher} color='#f87171' indent/>
+                <WaterfallRow label="Net Revenue to Brand" value={pnlResult.netRevenue} pct={pnlResult.pNetRev} color='#c9d1d9' isTotal bar={false}/>
+                <WaterfallRow label={`COGS / HPP (${pnl.asp>0?((pnl.cogsPerUnit/pnl.asp)*100).toFixed(0):'-'}% ASP)`} value={-pnlResult.cogs} pct={-pnlResult.pCOGS} color='#f87171' indent/>
+                <WaterfallRow label="Gross Profit" value={pnlResult.grossProfit} pct={pnlResult.pGrossProfit} color={pnlResult.grossProfit>=0?'#4ade80':'#f87171'} isTotal bar={false}/>
+                <WaterfallRow label="Ads Spend GMV Max" value={-pnlResult.adSpend} pct={-pnlResult.pAds} color='#fb923c' indent/>
+                <WaterfallRow label="Fulfillment / Logistik" value={-pnlResult.fulfillment} pct={-pnlResult.pFulfill} color='#fb923c' indent/>
+
+                <div style={{margin:'4px 8px',padding:'12px 14px',borderRadius:8,background:pnlResult.contribProfit>=0?'#0a2318':'#231012',border:`1px solid ${pnlResult.contribProfit>=0?'#22c55e40':'#f8711840'}`}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                    <span style={{fontFamily:'Syne',fontWeight:800,fontSize:13,color:pnlResult.contribProfit>=0?'#4ade80':'#f87171'}}>Contribution Profit</span>
+                    <div style={{textAlign:'right'}}>
+                      <div style={{fontFamily:'Syne',fontWeight:800,fontSize:18,color:pnlResult.contribProfit>=0?'#4ade80':'#f87171'}}>{fmtIDR(pnlResult.contribProfit)}</div>
+                      <div style={{fontSize:10,color:'#6e7681'}}>{fmtPct(pnlResult.pContrib)} dari GMV</div>
+                    </div>
+                  </div>
+                  <div style={{height:4,background:'#1c2333',borderRadius:2,overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${Math.min(100,Math.max(0,pnlResult.pContrib))}%`,background:pnlResult.contribProfit>=0?'#4ade80':'#f87171',borderRadius:2,transition:'width .4s'}}/>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:9,color:'#6e7681',flexWrap:'wrap',gap:4}}>
+                    <span>Total {days} hari: <span style={{color:pnlResult.contribProfit>=0?'#4ade80':'#f87171',fontWeight:700}}>{fmtIDR(pnlResult.totalContrib)}</span></span>
+                    <span>~{Math.round(pnlResult.units).toLocaleString()} unit/hari · {Math.round(pnlResult.orders).toLocaleString()} order/hari · BS Rp {(basketSize/1000).toFixed(0)}K</span>
+                  </div>
+                </div>
+
+                {pnl.fixedCostMonthly > 0 && (
+                  <>
+                    <WaterfallRow label={`Fixed Cost (${pnl.fixedCostMonthly}% GMV)`} value={-pnlResult.fixedDaily} pct={-(pnlResult.fixedDaily/pnlResult.grossGMV*100)} color='#6e7681' indent/>
+                    <div style={{margin:'0 8px 4px',padding:'10px 14px',borderRadius:6,background:'#131a24',border:'1px solid #21262d',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <span style={{fontFamily:'Syne',fontWeight:700,fontSize:12,color:'#e6edf3'}}>Operating Profit (EBIT)</span>
+                      <div style={{textAlign:'right'}}>
+                        <div style={{fontFamily:'Syne',fontWeight:800,fontSize:15,color:pnlResult.operatingProfit>=0?'#4ade80':'#f87171'}}>{fmtIDR(pnlResult.operatingProfit)}</div>
+                        <div style={{fontSize:9,color:'#6e7681'}}>{fmtPct(pnlResult.pOperating)} dari GMV</div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* SUMMARY METRICS */}
+            <div className="g2">
+              <div className="card">
+                <div className="sec">TOTAL {days} HARI</div>
+                {[
+                  ['Total GMV', fmtIDR(pnlResult.totalGMV), '#00d4aa'],
+                  ['Total Ads Budget', fmtIDR(pnlResult.totalAdSpend), '#fb923c'],
+                  ['Total Contribution', fmtIDR(pnlResult.totalContrib), pnlResult.totalContrib>=0?'#4ade80':'#f87171'],
+                  ['Total Operating', fmtIDR(pnlResult.totalOperating), pnlResult.totalOperating>=0?'#4ade80':'#f87171'],
+                ].map(([l,v,c])=>(
+                  <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid #1c2333'}}>
+                    <span style={{fontSize:10,color:'#6e7681'}}>{l}</span>
+                    <span style={{fontSize:11,fontWeight:700,color:c,fontFamily:'Syne'}}>{v}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div className="sec">MARGIN SUMMARY</div>
+                {[
+                  ['Net GMV / Gross GMV', fmtPct(pnlResult.pNetGMV-100), '#c9d1d9'],
+                  ['Net Revenue Rate', fmtPct(pnlResult.pNetRev-100), '#c9d1d9'],
+                  ['Gross Margin', `${pnlResult.pGrossProfit.toFixed(1)}%`, pnlResult.pGrossProfit>30?'#4ade80':pnlResult.pGrossProfit>15?'#facc15':'#f87171'],
+                  ['Contribution Margin', `${pnlResult.pContrib.toFixed(1)}%`, pnlResult.pContrib>15?'#4ade80':pnlResult.pContrib>5?'#facc15':'#f87171'],
+                  ['Operating Margin', `${pnlResult.pOperating.toFixed(1)}%`, pnlResult.pOperating>10?'#4ade80':pnlResult.pOperating>0?'#facc15':'#f87171'],
+                  ['Cost Ratio (Ads/GMV)', `${pnlResult.pAds.toFixed(1)}%`, pnlResult.pAds<15?'#4ade80':pnlResult.pAds<25?'#facc15':'#f87171'],
+                ].map(([l,v,c])=>(
+                  <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid #1c2333'}}>
+                    <span style={{fontSize:10,color:'#6e7681'}}>{l}</span>
+                    <span style={{fontSize:11,fontWeight:700,color:c,fontFamily:'Syne'}}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Break-even */}
+            {(() => {
+              const beROI = scens.find(r => {
+                const sg=interp(r,'gmv')*vm, ss=interp(r,'spend')*vm;
+                return calcPnL(sg, ss, pnl, days).contribProfit >= 0;
+              });
+              return (
+                <div style={{padding:'10px 14px',background:'#0d1117',border:`1px solid ${beROI?'#22c55e30':'#f8711830'}`,borderRadius:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <span style={{fontSize:10,color:'#6e7681'}}>Break-even ROI (contribution positive)</span>
+                  <span style={{fontSize:11,fontWeight:700,fontFamily:'Syne',color:beROI?'#4ade80':'#f87171'}}>
+                    {beROI ? `≤ ${beROI}x` : 'Tidak tercapai di range ini'}
+                  </span>
+                </div>
+              );
+            })()}
+
+            {/* MONTHLY P&L WATERFALL */}
+            <MonthlyWaterfall
+              dailyGMV={gmvResult.dailyGMV}
+              dailySpend={gmvResult.dailySpend}
+              pnl={pnl}
+              days={days}
+              startMonth={startMonth}
+              setStartMonth={setStartMonth}
+            />
+
+            <div style={{padding:'8px 12px',background:'#0d1117',border:'1px solid #1c2333',borderRadius:8,fontSize:9,color:'#4b5563',lineHeight:1.7}}>
+              GMV model: 271 hari data Hanasui TikTok GMV Max Jul 2025–Mar 2026 · R²=77.2% · P&L variables fully customizable per brand/SKU
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
