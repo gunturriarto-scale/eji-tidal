@@ -337,8 +337,8 @@ function App() {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#000', color: 'white' }}>Initializing...</div>;
   }
 
-  // LOGIN REDIRECT
-  if (!user) {
+  // LOGIN REDIRECT — skip in local dev
+  if (!user && !import.meta.env.DEV) {
     return <LoginView />;
   }
 
