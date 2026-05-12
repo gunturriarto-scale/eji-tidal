@@ -5,7 +5,8 @@ import {
   ChevronRight,
   LogOut,
   Zap,
-  BarChart2
+  BarChart2,
+  Bot
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -50,6 +51,9 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
 
     { type: 'divider', label: 'Social Analytics' },
     { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },
+
+    { type: 'divider', label: 'AI' },
+    { id: 'hermes', name: 'Hermes', icon: <Bot size={20} />, color: '#a855f7' },
   ];
 
   return (

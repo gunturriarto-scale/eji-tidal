@@ -15,6 +15,7 @@ import { KolView } from './views/KOLView'
 import { KOLDashboard } from './views/KOLDashboard'
 import { MetaDashboard } from './views/MetaDashboard'
 import { TikTokDashboard } from './views/TikTokDashboard'
+import { HermesView } from './views/HermesView'
 
 const Header = ({ 
   dateFilter, setDateFilter, 
@@ -301,7 +302,7 @@ function App() {
   }, [tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData, loading, dateRange, currentFilters]);
 
   const viewNames = {
-    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)', kol: '⚡ KOL APIFY System', kolDashboard: '📊 KOL Dashboard', metaDashboard: '📊 Meta Dashboard', tiktokDashboard: '🎵 TikTok Dashboard'
+    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)', kol: '⚡ KOL APIFY System', kolDashboard: '📊 KOL Dashboard', metaDashboard: '📊 Meta Dashboard', tiktokDashboard: '🎵 TikTok Dashboard', hermes: '🤖 Hermes'
   };
 
   const renderView = () => {
@@ -322,6 +323,7 @@ function App() {
       case 'kolDashboard': return <KOLDashboard />;
       case 'metaDashboard': return <MetaDashboard />;
       case 'tiktokDashboard': return <TikTokDashboard />;
+      case 'hermes': return <HermesView />;
       default: return <CommandCenterView {...commonProps} />;
     }
   };
