@@ -161,6 +161,16 @@ export const KOLDashboard = () => {
     return total > 0 ? entry : null;
   }).filter(Boolean), [filtered, brands]);
 
+  const tierViewChartData = useMemo(() => brands.map(brand => {
+    const rows  = filtered.filter(r => r.brand === brand);
+    const entry = { brand: brand === 'Next Level' ? 'NxtLvl' : brand.substring(0, 7) };
+    ['mega', 'makro', 'mikro', 'nano'].forEach(tier => {
+      entry[tier] = rows.filter(r => r.tier === tier).reduce((s, r) => s + r.view, 0);
+    });
+    const total = (entry.mega || 0) + (entry.makro || 0) + (entry.mikro || 0) + (entry.nano || 0);
+    return total > 0 ? entry : null;
+  }).filter(Boolean), [filtered, brands]);
+
   const showNCO = filterBrand === 'All' || filterBrand === 'NCO';
   const ncoAchData = useMemo(() => {
     if (!showNCO) return [];
@@ -463,6 +473,31 @@ export const KOLDashboard = () => {
                 }
               </Section>
             </div>
+
+            {/* Row 3: Views by Tier & Brand */}
+            <Section title="KOL Views by Tier & Brand" subtitle="total views per tier per brand">
+              {tierViewChartData.length === 0 ? <EmptyChart /> :
+                <ChartErrorBoundary>
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={tierViewChartData} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                      <XAxis dataKey="brand" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                      <YAxis tickFormatter={v => {
+                        if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M';
+                        if (v >= 1_000) return (v / 1_000).toFixed(0) + 'K';
+                        return v;
+                      }} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} width={52} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: '0.75rem' }} />
+                      <Bar dataKey="mega"  stackId="a" fill={TIER_COLORS.mega}  name="Mega" />
+                      <Bar dataKey="makro" stackId="a" fill={TIER_COLORS.makro} name="Makro" />
+                      <Bar dataKey="mikro" stackId="a" fill={TIER_COLORS.mikro} name="Mikro" />
+                      <Bar dataKey="nano"  stackId="a" fill={TIER_COLORS.nano}  name="Nano" radius={[3,3,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartErrorBoundary>
+              }
+            </Section>
           </div>
         )}
 
