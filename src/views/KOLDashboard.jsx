@@ -5,9 +5,26 @@ import {
 } from 'recharts';
 import {
   Users, Eye, Heart, TrendingUp, DollarSign, RefreshCw,
-  AlertCircle, BarChart2, TableIcon
+  AlertCircle, BarChart2, TableIcon, Calendar
 } from 'lucide-react';
 import { useEffect } from 'react';
+
+// ─── Date Helpers ─────────────────────────────────────────────────────────────
+function parseDate(str) {
+  if (!str) return null;
+  // handles DD/MM/YYYY, D/M/YYYY, YYYY-MM-DD, MM/DD/YYYY
+  const s = str.trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3]);
+  const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return new Date(+dmy[3], +dmy[2] - 1, +dmy[1]);
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function toInputDate(d) {
+  if (!d) return '';
+  return d.toISOString().split('T')[0];
+}
 
 // ─── Error Boundary ──────────────────────────────────────────────────────────
 class ChartErrorBoundary extends React.Component {
@@ -96,6 +113,8 @@ export const KOLDashboard = () => {
   const [filterBrand, setFilterBrand]       = useState('All');
   const [filterPlatform, setFilterPlatform] = useState('All');
   const [filterTier, setFilterTier]         = useState('All');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo]     = useState('');
   const [sortCol, setSortCol]   = useState('view');
   const [sortDir, setSortDir]   = useState('desc');
   const [page, setPage]         = useState(0);
@@ -115,13 +134,34 @@ export const KOLDashboard = () => {
 
   const brands = useMemo(() => [...new Set(allData.map(r => r.brand))].sort(), [allData]);
 
+  // ── Date bounds from data ───────────────────────────────────────────────────
+  const { minDate, maxDate } = useMemo(() => {
+    const dates = allData.map(r => parseDate(r.datePosting)).filter(Boolean);
+    if (!dates.length) return { minDate: null, maxDate: null };
+    return {
+      minDate: new Date(Math.min(...dates)),
+      maxDate: new Date(Math.max(...dates)),
+    };
+  }, [allData]);
+
   // ── Filtered Data ───────────────────────────────────────────────────────────
-  const filtered = useMemo(() => allData.filter(r => {
-    if (filterBrand !== 'All' && r.brand !== filterBrand) return false;
-    if (filterPlatform !== 'All' && r.platform !== filterPlatform) return false;
-    if (filterTier !== 'All' && r.tier !== filterTier.toLowerCase()) return false;
-    return true;
-  }), [allData, filterBrand, filterPlatform, filterTier]);
+  const filtered = useMemo(() => {
+    const from = dateFrom ? new Date(dateFrom) : null;
+    const to   = dateTo   ? new Date(dateTo)   : null;
+    if (to) to.setHours(23, 59, 59);
+    return allData.filter(r => {
+      if (filterBrand !== 'All' && r.brand !== filterBrand) return false;
+      if (filterPlatform !== 'All' && r.platform !== filterPlatform) return false;
+      if (filterTier !== 'All' && r.tier !== filterTier.toLowerCase()) return false;
+      if (from || to) {
+        const d = parseDate(r.datePosting);
+        if (!d) return false;
+        if (from && d < from) return false;
+        if (to   && d > to)   return false;
+      }
+      return true;
+    });
+  }, [allData, filterBrand, filterPlatform, filterTier, dateFrom, dateTo]);
 
   // ── KPIs ────────────────────────────────────────────────────────────────────
   const kpis = useMemo(() => {
@@ -133,6 +173,21 @@ export const KOLDashboard = () => {
     const avgCPV      = totalView > 0 ? totalRC / totalView : 0;
     return { total: filtered.length, active: active.length, totalView, totalEng, avgER, avgCPV };
   }, [filtered]);
+
+  // ── Per-Tier KPIs ───────────────────────────────────────────────────────────
+  const TIERS = ['mega', 'makro', 'mikro', 'nano'];
+  const tierKpis = useMemo(() => TIERS.map(tier => {
+    const rows       = filtered.filter(r => r.tier === tier);
+    const count      = rows.length;
+    const totalView  = rows.reduce((s, r) => s + r.view, 0);
+    const totalImp   = rows.reduce((s, r) => s + r.impression, 0);
+    const totalRC    = rows.reduce((s, r) => s + r.ratecard, 0);
+    const cpv        = totalView > 0       ? totalRC / totalView         : 0;
+    const cpm        = totalImp  > 0       ? (totalRC / totalImp) * 1000 : 0;
+    const avgView    = count     > 0       ? totalView / count           : 0;
+    const avgImp     = count     > 0       ? totalImp  / count           : 0;
+    return { tier, count, totalView, totalImp, cpv, cpm, avgView, avgImp };
+  }), [filtered]);
 
   // ── Chart Data ──────────────────────────────────────────────────────────────
   const brandChartData = useMemo(() => brands.map(brand => {
@@ -287,6 +342,33 @@ export const KOLDashboard = () => {
             </div>
           ))}
 
+          {/* Date range */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Calendar size={13} style={{ color: 'var(--text-tertiary)' }} />
+            <input type="date" value={dateFrom}
+              min={minDate ? toInputDate(minDate) : undefined}
+              max={maxDate ? toInputDate(maxDate) : undefined}
+              onChange={e => { setDateFrom(e.target.value); setPage(0); }}
+              className="glass-input"
+              style={{ fontSize: '0.75rem', padding: '0.28rem 0.5rem', width: 130 }}
+            />
+            <span style={{ color: 'var(--text-tertiary)', fontSize: '0.72rem' }}>—</span>
+            <input type="date" value={dateTo}
+              min={minDate ? toInputDate(minDate) : undefined}
+              max={maxDate ? toInputDate(maxDate) : undefined}
+              onChange={e => { setDateTo(e.target.value); setPage(0); }}
+              className="glass-input"
+              style={{ fontSize: '0.75rem', padding: '0.28rem 0.5rem', width: 130 }}
+            />
+            {(dateFrom || dateTo) && (
+              <button onClick={() => { setDateFrom(''); setDateTo(''); setPage(0); }}
+                title="Reset tanggal"
+                style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.85rem', lineHeight: 1, padding: '0 2px' }}>
+                ✕
+              </button>
+            )}
+          </div>
+
           <button onClick={loadData} title="Refresh" style={{
             background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)',
             borderRadius: 6, padding: '0.3rem 0.6rem', cursor: 'pointer',
@@ -319,6 +401,49 @@ export const KOLDashboard = () => {
               </div>
               <div className="kpi-value" style={{ fontSize: '1.6rem' }}>{card.value}</div>
               {card.sub && <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{card.sub}</div>}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Per-Tier Scorecards ──────────────────────────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+          {tierKpis.map(t => (
+            <div key={t.tier} className="glass-panel" style={{
+              padding: '1rem 1.25rem',
+              borderTop: `2px solid ${TIER_COLORS[t.tier]}`,
+            }}>
+              {/* Tier header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase',
+                  letterSpacing: '0.08em', color: TIER_COLORS[t.tier],
+                }}>{t.tier}</span>
+                <span style={{
+                  fontSize: '0.65rem', color: 'var(--text-tertiary)',
+                  background: `${TIER_COLORS[t.tier]}18`, padding: '2px 8px',
+                  borderRadius: 20, fontWeight: 600,
+                }}>{t.count} KOL</span>
+              </div>
+              {/* Metrics grid 2x3 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem 0.75rem' }}>
+                {[
+                  { label: 'Total Views',   value: fmtNum(t.totalView) },
+                  { label: 'Total Impress', value: fmtNum(t.totalImp)  },
+                  { label: 'Avg View',      value: fmtNum(Math.round(t.avgView)) },
+                  { label: 'Avg Impress',   value: fmtNum(Math.round(t.avgImp))  },
+                  { label: 'CPV',           value: fmtRp(t.cpv)        },
+                  { label: 'CPM',           value: fmtRp(t.cpm)        },
+                ].map(m => (
+                  <div key={m.label}>
+                    <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.15rem' }}>
+                      {m.label}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+                      {m.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
