@@ -48,7 +48,7 @@ export const TikTokCampaignTable = ({ data }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
           <thead>
             <tr>
-              <TH label="Brand" col="ACCOUNT_NAME" />
+              <TH label="Brand" col="account_name" />
               <TH label="Campaign" col="CAMPAIGN_NAME" />
               <TH label="Objective" col="CAMPAIGN_OBJECTIVE_TYPE" />
               <TH label="Spend" col="spend" />
@@ -62,7 +62,7 @@ export const TikTokCampaignTable = ({ data }) => {
             {paged.map((row, i) => (
               <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <td style={{ padding: '0.6rem 0.75rem', color: '#FF0050', fontWeight: 600, fontSize: '0.7rem', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {row.ACCOUNT_NAME?.split('//').pop()?.trim() || '—'}
+                  {row.account_name?.split('//').pop()?.trim() || '—'}
                 </td>
                 <td style={{ padding: '0.6rem 0.75rem', color: 'var(--text-primary)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {row.CAMPAIGN_NAME || '—'}

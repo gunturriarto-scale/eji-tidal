@@ -271,7 +271,7 @@ const TikTokDashboardInner = () => {
     brandTrend.forEach(row => {
       const d = String(row.DATE?.value || row.DATE || row.date || '');
       if (!byDate[d]) byDate[d] = { date: d };
-      const label = BRAND_LABELS[row.ACCOUNT_NAME] || row.ACCOUNT_NAME?.split('//').pop()?.trim() || 'Unknown';
+      const label = BRAND_LABELS[row.account_name] || row.account_name?.split('//').pop()?.trim() || 'Unknown';
       byDate[d][label] = Number(row.spend) || 0;
     });
     return Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
@@ -280,7 +280,7 @@ const TikTokDashboardInner = () => {
   // ─── Brand Donut Data ─────────────────────────────────────────────────────────
   const brandDonutData = useMemo(() => {
     return brandOverview.map(d => {
-      const label = BRAND_LABELS[d.ACCOUNT_NAME] || d.ACCOUNT_NAME?.split('//').pop()?.trim() || 'Unknown';
+      const label = BRAND_LABELS[d.account_name] || d.account_name?.split('//').pop()?.trim() || 'Unknown';
       return {
         name: label,
         value: Number(d.spend) || 0,
@@ -526,7 +526,7 @@ const TikTokVideoTopTable = ({ data, brandLabels, brandColors }) => {
         </thead>
         <tbody>
           {data.slice(0, 10).map((row, i) => {
-            const label = brandLabels[row.ACCOUNT_NAME] || row.ACCOUNT_NAME?.split('//').pop()?.trim() || 'Unknown';
+            const label = brandLabels[row.account_name] || row.account_name?.split('//').pop()?.trim() || 'Unknown';
             return (
               <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-primary)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

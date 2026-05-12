@@ -6,6 +6,7 @@ import {
   LogOut,
   Zap,
   BarChart2,
+  MessageSquare,
   Bot
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +20,14 @@ const MetaIcon = ({ size = 20 }) => (
 const ShopeeIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M19 6H17.5V5.5C17.5 2.46243 15.0376 0 12 0C8.96243 0 6.5 2.46243 6.5 5.5V6H5C3.34315 6 2 7.34315 2 9V19C2 21.7614 4.23858 24 7 24H17C19.7614 24 22 21.7614 22 19V9C22 7.34315 20.6569 6 19 6ZM8.5 5.5C8.5 3.567 10.067 2 12 2C13.933 2 15.5 3.567 15.5 5.5V6H8.5V5.5ZM13.8247 16.5913C13.8247 17.575 13.0238 18.0673 12.0163 18.0673C11.0089 18.0673 10.1501 17.5516 10.0247 16.5913H11.2334C11.3115 17.0754 11.6081 17.2628 12.0142 17.2628C12.4206 17.2628 12.6393 17.1065 12.6393 16.8176C12.6393 16.5287 12.5222 16.4272 11.9673 16.2708L10.9836 15.9899C10.3746 15.8179 10.0471 15.5446 10.0471 14.8652C10.0471 14.0064 10.8756 13.5146 11.8361 13.5146C12.7183 13.5146 13.538 13.9363 13.686 14.8885H12.4912C12.4287 14.4984 12.1864 14.3184 11.8127 14.3184C11.4391 14.3184 11.2359 14.4673 11.2359 14.7171C11.2359 14.9669 11.3375 15.0685 11.915 15.2246C11.915 15.2246 12.8755 15.4822 13.0631 15.5369C13.5627 15.6853 13.8247 16.0369 13.8247 16.5913Z" fill="currentColor"/>
+  </svg>
+);
+
+const InstagramIcon = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" strokeWidth="2" fill="none"/>
+    <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2" fill="none"/>
+    <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
   </svg>
 );
 
@@ -51,9 +60,8 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
 
     { type: 'divider', label: 'Social Analytics' },
     { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },
+    { id: 'instagramDashboard', name: 'Instagram', icon: <InstagramIcon size={20} />, color: '#EC4899' },
 
-    { type: 'divider', label: 'AI' },
-    { id: 'hermes', name: 'Hermes', icon: <Bot size={20} />, color: '#a855f7' },
   ];
 
   return (

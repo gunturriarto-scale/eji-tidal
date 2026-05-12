@@ -1,4 +1,5 @@
 import React from 'react';
+import { toPlacementLabel } from './TikTokPlacementChart';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { PieChart, Pie, Cell, Tooltip as PieTooltip, ResponsiveContainer as PieResponsive } from 'recharts';
 import { BarChart, Bar, Tooltip as BarTooltip } from 'recharts';
@@ -53,7 +54,7 @@ const PlacementMiniCard = ({ placement }) => {
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <div style={{ width: 6, height: 6, borderRadius: '50%', background: colors[0] }} />
-        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{placement.PLACEMENT_TYPE}</span>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{toPlacementLabel(placement.PLACEMENT_TYPE)}</span>
       </div>
       <span style={{ fontSize: '0.7rem', fontWeight: 600, color: '#FF0050' }}>Rp {fmt(placement.spend)}</span>
     </div>
@@ -120,7 +121,7 @@ export const TikTokQuickInsights = ({ trendData, brandDonutData, placement, conv
       <InsightCard title="Top Placement">
         {topPlacement ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FF0050' }}>{topPlacement.PLACEMENT_TYPE}</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#FF0050' }}>{toPlacementLabel(topPlacement.PLACEMENT_TYPE)}</div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Spend: Rp {fmt(topPlacement.spend)}</div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>{topPlacementPct}% of total</div>
             <div style={{ fontSize: '0.65rem', color: '#10B981' }}>2s Views: {fmt(topPlacement.video_2s)}</div>
