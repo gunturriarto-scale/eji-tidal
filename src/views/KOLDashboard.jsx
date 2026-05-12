@@ -186,7 +186,7 @@ export const KOLDashboard = () => {
     const cpm        = totalImp  > 0       ? (totalRC / totalImp) * 1000 : 0;
     const avgView    = count     > 0       ? totalView / count           : 0;
     const avgImp     = count     > 0       ? totalImp  / count           : 0;
-    return { tier, count, totalView, totalImp, cpv, cpm, avgView, avgImp };
+    return { tier, count, totalView, totalImp, totalRC, cpv, cpm, avgView, avgImp };
   }), [filtered]);
 
   // ── Chart Data ──────────────────────────────────────────────────────────────
@@ -424,6 +424,20 @@ export const KOLDashboard = () => {
                   borderRadius: 20, fontWeight: 600,
                 }}>{t.count} KOL</span>
               </div>
+              {/* Total Budget — full width */}
+              <div style={{
+                background: `${TIER_COLORS[t.tier]}12`,
+                border: `1px solid ${TIER_COLORS[t.tier]}30`,
+                borderRadius: 8, padding: '0.5rem 0.75rem', marginBottom: '0.75rem',
+              }}>
+                <div style={{ fontSize: '0.6rem', color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Total Budget
+                </div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: TIER_COLORS[t.tier], letterSpacing: '-0.01em', marginTop: '0.1rem' }}>
+                  {fmtRp(t.totalRC)}
+                </div>
+              </div>
+
               {/* Metrics grid 2x3 */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem 0.75rem' }}>
                 {[
