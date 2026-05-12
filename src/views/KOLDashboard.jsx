@@ -171,7 +171,7 @@ export const KOLDashboard = () => {
     const totalRC     = filtered.reduce((s, r) => s + r.ratecard, 0);
     const avgER       = totalView > 0 ? (totalEng / totalView) * 100 : 0;
     const avgCPV      = totalView > 0 ? totalRC / totalView : 0;
-    return { total: filtered.length, active: active.length, totalView, totalEng, avgER, avgCPV };
+    return { total: filtered.length, active: active.length, totalView, totalEng, totalRC, avgER, avgCPV };
   }, [filtered]);
 
   // ── Per-Tier KPIs ───────────────────────────────────────────────────────────
@@ -389,6 +389,7 @@ export const KOLDashboard = () => {
             { icon: <Heart size={16} />,       label: 'Total Engagement', value: fmtNum(kpis.totalEng),   sub: 'likes + share + comment + save', color: '#EC4899' },
             { icon: <TrendingUp size={16} />,  label: 'Avg ER%',          value: fmtPct(kpis.avgER),      sub: 'engagement / views',            color: '#10B981' },
             { icon: <DollarSign size={16} />,  label: 'Avg CPV',          value: fmtRp(kpis.avgCPV),      sub: 'ratecard / views',              color: '#F59E0B' },
+            { icon: <DollarSign size={16} />,  label: 'Total Budget',      value: fmtRp(kpis.totalRC),     sub: 'sum ratecard semua KOL',        color: '#10B981' },
           ].map((card, i) => (
             <div key={i} className="kpi-card glass-panel" style={{ '--card-accent': card.color }}>
               <div className="kpi-header">
