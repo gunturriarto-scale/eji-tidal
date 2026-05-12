@@ -7,7 +7,8 @@ import {
   Zap,
   BarChart2,
   MessageSquare,
-  Bot
+  Bot,
+  Calculator
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -57,6 +58,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { id: 'commandCenter',  name: 'Command Center',   icon: <Target size={20} />,    color: '#F59E0B' },
     { id: 'metaDashboard',   name: 'Meta Dashboard',  icon: <MetaIcon size={20} />, color: '#1877F2' },
     { id: 'tiktokDashboard', name: 'TikTok Dashboard', icon: <TikTokIcon size={20} />, color: '#FF0050' },
+    { id: 'gmvMax', name: 'Calculator GMV Max', icon: <Calculator size={20} />, color: '#00d4aa' },
 
     { type: 'divider', label: 'Social Analytics' },
     { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },

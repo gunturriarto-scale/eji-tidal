@@ -384,12 +384,12 @@ export const KOLDashboard = () => {
         {/* ── KPI Cards ────────────────────────────────────────────────────── */}
         <div className="kpi-grid">
           {[
+            { icon: <DollarSign size={16} />,  label: 'Total Budget',     value: fmtRp(kpis.totalRC),     sub: 'sum ratecard semua KOL',        color: '#00d4aa' },
             { icon: <Users size={16} />,      label: 'Total KOL',        value: kpis.total,              sub: `${kpis.active} aktif`,          color: '#4F46E5' },
             { icon: <Eye size={16} />,         label: 'Total Views',      value: fmtNum(kpis.totalView),  sub: 'sum semua KOL',                 color: '#6366F1' },
             { icon: <Heart size={16} />,       label: 'Total Engagement', value: fmtNum(kpis.totalEng),   sub: 'likes + share + comment + save', color: '#EC4899' },
             { icon: <TrendingUp size={16} />,  label: 'Avg ER%',          value: fmtPct(kpis.avgER),      sub: 'engagement / views',            color: '#10B981' },
             { icon: <DollarSign size={16} />,  label: 'Avg CPV',          value: fmtRp(kpis.avgCPV),      sub: 'ratecard / views',              color: '#F59E0B' },
-            { icon: <DollarSign size={16} />,  label: 'Total Budget',      value: fmtRp(kpis.totalRC),     sub: 'sum ratecard semua KOL',        color: '#10B981' },
           ].map((card, i) => (
             <div key={i} className="kpi-card glass-panel" style={{ '--card-accent': card.color }}>
               <div className="kpi-header">
