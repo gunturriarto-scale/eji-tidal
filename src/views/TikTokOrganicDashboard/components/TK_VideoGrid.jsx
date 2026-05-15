@@ -53,9 +53,9 @@ function VideoCard({ video }) {
       onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
     >
       {/* Thumbnail */}
-      {video.THUMBNAIL_URL && !imgError ? (
+      {video.SHARE_URL && !imgError ? (
         <img
-          src={`/api/proxy-image?url=${encodeURIComponent(video.THUMBNAIL_URL)}`}
+          src={`/api/tiktok-thumbnail?share_url=${encodeURIComponent(video.SHARE_URL)}`}
           alt={caption.slice(0, 40)}
           onError={() => setImgError(true)}
           style={{
