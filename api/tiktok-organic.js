@@ -62,15 +62,26 @@ const QUERIES = {
     const videoClauses = buildVideoFilters({ start, end, username });
     const profileWhere = where(profileClauses);
     const videoWhere = where(videoClauses);
+    // NEW_FOLLOWERS is cumulative since account creation — use MAX-MIN per account for period gain
+    // current_followers — SUM of latest snapshot per account
+    const audienceWhere = where(buildAudienceFilters({ username }));
     return `
       SELECT
-        (SELECT SUM(VIDEO_VIEWS)    FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_video_views,
-        (SELECT SUM(LIKES)          FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_likes,
-        (SELECT SUM(COMMENTS)       FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_comments,
-        (SELECT SUM(SHARES)         FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_shares,
-        (SELECT SUM(NEW_FOLLOWERS)  FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_new_followers,
-        (SELECT SUM(PROFILE_VIEWS)  FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_profile_views,
-        (SELECT MAX(PROFILE_FOLLOWERS_CURRENT_FOLLOWERS) FROM \`bigdata.TIKBA_PROFILE\` ${where(buildAudienceFilters({ username }))}) AS current_followers,
+        (SELECT SUM(VIDEO_VIEWS)   FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_video_views,
+        (SELECT SUM(LIKES)         FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_likes,
+        (SELECT SUM(COMMENTS)      FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_comments,
+        (SELECT SUM(SHARES)        FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_shares,
+        (SELECT SUM(gained) FROM (
+          SELECT MAX(NEW_FOLLOWERS) - MIN(NEW_FOLLOWERS) AS gained
+          FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}
+          GROUP BY USERNAME
+        )) AS total_new_followers,
+        (SELECT SUM(PROFILE_VIEWS) FROM \`bigdata.TIKBA_PROFILE\` ${profileWhere}) AS total_profile_views,
+        (SELECT SUM(latest) FROM (
+          SELECT MAX(PROFILE_FOLLOWERS_CURRENT_FOLLOWERS) AS latest
+          FROM \`bigdata.TIKBA_PROFILE\` ${audienceWhere}
+          GROUP BY USERNAME
+        )) AS current_followers,
         (SELECT COUNT(*) FROM \`bigdata.TIKBA_VIDEO\` ${videoWhere}) AS total_videos,
         (SELECT ROUND(AVG(VIDEO_COMPLETION_RATE) * 100, 1) FROM \`bigdata.TIKBA_VIDEO\` ${where([...videoClauses, 'VIDEO_COMPLETION_RATE IS NOT NULL'])}) AS avg_completion_rate
     `;
@@ -85,7 +96,6 @@ const QUERIES = {
         SUM(LIKES)         AS likes,
         SUM(COMMENTS)      AS comments,
         SUM(SHARES)        AS shares,
-        SUM(NEW_FOLLOWERS) AS new_followers,
         SUM(PROFILE_VIEWS) AS profile_views
       FROM \`bigdata.TIKBA_PROFILE\`
       ${where(clauses)}
@@ -131,7 +141,7 @@ const QUERIES = {
       FROM \`bigdata.TIKBA_VIDEO\`
       ${where(clauses)}
       ORDER BY VIDEO_VIEWS DESC
-      LIMIT 10
+      LIMIT 50
     `;
   },
 
