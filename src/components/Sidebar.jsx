@@ -62,6 +62,7 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
     { type: 'divider', label: 'Social Analytics' },
     { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },
     { id: 'instagramDashboard', name: 'Instagram', icon: <InstagramIcon size={20} />, color: '#EC4899' },
+    { id: 'tiktokOrganic', name: 'TikTok Organic', icon: <TikTokIcon size={20} />, color: '#FF0050' },
 
     { type: 'divider', label: 'Tools' },
     { id: 'gmvMax', name: 'Calculator GMV Max', icon: <Calculator size={20} />, color: '#00d4aa' },
