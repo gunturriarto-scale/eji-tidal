@@ -158,7 +158,7 @@ export function TK_TopVideos({ videos }) {
                     {v.THUMBNAIL_URL ? (
                       <a href={v.SHARE_URL || '#'} target="_blank" rel="noopener noreferrer">
                         <img
-                          src={`/api/proxy-image?url=${encodeURIComponent(v.THUMBNAIL_URL)}`}
+                          src={v.SHARE_URL ? `/api/tiktok-thumbnail?share_url=${encodeURIComponent(v.SHARE_URL)}` : undefined}
                           alt=""
                           style={{ width: '28px', height: '50px', objectFit: 'cover', borderRadius: '4px', display: 'block' }}
                           onError={e => { e.target.style.display = 'none'; }}
