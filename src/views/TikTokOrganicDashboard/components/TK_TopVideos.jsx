@@ -158,10 +158,8 @@ export function TK_TopVideos({ videos }) {
                     {v.THUMBNAIL_URL ? (
                       <a href={v.SHARE_URL || '#'} target="_blank" rel="noopener noreferrer">
                         <img
-                          src={v.THUMBNAIL_URL}
+                          src={`/api/proxy-image?url=${encodeURIComponent(v.THUMBNAIL_URL)}`}
                           alt=""
-                          referrerPolicy="no-referrer"
-                          crossOrigin="anonymous"
                           style={{ width: '28px', height: '50px', objectFit: 'cover', borderRadius: '4px', display: 'block' }}
                           onError={e => { e.target.style.display = 'none'; }}
                         />

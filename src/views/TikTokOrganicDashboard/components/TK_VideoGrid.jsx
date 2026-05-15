@@ -55,10 +55,8 @@ function VideoCard({ video }) {
       {/* Thumbnail */}
       {video.THUMBNAIL_URL && !imgError ? (
         <img
-          src={video.THUMBNAIL_URL}
+          src={`/api/proxy-image?url=${encodeURIComponent(video.THUMBNAIL_URL)}`}
           alt={caption.slice(0, 40)}
-          referrerPolicy="no-referrer"
-          crossOrigin="anonymous"
           onError={() => setImgError(true)}
           style={{
             position: 'absolute', inset: 0,
