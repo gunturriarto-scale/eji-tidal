@@ -61,7 +61,7 @@ export function TK_KPICards({ kpi }) {
     }}>
       <Card icon={<Eye size={15} />}      label="Video Views"      value={fmtNum(kpi.total_video_views)}   color="#FF0050" />
       <Card icon={<Users size={15} />}    label="Followers"        value={fmtNum(kpi.current_followers)}   color="#7C3AED" sub="current" />
-      <Card icon={<UserPlus size={15} />} label="New Followers"    value={fmtNum(kpi.total_new_followers)} color="#06B6D4" />
+      <Card icon={<UserPlus size={15} />} label="Followers Gained" value={fmtNum(kpi.total_new_followers)} color="#06B6D4" sub="in period" />
       <Card icon={<Heart size={15} />}    label="Likes"            value={fmtNum(kpi.total_likes)}         color="#EC4899" />
       <Card icon={<MessageCircle size={15} />} label="Comments"   value={fmtNum(kpi.total_comments)}      color="#F59E0B" />
       <Card icon={<Share2 size={15} />}   label="Shares"           value={fmtNum(kpi.total_shares)}        color="#10B981" />

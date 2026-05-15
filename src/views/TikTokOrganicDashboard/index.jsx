@@ -57,14 +57,15 @@ const DATE_LABELS = {
 
 // ─── DateFilterBar ────────────────────────────────────────────────────────────
 
-function DateFilterBar({ dateFilter, setDateFilter, customStart, setCustomStart, customEnd, setCustomEnd, onRefresh, isLoading }) {
-  const [open, setOpen] = useState(false);
+function DateFilterBar({ dateFilter, setDateFilter, customStart, setCustomStart, customEnd, setCustomEnd, onRefresh, isLoading, accounts, selectedAccount, onAccountChange }) {
+  const [dateOpen, setDateOpen] = useState(false);
 
   return (
     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+      {/* Date dropdown */}
       <div style={{ position: 'relative' }}>
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => setDateOpen(!dateOpen)}
           style={{
             display: 'flex', alignItems: 'center', gap: '0.5rem',
             padding: '0.5rem 1rem',
@@ -77,20 +78,20 @@ function DateFilterBar({ dateFilter, setDateFilter, customStart, setCustomStart,
         >
           <Calendar size={14} />
           {DATE_LABELS[dateFilter]}
-          <ChevronDown size={12} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'all 0.2s' }} />
+          <ChevronDown size={12} style={{ transform: dateOpen ? 'rotate(180deg)' : 'none', transition: 'all 0.2s' }} />
         </button>
-        {open && (
+        {dateOpen && (
           <div style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0,
-            minWidth: '180px', background: 'rgba(15,23,42,0.95)',
+            minWidth: '180px', background: 'rgba(15,23,42,0.97)',
             border: '1px solid rgba(255,0,80,0.2)', borderRadius: '10px',
             overflow: 'hidden', backdropFilter: 'blur(20px)',
-            zIndex: 100, boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            zIndex: 200, boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
           }}>
             {DATE_OPTIONS.map(opt => (
               <button
                 key={opt.value}
-                onClick={() => { setDateFilter(opt.value); setOpen(false); }}
+                onClick={() => { setDateFilter(opt.value); setDateOpen(false); }}
                 style={{
                   width: '100%', padding: '0.6rem 1rem', textAlign: 'left',
                   background: dateFilter === opt.value ? 'rgba(255,0,80,0.12)' : 'transparent',
@@ -98,8 +99,8 @@ function DateFilterBar({ dateFilter, setDateFilter, customStart, setCustomStart,
                   border: 'none', cursor: 'pointer', fontSize: '0.75rem',
                   fontWeight: dateFilter === opt.value ? 700 : 400, transition: 'all 0.15s',
                 }}
-                onMouseEnter={e => { if (dateFilter !== opt.value) e.target.style.background = 'rgba(255,255,255,0.04)'; }}
-                onMouseLeave={e => { if (dateFilter !== opt.value) e.target.style.background = 'transparent'; }}
+                onMouseEnter={e => { if (dateFilter !== opt.value) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                onMouseLeave={e => { if (dateFilter !== opt.value) e.currentTarget.style.background = 'transparent'; }}
               >
                 {opt.label}
               </button>
@@ -108,6 +109,7 @@ function DateFilterBar({ dateFilter, setDateFilter, customStart, setCustomStart,
         )}
       </div>
 
+      {/* Custom date inputs */}
       {dateFilter === 'custom' && (
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
           <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)}
@@ -117,6 +119,9 @@ function DateFilterBar({ dateFilter, setDateFilter, customStart, setCustomStart,
             className="glass-input" style={{ height: '38px', fontSize: '0.72rem' }} min={customStart || undefined} />
         </div>
       )}
+
+      {/* Account dropdown — next to date filter */}
+      <TK_AccountSwitcher accounts={accounts} selected={selectedAccount} onChange={onAccountChange} />
 
       <button
         onClick={onRefresh} disabled={isLoading}
@@ -298,19 +303,17 @@ export function TikTokOrganicDashboard() {
         </p>
       </div>
 
-      {/* Date Filter Bar */}
+      {/* Date Filter Bar (includes account dropdown) */}
       <DateFilterBar
         dateFilter={dateFilter} setDateFilter={setDateFilter}
         customStart={customStart} setCustomStart={setCustomStart}
         customEnd={customEnd} setCustomEnd={setCustomEnd}
         onRefresh={handleRefresh} isLoading={filterLoading}
+        accounts={data.accounts} selectedAccount={selectedAccount} onAccountChange={setSelectedAccount}
       />
 
       {/* KPI Cards */}
       <TK_KPICards kpi={data.kpi} />
-
-      {/* Account Switcher */}
-      <TK_AccountSwitcher accounts={data.accounts} selected={selectedAccount} onChange={setSelectedAccount} />
 
       {/* Section Tabs */}
       <TK_SectionTabs activeTab={activeTab} onTabChange={setActiveTab} />

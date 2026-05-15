@@ -16,7 +16,6 @@ const METRICS = [
   { key: 'likes',         label: 'Likes',         color: '#EC4899' },
   { key: 'comments',      label: 'Comments',      color: '#F59E0B' },
   { key: 'shares',        label: 'Shares',        color: '#10B981' },
-  { key: 'new_followers', label: 'New Followers', color: '#06B6D4' },
   { key: 'profile_views', label: 'Profile Views', color: '#8B5CF6' },
 ];
 

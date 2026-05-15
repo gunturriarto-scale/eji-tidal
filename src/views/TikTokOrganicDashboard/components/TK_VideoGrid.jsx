@@ -31,18 +31,24 @@ function VideoCard({ video }) {
       : '—';
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      aspectRatio: '9 / 16',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      cursor: 'pointer',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-      flexShrink: 0,
-    }}
+    <a
+      href={video.SHARE_URL || undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        position: 'relative',
+        display: 'block',
+        width: '100%',
+        aspectRatio: '9 / 16',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        background: 'rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        cursor: video.SHARE_URL ? 'pointer' : 'default',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        flexShrink: 0,
+        textDecoration: 'none',
+      }}
       onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.5)'; }}
       onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
     >
@@ -51,6 +57,8 @@ function VideoCard({ video }) {
         <img
           src={video.THUMBNAIL_URL}
           alt={caption.slice(0, 40)}
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
           onError={() => setImgError(true)}
           style={{
             position: 'absolute', inset: 0,
@@ -159,7 +167,7 @@ function VideoCard({ video }) {
           </a>
         )}
       </div>
-    </div>
+    </a>
   );
 }
 
