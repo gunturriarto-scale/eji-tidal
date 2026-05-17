@@ -56,13 +56,13 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
   const menuItems = [
     { type: 'divider', label: 'Management' },
     { id: 'commandCenter',  name: 'Command Center',   icon: <Target size={20} />,    color: '#F59E0B' },
-    { id: 'metaDashboard',   name: 'Meta Dashboard',  icon: <MetaIcon size={20} />, color: '#1877F2' },
-    { id: 'tiktokDashboard', name: 'TikTok Dashboard', icon: <TikTokIcon size={20} />, color: '#FF0050' },
+    { id: 'metaDashboard',   name: 'Ads // Meta',   icon: <MetaIcon size={20} />, color: '#1877F2' },
+    { id: 'tiktokDashboard', name: 'Ads // Tiktok', icon: <TikTokIcon size={20} />, color: '#FF0050' },
 
     { type: 'divider', label: 'Social Analytics' },
-    { id: 'kolDashboard', name: 'KOL Dashboard', icon: <BarChart2 size={20} />, color: '#EC4899' },
-    { id: 'instagramDashboard', name: 'Instagram', icon: <InstagramIcon size={20} />, color: '#EC4899' },
-    { id: 'tiktokOrganic', name: 'TikTok Organic', icon: <TikTokIcon size={20} />, color: '#FF0050' },
+    { id: 'kolDashboard',       name: 'Social // KOL',      icon: <BarChart2 size={20} />,     color: '#EC4899' },
+    { id: 'instagramDashboard', name: 'Social // Instagram', icon: <InstagramIcon size={20} />, color: '#EC4899' },
+    { id: 'tiktokOrganic',      name: 'Social // Tiktok',   icon: <TikTokIcon size={20} />,    color: '#FF0050' },
 
     { type: 'divider', label: 'Tools' },
     { id: 'gmvMax', name: 'Calculator GMV Max', icon: <Calculator size={20} />, color: '#00d4aa' },
