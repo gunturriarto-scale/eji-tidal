@@ -27,11 +27,19 @@ function SortIcon({ col, sortCol, sortDir }) {
 }
 
 const PLACEMENT_TYPE_COLORS = {
-  YOUTUBE_CHANNEL: '#EA4335',
-  YOUTUBE_VIDEO:   '#FF6B35',
-  WEBSITE:         '#4285F4',
-  MOBILE_APP_CATEGORY: '#34A853',
-  MOBILE_APP:      '#FBBC04',
+  CONTENT:        '#4285F4',
+  YOUTUBE_WATCH:  '#EA4335',
+  YOUTUBE_SEARCH: '#FF6B35',
+  SEARCH:         '#34A853',
+  UNKNOWN:        '#6B7280',
+};
+
+const PLACEMENT_TYPE_LABELS = {
+  CONTENT:        'Display',
+  YOUTUBE_WATCH:  'YT Watch',
+  YOUTUBE_SEARCH: 'YT Search',
+  SEARCH:         'Search',
+  UNKNOWN:        'Unknown',
 };
 
 const COLUMNS = [
@@ -101,7 +109,7 @@ export function GA_PlacementTable({ placementData }) {
   }
 
   function isYouTubeURL(url) {
-    return url && (url.includes('youtube.com') || url.includes('youtu.be') || url.startsWith('UC'));
+    return url && (url.includes('youtube.com') || url.includes('youtu.be'));
   }
 
   function renderCell(row, col) {
@@ -109,12 +117,13 @@ export function GA_PlacementTable({ placementData }) {
     switch (col.key) {
       case 'PLACEMENT': {
         const isYT = isYouTubeURL(v || '');
+        const href = v ? (v.startsWith('http') ? v : `https://${v}`) : null;
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', maxWidth: '240px' }}>
             {isYT && <span style={{ fontSize: '0.6rem', padding: '1px 4px', background: 'rgba(234,67,53,0.15)', color: '#EA4335', borderRadius: '3px', flexShrink: 0 }}>YT</span>}
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)', fontSize: '0.7rem' }}>{v || '—'}</span>
-            {v && v.startsWith('http') && (
-              <a href={v} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+            {href && (
+              <a href={href} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
                 style={{ color: 'var(--text-tertiary)', flexShrink: 0 }}>
                 <ExternalLink size={10} />
               </a>
@@ -124,7 +133,7 @@ export function GA_PlacementTable({ placementData }) {
       }
       case 'PLACEMENT_TYPE': {
         const color = PLACEMENT_TYPE_COLORS[v] || '#6B7280';
-        const label = (v || '').replace(/_/g, ' ').replace('YOUTUBE ', 'YT ');
+        const label = PLACEMENT_TYPE_LABELS[v] || (v || '').replace(/_/g, ' ');
         return <span style={{ fontSize: '0.6rem', padding: '2px 5px', background: `${color}18`, color, borderRadius: '3px', fontWeight: 700, whiteSpace: 'nowrap' }}>{label || '—'}</span>;
       }
       case 'CAMPAIGN_NAME':
@@ -164,7 +173,7 @@ export function GA_PlacementTable({ placementData }) {
             {types.map(t => {
               const isActive = typeFilter === t;
               const color = PLACEMENT_TYPE_COLORS[t] || ACCENT;
-              const label = t === 'all' ? 'All Types' : t.replace(/_/g, ' ').replace('YOUTUBE ', 'YT ');
+              const label = t === 'all' ? 'All Types' : (PLACEMENT_TYPE_LABELS[t] || t.replace(/_/g, ' '));
               return (
                 <button key={t} onClick={() => { setTypeFilter(t); setPage(0); }}
                   style={{ padding: '3px 8px', borderRadius: '10px', fontSize: '0.62rem', cursor: 'pointer', fontWeight: isActive ? 700 : 400, background: isActive ? `${color}18` : 'transparent', border: `1px solid ${isActive ? color : 'rgba(255,255,255,0.1)'}`, color: isActive ? color : 'var(--text-tertiary)' }}>
