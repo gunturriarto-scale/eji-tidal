@@ -250,7 +250,7 @@ const QUERIES = {
     const clauses = buildSimpleFilters({ start, end, account });
     return `
       SELECT
-        PLACEMENT,
+        PLACEMENT_URL                                                   AS PLACEMENT,
         PLACEMENT_TYPE,
         CAMPAIGN_NAME,
         ACCOUNT_NAME,
@@ -261,7 +261,7 @@ const QUERIES = {
         ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                     AS cpc
       FROM \`bigdata.GOOGLEADS_PLACEMENT\`
       ${where(clauses)}
-      GROUP BY PLACEMENT, PLACEMENT_TYPE, CAMPAIGN_NAME, ACCOUNT_NAME
+      GROUP BY PLACEMENT_URL, PLACEMENT_TYPE, CAMPAIGN_NAME, ACCOUNT_NAME
       ORDER BY impressions DESC
     `;
   },
