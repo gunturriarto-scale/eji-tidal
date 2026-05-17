@@ -150,14 +150,14 @@ const QUERIES = {
     const videoWhere = where([...clauses, 'VIDEO_COMPLETION_RATE IS NOT NULL']);
     return `
       SELECT
-        ROUND(AVG(VIDEO_COMPLETION_RATE) * 100, 1)                                                 AS avg_completion_pct,
-        COUNTIF(VIDEO_COMPLETION_RATE >= 0.25)                                                      AS reached_25pct,
-        COUNTIF(VIDEO_COMPLETION_RATE >= 0.50)                                                      AS reached_50pct,
-        COUNTIF(VIDEO_COMPLETION_RATE >= 0.75)                                                      AS reached_75pct,
-        COUNTIF(VIDEO_COMPLETION_RATE >= 1.00)                                                      AS reached_100pct,
-        COUNT(*)                                                                                     AS total_videos,
-        ROUND(AVG(VIDEO_DURATION_MIN), 2)                                                           AS avg_duration_min,
-        ROUND(AVG(TOTAL_TIME_WATCHED_MIN), 2)                                                       AS avg_watch_time_min
+        ROUND(AVG(VIDEO_COMPLETION_RATE) * 100, 1)                                                         AS avg_completion_pct,
+        COUNTIF(VIDEO_COMPLETION_RATE < 0.05)                                                               AS bucket_0_5,
+        COUNTIF(VIDEO_COMPLETION_RATE >= 0.05 AND VIDEO_COMPLETION_RATE < 0.25)                             AS bucket_5_25,
+        COUNTIF(VIDEO_COMPLETION_RATE >= 0.25 AND VIDEO_COMPLETION_RATE < 0.50)                             AS bucket_25_50,
+        COUNTIF(VIDEO_COMPLETION_RATE >= 0.50)                                                              AS bucket_50_plus,
+        COUNT(*)                                                                                             AS total_videos,
+        ROUND(AVG(VIDEO_DURATION_MIN), 2)                                                                   AS avg_duration_min,
+        ROUND(AVG(SAFE_DIVIDE(TOTAL_TIME_WATCHED_MIN, VIDEO_VIEWS) * 60), 1)                                AS avg_sec_per_view
       FROM \`bigdata.TIKBA_VIDEO\`
       ${videoWhere}
     `;
