@@ -168,10 +168,10 @@ const QUERIES = {
     const usernameFilter = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     return `
       WITH latest AS (
-        SELECT USERNAME, COUNTRY, DISTRIBUTION
+        SELECT USERNAME, COUNTRY, DISTRIBUTION, \`DATE\`
         FROM \`bigdata.TIKBA_COUNTRY\`
         ${usernameFilter}
-        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY DATE DESC) = 1
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY \`DATE\` DESC) = 1
       )
       SELECT
         COUNTRY,
@@ -187,10 +187,10 @@ const QUERIES = {
     const usernameFilter = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     return `
       WITH latest AS (
-        SELECT USERNAME, GENDER, DISTRIBUTION
+        SELECT USERNAME, GENDER, DISTRIBUTION, \`DATE\`
         FROM \`bigdata.TIKBA_GENDER\`
         ${usernameFilter}
-        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY DATE DESC) = 1
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY \`DATE\` DESC) = 1
       )
       SELECT
         GENDER,
