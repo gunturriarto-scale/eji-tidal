@@ -17,6 +17,7 @@ import { MetaDashboard } from './views/MetaDashboard'
 import { TikTokDashboard } from './views/TikTokDashboard'
 import { InstagramDashboard } from './views/InstagramDashboard'
 import { TikTokOrganicDashboard } from './views/TikTokOrganicDashboard'
+import { GoogleAdsDashboard } from './views/GoogleAdsDashboard'
 import { AIChatView } from './views/AIChatView'
 import { HermesView } from './views/HermesView'
 
@@ -84,7 +85,7 @@ const Header = ({
           </div>
         </div>
 
-        {!['creativehub', 'commandCenter', 'gmvMax', 'kol', 'kolDashboard', 'metaDashboard', 'tiktokDashboard', 'instagramDashboard', 'tiktokOrganic', 'aiChat'].includes(activeView) && (
+        {!['creativehub', 'commandCenter', 'gmvMax', 'kol', 'kolDashboard', 'metaDashboard', 'tiktokDashboard', 'instagramDashboard', 'tiktokOrganic', 'googleAdsDashboard', 'aiChat'].includes(activeView) && (
           <div className="filter-deck" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
             <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-end' }}>
               <div className="filter-group" style={{ flex: 'none', width: '160px' }}>
@@ -305,7 +306,7 @@ function App() {
   }, [tiktokAdsData, metaAdsData, metaAdsSupabaseData, googleAdsData, kolData, offsiteData, criteoData, commandCenterData, loading, dateRange, currentFilters]);
 
   const viewNames = {
-    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)', kol: '⚡ KOL APIFY System', kolDashboard: '📊 KOL Dashboard', metaDashboard: '📊 Meta Dashboard', tiktokDashboard: '🎵 TikTok Dashboard', instagramDashboard: '📷 Instagram Analytics', tiktokOrganic: '🎵 TikTok Organic Analytics', aiChat: '🔮 Ask Gandalf', hermes: '🤖 Hermes'
+    shopee: '🛒 Shopee Performance', tiktokShop: '🎵 TikTok Shop Performance', lazada: '🛍️ Lazada Performance', tokopedia: '🟢 Tokopedia Performance', shopeeNco: '🛒 Shopee NCO Performance', tiktokShopNco: '🎵 TikTok Shop NCO Performance', lazadaNco: '🛍️ Lazada NCO Performance', tokopediaNco: '🟢 Tokopedia NCO Performance', commandCenter: '🎯 Command Center', gmvMax: '⚡ GMV Max Intelligence', perfMarketing: '🚀 Performance Marketing (belum kelar woi yang ini)', kol: '⚡ KOL APIFY System', kolDashboard: '📊 KOL Dashboard', metaDashboard: '📊 Meta Dashboard', tiktokDashboard: '🎵 TikTok Dashboard', instagramDashboard: '📷 Instagram Analytics', tiktokOrganic: '🎵 TikTok Organic Analytics', googleAdsDashboard: '📊 Google Ads Analytics', aiChat: '🔮 Ask Gandalf', hermes: '🤖 Hermes'
   };
 
   const renderView = () => {
@@ -328,6 +329,7 @@ function App() {
       case 'tiktokDashboard': return <TikTokDashboard />;
       case 'instagramDashboard': return <InstagramDashboard />;
       case 'tiktokOrganic': return <TikTokOrganicDashboard />;
+      case 'googleAdsDashboard': return <GoogleAdsDashboard />;
       case 'aiChat': return <AIChatView />;
       case 'hermes': return <HermesView />;
       default: return <CommandCenterView {...commonProps} />;
