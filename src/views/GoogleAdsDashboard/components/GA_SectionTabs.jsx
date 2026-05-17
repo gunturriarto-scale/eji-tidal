@@ -8,6 +8,7 @@ const TABS = [
   { id: 'ads',          label: 'Ads' },
   { id: 'shopping',     label: 'Shopping' },
   { id: 'conversions',  label: 'Conversions' },
+  { id: 'placements',   label: 'Placements' },
 ];
 
 export function GA_SectionTabs({ activeTab, onTabChange }) {

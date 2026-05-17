@@ -38,15 +38,7 @@ function buildFilters({ start, end, account, channel }) {
   return clauses;
 }
 
-function buildShoppingFilters({ start, end, account }) {
-  const clauses = [];
-  if (start)   clauses.push(`DATE >= '${start}'`);
-  if (end)     clauses.push(`DATE <= '${end}'`);
-  if (account && account !== 'all') clauses.push(`ACCOUNT_NAME = '${account}'`);
-  return clauses;
-}
-
-function buildConversionFilters({ start, end, account }) {
+function buildSimpleFilters({ start, end, account }) {
   const clauses = [];
   if (start)   clauses.push(`DATE >= '${start}'`);
   if (end)     clauses.push(`DATE <= '${end}'`);
@@ -60,28 +52,30 @@ function where(clauses) {
 
 const QUERIES = {
 
+  // Discover actual column names — use this for debugging schema mismatches
+  schema: () => `
+    SELECT table_name, column_name, data_type
+    FROM \`bigdata.INFORMATION_SCHEMA.COLUMNS\`
+    WHERE table_name IN ('GOOGLEADS_CAMPAIGN', 'GOOGLEADS_AD', 'GOOGLEADS_CONVERSION', 'GOOGLEADS_SHOPPING', 'GOOGLEADS_PLACEMENT')
+    ORDER BY table_name, ordinal_position
+  `,
+
   kpiOverview: ({ start, end, account, channel }) => {
     const clauses = buildFilters({ start, end, account, channel });
     const w = where(clauses);
     return `
       SELECT
-        ROUND(SUM(COST))                                                             AS total_cost,
-        SUM(CLICKS)                                                                  AS total_clicks,
-        SUM(IMPRESSIONS)                                                             AS total_impressions,
-        ROUND(SUM(CONVERSIONS), 1)                                                   AS total_conversions,
-        ROUND(SUM(CONVERSION_VALUE))                                                 AS total_conv_value,
-        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)                  AS ctr,
-        ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                                   AS cpc,
-        ROUND(SAFE_DIVIDE(SUM(COST) * 1000, SUM(IMPRESSIONS)))                       AS cpm,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2)                      AS roas,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS), SUM(CLICKS)) * 100, 2)                  AS conv_rate,
-        SUM(VIDEO_VIEWS)                                                             AS total_video_views,
-        (SELECT ROUND(SUM(b)) FROM (
-          SELECT MAX(DAILY_BUDGET) AS b
-          FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
-          ${w}
-          GROUP BY CAMPAIGN_NAME
-        ))                                                                           AS total_daily_budget
+        ROUND(SUM(COST))                                                              AS total_cost,
+        SUM(CLICKS)                                                                   AS total_clicks,
+        SUM(IMPRESSIONS)                                                              AS total_impressions,
+        ROUND(SUM(CONVERSIONS), 1)                                                    AS total_conversions,
+        ROUND(SUM(CONVERSIONS_VALUE))                                                 AS total_conv_value,
+        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)                   AS ctr,
+        ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                                    AS cpc,
+        ROUND(SAFE_DIVIDE(SUM(COST) * 1000, SUM(IMPRESSIONS)))                        AS cpm,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)                      AS roas,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS), SUM(CLICKS)) * 100, 2)                   AS conv_rate,
+        SUM(VIDEO_VIEWS)                                                              AS total_video_views
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
       ${w}
     `;
@@ -92,11 +86,11 @@ const QUERIES = {
     return `
       SELECT
         DATE,
-        ROUND(SUM(COST))                                        AS cost,
-        SUM(CLICKS)                                             AS clicks,
-        SUM(IMPRESSIONS)                                        AS impressions,
-        ROUND(SUM(CONVERSIONS), 1)                              AS conversions,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2) AS roas
+        ROUND(SUM(COST))                                          AS cost,
+        SUM(CLICKS)                                               AS clicks,
+        SUM(IMPRESSIONS)                                          AS impressions,
+        ROUND(SUM(CONVERSIONS), 1)                                AS conversions,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)  AS roas
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
       ${where(clauses)}
       GROUP BY DATE
@@ -105,15 +99,15 @@ const QUERIES = {
   },
 
   channelBreakdown: ({ start, end, account }) => {
-    const clauses = buildFilters({ start, end, account });
+    const clauses = buildSimpleFilters({ start, end, account });
     return `
       SELECT
-        ADVERTISING_CHANNEL_TYPE                                 AS channel_type,
-        ROUND(SUM(COST))                                         AS cost,
-        SUM(IMPRESSIONS)                                         AS impressions,
-        SUM(CLICKS)                                              AS clicks,
-        ROUND(SUM(CONVERSIONS), 1)                               AS conversions,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2)  AS roas
+        ADVERTISING_CHANNEL_TYPE                                   AS channel_type,
+        ROUND(SUM(COST))                                           AS cost,
+        SUM(IMPRESSIONS)                                           AS impressions,
+        SUM(CLICKS)                                                AS clicks,
+        ROUND(SUM(CONVERSIONS), 1)                                 AS conversions,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)   AS roas
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
       ${where(clauses)}
       GROUP BY ADVERTISING_CHANNEL_TYPE
@@ -132,65 +126,61 @@ const QUERIES = {
     return `
       SELECT
         CAMPAIGN_NAME,
-        STATUS,
-        ADVERTISING_CHANNEL_TYPE                                            AS channel_type,
-        BIDDING_STRATEGY_TYPE                                               AS bidding_strategy,
+        CAMPAIGN_STATUS                                                      AS STATUS,
+        ADVERTISING_CHANNEL_TYPE                                             AS channel_type,
         ACCOUNT_NAME,
-        MAX(DAILY_BUDGET)                                                   AS daily_budget,
-        SUM(IMPRESSIONS)                                                    AS impressions,
-        SUM(CLICKS)                                                         AS clicks,
-        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)         AS ctr,
-        ROUND(SUM(COST))                                                    AS cost,
-        ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                         AS cpc,
-        ROUND(SAFE_DIVIDE(SUM(COST) * 1000, SUM(IMPRESSIONS)))             AS cpm,
-        ROUND(SUM(CONVERSIONS), 1)                                          AS conversions,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS), SUM(CLICKS)) * 100, 2)         AS conv_rate,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2)            AS roas,
-        ROUND(AVG(IMPRESSION_SHARE) * 100, 1)                              AS impression_share,
-        SUM(VIDEO_VIEWS)                                                    AS video_views
+        MAX(CAMPAIGN_BUDGET)                                                 AS daily_budget,
+        SUM(IMPRESSIONS)                                                     AS impressions,
+        SUM(CLICKS)                                                          AS clicks,
+        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)          AS ctr,
+        ROUND(SUM(COST))                                                     AS cost,
+        ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                          AS cpc,
+        ROUND(SAFE_DIVIDE(SUM(COST) * 1000, SUM(IMPRESSIONS)))              AS cpm,
+        ROUND(SUM(CONVERSIONS), 1)                                           AS conversions,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS), SUM(CLICKS)) * 100, 2)          AS conv_rate,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)            AS roas,
+        ROUND(AVG(SEARCH_IMPRESSION_SHARE) * 100, 1)                        AS impression_share,
+        SUM(VIDEO_VIEWS)                                                     AS video_views
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
       ${where(clauses)}
-      GROUP BY CAMPAIGN_NAME, STATUS, ADVERTISING_CHANNEL_TYPE, BIDDING_STRATEGY_TYPE, ACCOUNT_NAME
+      GROUP BY CAMPAIGN_NAME, CAMPAIGN_STATUS, ADVERTISING_CHANNEL_TYPE, ACCOUNT_NAME
       ORDER BY cost DESC
     `;
   },
 
   ads: ({ start, end, account }) => {
-    const clauses = buildFilters({ start, end, account });
+    const clauses = buildSimpleFilters({ start, end, account });
     return `
       SELECT
         CAMPAIGN_NAME,
         AD_GROUP_NAME,
         AD_TYPE,
-        STATUS,
+        AD_STATUS                                                             AS STATUS,
         DEVICE,
         NETWORK,
         ACCOUNT_NAME,
-        MAX(COALESCE(HEADLINE_1, ''))     AS headline,
-        MAX(COALESCE(DESCRIPTION_1, '')) AS description,
-        SUM(IMPRESSIONS)                                                    AS impressions,
-        SUM(CLICKS)                                                         AS clicks,
-        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)         AS ctr,
-        ROUND(SUM(COST))                                                    AS cost,
-        ROUND(SUM(CONVERSIONS), 1)                                          AS conversions,
-        SUM(VIDEO_VIEWS)                                                    AS video_views,
-        SUM(VIDEO_QUARTILE_100_RATE)                                        AS video_100_views
+        SUM(IMPRESSIONS)                                                      AS impressions,
+        SUM(CLICKS)                                                           AS clicks,
+        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)           AS ctr,
+        ROUND(SUM(COST))                                                      AS cost,
+        ROUND(SUM(CONVERSIONS), 1)                                            AS conversions,
+        SUM(VIDEO_VIEWS)                                                      AS video_views
       FROM \`bigdata.GOOGLEADS_AD\`
       ${where(clauses)}
-      GROUP BY CAMPAIGN_NAME, AD_GROUP_NAME, AD_TYPE, STATUS, DEVICE, NETWORK, ACCOUNT_NAME
+      GROUP BY CAMPAIGN_NAME, AD_GROUP_NAME, AD_TYPE, AD_STATUS, DEVICE, NETWORK, ACCOUNT_NAME
       ORDER BY cost DESC
       LIMIT 500
     `;
   },
 
   deviceBreakdown: ({ start, end, account }) => {
-    const clauses = buildFilters({ start, end, account });
+    const clauses = buildSimpleFilters({ start, end, account });
     return `
       SELECT
         DEVICE,
-        SUM(CLICKS)       AS clicks,
-        SUM(IMPRESSIONS)  AS impressions,
-        ROUND(SUM(COST))  AS cost,
+        SUM(CLICKS)                AS clicks,
+        SUM(IMPRESSIONS)           AS impressions,
+        ROUND(SUM(COST))           AS cost,
         ROUND(SUM(CONVERSIONS), 1) AS conversions
       FROM \`bigdata.GOOGLEADS_AD\`
       ${where(clauses)}
@@ -200,7 +190,7 @@ const QUERIES = {
   },
 
   shopping: ({ start, end, account }) => {
-    const clauses = buildShoppingFilters({ start, end, account });
+    const clauses = buildSimpleFilters({ start, end, account });
     return `
       SELECT
         BRAND,
@@ -209,11 +199,11 @@ const QUERIES = {
         CATEGORY_LEVEL_2,
         CATEGORY_LEVEL_3,
         PRODUCT_TYPE_LEVEL_1,
-        SUM(CLICKS)                                                    AS clicks,
-        SUM(IMPRESSIONS)                                               AS impressions,
-        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)    AS ctr,
-        ROUND(SUM(COST))                                               AS cost,
-        ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                    AS cpc
+        SUM(CLICKS)                                                     AS clicks,
+        SUM(IMPRESSIONS)                                                AS impressions,
+        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)     AS ctr,
+        ROUND(SUM(COST))                                                AS cost,
+        ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                     AS cpc
       FROM \`bigdata.GOOGLEADS_SHOPPING\`
       ${where(clauses)}
       GROUP BY BRAND, PRODUCT_TITLE, CATEGORY_LEVEL_1, CATEGORY_LEVEL_2, CATEGORY_LEVEL_3, PRODUCT_TYPE_LEVEL_1
@@ -223,14 +213,14 @@ const QUERIES = {
   },
 
   shoppingBrand: ({ start, end, account }) => {
-    const clauses = buildShoppingFilters({ start, end, account });
+    const clauses = buildSimpleFilters({ start, end, account });
     return `
       SELECT
         BRAND,
-        SUM(CLICKS)                                                    AS clicks,
-        SUM(IMPRESSIONS)                                               AS impressions,
-        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)    AS ctr,
-        ROUND(SUM(COST))                                               AS cost
+        SUM(CLICKS)                                                     AS clicks,
+        SUM(IMPRESSIONS)                                                AS impressions,
+        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)     AS ctr,
+        ROUND(SUM(COST))                                                AS cost
       FROM \`bigdata.GOOGLEADS_SHOPPING\`
       ${where(clauses)}
       GROUP BY BRAND
@@ -239,20 +229,40 @@ const QUERIES = {
   },
 
   conversions: ({ start, end, account }) => {
-    const clauses = buildConversionFilters({ start, end, account });
+    const clauses = buildSimpleFilters({ start, end, account });
     return `
       SELECT
         CONVERSION_TYPE_NAME,
         DEVICE,
         CAMPAIGN_NAME,
-        ROUND(SUM(CONVERSIONS), 1)                                     AS conversions,
-        ROUND(SUM(CONVERSION_VALUE))                                   AS conversion_value,
-        ROUND(SUM(ESTIMATED_CROSS_DEVICE_CONVERSIONS), 1)              AS est_cross_device,
-        ROUND(SUM(VIEW_THROUGH_CONVERSIONS), 1)                        AS view_through
+        ROUND(SUM(CONVERSIONS), 1)                                      AS conversions,
+        ROUND(SUM(CONVERSIONS_VALUE))                                   AS conversion_value,
+        ROUND(SUM(ESTIMATED_CROSS_DEVICE_CONVERSIONS), 1)               AS est_cross_device,
+        ROUND(SUM(VIEW_THROUGH_CONVERSIONS), 1)                         AS view_through
       FROM \`bigdata.GOOGLEADS_CONVERSION\`
       ${where(clauses)}
       GROUP BY CONVERSION_TYPE_NAME, DEVICE, CAMPAIGN_NAME
       ORDER BY conversions DESC
+    `;
+  },
+
+  placements: ({ start, end, account }) => {
+    const clauses = buildSimpleFilters({ start, end, account });
+    return `
+      SELECT
+        PLACEMENT,
+        PLACEMENT_TYPE,
+        CAMPAIGN_NAME,
+        ACCOUNT_NAME,
+        SUM(IMPRESSIONS)                                                AS impressions,
+        SUM(CLICKS)                                                     AS clicks,
+        ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)     AS ctr,
+        ROUND(SUM(COST))                                                AS cost,
+        ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                     AS cpc
+      FROM \`bigdata.GOOGLEADS_PLACEMENT\`
+      ${where(clauses)}
+      GROUP BY PLACEMENT, PLACEMENT_TYPE, CAMPAIGN_NAME, ACCOUNT_NAME
+      ORDER BY impressions DESC
     `;
   },
 };

@@ -4,9 +4,25 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const ACCENT = '#4285F4';
 
-const DEVICE_COLORS  = { MOBILE: '#4285F4', DESKTOP: '#34A853', TABLET: '#FBBC04', OTHER: '#6B7280', CONNECTED_TV: '#EA4335' };
-const NETWORK_COLORS = { CONTENT: '#4285F4', SEARCH: '#34A853', YOUTUBE_WATCH: '#EA4335', YOUTUBE_SEARCH: '#FBBC04', UNKNOWN: '#6B7280' };
-const NETWORK_LABELS = { CONTENT: 'Display', SEARCH: 'Search', YOUTUBE_WATCH: 'YT Watch', YOUTUBE_SEARCH: 'YT Search', UNKNOWN: 'Unknown' };
+// BigQuery stores device values as lowercase strings
+const DEVICE_COLORS  = {
+  MOBILE: '#4285F4', mobile: '#4285F4',
+  DESKTOP: '#34A853', desktop: '#34A853',
+  TABLET: '#FBBC04', tablet: '#FBBC04',
+  OTHER: '#6B7280', other: '#6B7280',
+  CONNECTED_TV: '#EA4335', connected_tv: '#EA4335',
+  'Devices streaming video content to TV screens': '#EA4335',
+};
+const DEVICE_LABELS = {
+  mobile: 'Mobile', MOBILE: 'Mobile',
+  desktop: 'Desktop', DESKTOP: 'Desktop',
+  tablet: 'Tablet', TABLET: 'Tablet',
+  connected_tv: 'CTV', CONNECTED_TV: 'CTV',
+  'Devices streaming video content to TV screens': 'CTV',
+  other: 'Other', OTHER: 'Other',
+};
+const NETWORK_COLORS = { CONTENT: '#4285F4', content: '#4285F4', SEARCH: '#34A853', search: '#34A853', YOUTUBE_WATCH: '#EA4335', youtube_watch: '#EA4335', YOUTUBE_SEARCH: '#FBBC04', youtube_search: '#FBBC04', UNKNOWN: '#6B7280', unknown: '#6B7280' };
+const NETWORK_LABELS = { CONTENT: 'Display', content: 'Display', SEARCH: 'Search', search: 'Search', YOUTUBE_WATCH: 'YT Watch', youtube_watch: 'YT Watch', YOUTUBE_SEARCH: 'YT Search', youtube_search: 'YT Search', UNKNOWN: 'Unknown', unknown: 'Unknown' };
 const AD_TYPE_COLORS = { RESPONSIVE_DISPLAY_AD: '#FBBC04', VIDEO_AD: '#EA4335', DEMAND_GEN_VIDEO_RESPONSIVE_AD: '#34A853', DEMAND_GEN_PRODUCT_AD: '#8B5CF6' };
 const AD_TYPE_LABELS = {
   RESPONSIVE_DISPLAY_AD: 'Display',
@@ -38,7 +54,7 @@ function SortIcon({ col, sortCol, sortDir }) {
   return sortDir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />;
 }
 
-function DonutChart({ data, colorMap, labelMap, title }) {
+function DonutChart({ data, colorMap, labelMap = {}, title }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   if (total === 0) return null;
   return (
@@ -59,7 +75,7 @@ function DonutChart({ data, colorMap, labelMap, title }) {
           return (
             <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.62rem' }}>
               <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, flexShrink: 0 }} />
-              <span style={{ color: 'var(--text-secondary)', flex: 1 }}>{labelMap[entry.name] || entry.name}</span>
+              <span style={{ color: 'var(--text-secondary)', flex: 1 }}>{labelMap[entry.name] || DEVICE_LABELS[entry.name] || NETWORK_LABELS[entry.name] || entry.name}</span>
               <span style={{ color, fontWeight: 700 }}>{pct}%</span>
             </div>
           );
@@ -122,11 +138,11 @@ export function GA_AdTable({ adsData, deviceBreakdown }) {
       }
       case 'DEVICE': {
         const color = DEVICE_COLORS[v] || '#6B7280';
-        return <span style={{ fontSize: '0.62rem', color, fontWeight: 600 }}>{v || '—'}</span>;
+        return <span style={{ fontSize: '0.62rem', color, fontWeight: 600 }}>{DEVICE_LABELS[v] || v || '—'}</span>;
       }
       case 'NETWORK': {
         const color = NETWORK_COLORS[v] || '#6B7280';
-        return <span style={{ fontSize: '0.6rem', color, fontWeight: 600 }}>{NETWORK_LABELS[v] || (v || '—')}</span>;
+        return <span style={{ fontSize: '0.6rem', color, fontWeight: 600 }}>{NETWORK_LABELS[v] || v || '—'}</span>;
       }
       case 'cost':        return <span style={{ color: ACCENT, fontWeight: 600 }}>{v != null ? `IDR ${fmtIDR(v)}` : '—'}</span>;
       case 'impressions': return fmtNum(v);
@@ -151,7 +167,7 @@ export function GA_AdTable({ adsData, deviceBreakdown }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Donuts row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        <DonutChart data={deviceData} colorMap={DEVICE_COLORS} labelMap={{}} title="Device Breakdown" />
+        <DonutChart data={deviceData} colorMap={DEVICE_COLORS} labelMap={DEVICE_LABELS} title="Device Breakdown" />
         <DonutChart data={networkData} colorMap={NETWORK_COLORS} labelMap={NETWORK_LABELS} title="Network Breakdown" />
       </div>
 

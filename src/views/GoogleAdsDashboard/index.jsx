@@ -10,6 +10,7 @@ import { GA_CampaignTable }    from './components/GA_CampaignTable';
 import { GA_AdTable }          from './components/GA_AdTable';
 import { GA_ShoppingTable }    from './components/GA_ShoppingTable';
 import { GA_ConversionPanel }  from './components/GA_ConversionPanel';
+import { GA_PlacementTable }   from './components/GA_PlacementTable';
 
 const ACCENT = '#4285F4';
 const API    = '/api/google-ads';
@@ -235,6 +236,10 @@ function ConversionsSection({ data }) {
   return <GA_ConversionPanel convData={data.conversions} />;
 }
 
+function PlacementsSection({ data }) {
+  return <GA_PlacementTable placementData={data.placements} />;
+}
+
 // ─── Main export ───────────────────────────────────────────────────────────────
 
 export function GoogleAdsDashboard() {
@@ -252,7 +257,7 @@ export function GoogleAdsDashboard() {
   const [data, setData] = useState({
     kpi: null, accounts: [], trend: [], channel: [],
     campaigns: [], ads: [], deviceBreakdown: [],
-    shopping: [], shoppingBrand: [], conversions: [],
+    shopping: [], shoppingBrand: [], conversions: [], placements: [],
   });
 
   const dateRange = computeDateRange(dateFilter, customStart, customEnd);
@@ -268,7 +273,7 @@ export function GoogleAdsDashboard() {
       if (end)     qs.set('end', end);
       if (account && account !== 'all') qs.set('account', account);
 
-      const [kpiRes, accRes, trendRes, channelRes, campRes, adsRes, devRes, shopRes, brandRes, convRes] = await Promise.all([
+      const [kpiRes, accRes, trendRes, channelRes, campRes, adsRes, devRes, shopRes, brandRes, convRes, placRes] = await Promise.all([
         fetch(`${API}?type=kpiOverview&${qs}`).then(r => r.json()),
         fetch(`${API}?type=accounts`).then(r => r.json()),
         fetch(`${API}?type=dailyTrend&${qs}`).then(r => r.json()),
@@ -279,6 +284,7 @@ export function GoogleAdsDashboard() {
         fetch(`${API}?type=shopping&${qs}`).then(r => r.json()),
         fetch(`${API}?type=shoppingBrand&${qs}`).then(r => r.json()),
         fetch(`${API}?type=conversions&${qs}`).then(r => r.json()),
+        fetch(`${API}?type=placements&${qs}`).then(r => r.json()),
       ]);
 
       setData({
@@ -292,6 +298,7 @@ export function GoogleAdsDashboard() {
         shopping:       shopRes.data       || [],
         shoppingBrand:  brandRes.data      || [],
         conversions:    convRes.data       || [],
+        placements:     placRes.data       || [],
       });
     } catch (err) {
       setError(err.message);
@@ -357,6 +364,7 @@ export function GoogleAdsDashboard() {
       case 'ads':         return <AdsSection data={data} />;
       case 'shopping':    return <ShoppingSection data={data} />;
       case 'conversions': return <ConversionsSection data={data} />;
+      case 'placements':  return <PlacementsSection data={data} />;
       default:            return null;
     }
   };
