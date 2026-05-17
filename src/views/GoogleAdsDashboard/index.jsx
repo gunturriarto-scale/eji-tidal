@@ -253,6 +253,7 @@ export function GoogleAdsDashboard() {
   const [loading, setLoading]             = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError]                 = useState(null);
+  const [queryErrors, setQueryErrors]     = useState({});
 
   const [data, setData] = useState({
     kpi: null, accounts: [], trend: [], channel: [],
@@ -286,6 +287,19 @@ export function GoogleAdsDashboard() {
         fetch(`${API}?type=conversions&${qs}`).then(r => r.json()),
         fetch(`${API}?type=placements&${qs}`).then(r => r.json()),
       ]);
+
+      const errs = {};
+      if (kpiRes.error)     errs.kpiOverview     = kpiRes.error;
+      if (trendRes.error)   errs.dailyTrend      = trendRes.error;
+      if (channelRes.error) errs.channelBreakdown = channelRes.error;
+      if (campRes.error)    errs.campaigns       = campRes.error;
+      if (adsRes.error)     errs.ads             = adsRes.error;
+      if (devRes.error)     errs.deviceBreakdown = devRes.error;
+      if (shopRes.error)    errs.shopping        = shopRes.error;
+      if (brandRes.error)   errs.shoppingBrand   = brandRes.error;
+      if (convRes.error)    errs.conversions     = convRes.error;
+      if (placRes.error)    errs.placements      = placRes.error;
+      setQueryErrors(errs);
 
       setData({
         kpi:            kpiRes.data?.[0]   || {},
@@ -390,6 +404,21 @@ export function GoogleAdsDashboard() {
       />
 
       <GA_KPICards kpi={data.kpi} />
+
+      {Object.keys(queryErrors).length > 0 && (
+        <details style={{ marginBottom: '1rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '0.6rem 0.9rem' }}>
+          <summary style={{ color: '#EF4444', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>
+            ⚠ {Object.keys(queryErrors).length} query error(s) — some data may be missing
+          </summary>
+          <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {Object.entries(queryErrors).map(([q, msg]) => (
+              <div key={q} style={{ fontSize: '0.62rem', color: '#FCA5A5' }}>
+                <strong style={{ color: '#F87171' }}>{q}:</strong> {msg}
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
 
       <GA_SectionTabs activeTab={activeTab} onTabChange={setActiveTab} />
 

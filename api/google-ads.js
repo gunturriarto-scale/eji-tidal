@@ -69,11 +69,11 @@ const QUERIES = {
         SUM(CLICKS)                                                                   AS total_clicks,
         SUM(IMPRESSIONS)                                                              AS total_impressions,
         ROUND(SUM(CONVERSIONS), 1)                                                    AS total_conversions,
-        ROUND(SUM(CONVERSIONS_VALUE))                                                 AS total_conv_value,
+        ROUND(SUM(CONVERSION_VALUE))                                                  AS total_conv_value,
         ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)                   AS ctr,
         ROUND(SAFE_DIVIDE(SUM(COST), SUM(CLICKS)))                                    AS cpc,
         ROUND(SAFE_DIVIDE(SUM(COST) * 1000, SUM(IMPRESSIONS)))                        AS cpm,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)                      AS roas,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2)                       AS roas,
         ROUND(SAFE_DIVIDE(SUM(CONVERSIONS), SUM(CLICKS)) * 100, 2)                   AS conv_rate,
         SUM(VIDEO_VIEWS)                                                              AS total_video_views
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
@@ -90,7 +90,7 @@ const QUERIES = {
         SUM(CLICKS)                                               AS clicks,
         SUM(IMPRESSIONS)                                          AS impressions,
         ROUND(SUM(CONVERSIONS), 1)                                AS conversions,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)  AS roas
+        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2)   AS roas
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
       ${where(clauses)}
       GROUP BY DATE
@@ -107,7 +107,7 @@ const QUERIES = {
         SUM(IMPRESSIONS)                                           AS impressions,
         SUM(CLICKS)                                                AS clicks,
         ROUND(SUM(CONVERSIONS), 1)                                 AS conversions,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)   AS roas
+        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2)    AS roas
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
       ${where(clauses)}
       GROUP BY ADVERTISING_CHANNEL_TYPE
@@ -129,7 +129,7 @@ const QUERIES = {
         CAMPAIGN_STATUS                                                      AS STATUS,
         ADVERTISING_CHANNEL_TYPE                                             AS channel_type,
         ACCOUNT_NAME,
-        MAX(CAMPAIGN_BUDGET)                                                 AS daily_budget,
+        MAX(DAILY_BUDGET)                                                    AS daily_budget,
         SUM(IMPRESSIONS)                                                     AS impressions,
         SUM(CLICKS)                                                          AS clicks,
         ROUND(SAFE_DIVIDE(SUM(CLICKS), SUM(IMPRESSIONS)) * 100, 2)          AS ctr,
@@ -138,7 +138,7 @@ const QUERIES = {
         ROUND(SAFE_DIVIDE(SUM(COST) * 1000, SUM(IMPRESSIONS)))              AS cpm,
         ROUND(SUM(CONVERSIONS), 1)                                           AS conversions,
         ROUND(SAFE_DIVIDE(SUM(CONVERSIONS), SUM(CLICKS)) * 100, 2)          AS conv_rate,
-        ROUND(SAFE_DIVIDE(SUM(CONVERSIONS_VALUE), SUM(COST)), 2)            AS roas,
+        ROUND(SAFE_DIVIDE(SUM(CONVERSION_VALUE), SUM(COST)), 2)             AS roas,
         ROUND(AVG(SEARCH_IMPRESSION_SHARE) * 100, 1)                        AS impression_share,
         SUM(VIDEO_VIEWS)                                                     AS video_views
       FROM \`bigdata.GOOGLEADS_CAMPAIGN\`
@@ -236,7 +236,7 @@ const QUERIES = {
         DEVICE,
         CAMPAIGN_NAME,
         ROUND(SUM(CONVERSIONS), 1)                                      AS conversions,
-        ROUND(SUM(CONVERSIONS_VALUE))                                   AS conversion_value,
+        ROUND(SUM(CONVERSION_VALUE))                                    AS conversion_value,
         ROUND(SUM(ESTIMATED_CROSS_DEVICE_CONVERSIONS), 1)               AS est_cross_device,
         ROUND(SUM(VIEW_THROUGH_CONVERSIONS), 1)                         AS view_through
       FROM \`bigdata.GOOGLEADS_CONVERSION\`
