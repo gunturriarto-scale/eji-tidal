@@ -165,28 +165,38 @@ const QUERIES = {
 
   country: ({ username }) => {
     const clauses = buildAudienceFilters({ username });
+    const usernameFilter = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     return `
+      WITH latest AS (
+        SELECT USERNAME, COUNTRY, DISTRIBUTION
+        FROM \`bigdata.TIKBA_COUNTRY\`
+        ${usernameFilter}
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY DATE DESC) = 1
+      )
       SELECT
         COUNTRY,
-        DISPLAY_NAME,
-        ROUND(SUM(DISTRIBUTION) * 100, 2) AS distribution_pct
-      FROM \`bigdata.TIKBA_COUNTRY\`
-      ${where(clauses)}
-      GROUP BY COUNTRY, DISPLAY_NAME
+        ROUND(AVG(DISTRIBUTION) * 100, 2) AS distribution_pct
+      FROM latest
+      GROUP BY COUNTRY
       ORDER BY distribution_pct DESC
     `;
   },
 
   gender: ({ username }) => {
     const clauses = buildAudienceFilters({ username });
+    const usernameFilter = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     return `
+      WITH latest AS (
+        SELECT USERNAME, GENDER, DISTRIBUTION
+        FROM \`bigdata.TIKBA_GENDER\`
+        ${usernameFilter}
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY DATE DESC) = 1
+      )
       SELECT
         GENDER,
-        DISPLAY_NAME,
-        ROUND(SUM(DISTRIBUTION) * 100, 2) AS distribution_pct
-      FROM \`bigdata.TIKBA_GENDER\`
-      ${where(clauses)}
-      GROUP BY GENDER, DISPLAY_NAME
+        ROUND(AVG(DISTRIBUTION) * 100, 2) AS distribution_pct
+      FROM latest
+      GROUP BY GENDER
       ORDER BY distribution_pct DESC
     `;
   },

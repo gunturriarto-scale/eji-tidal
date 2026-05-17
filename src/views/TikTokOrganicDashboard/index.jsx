@@ -161,7 +161,7 @@ function VideoPerformanceSection({ data }) {
 }
 
 function AudienceSection({ data }) {
-  return <TK_Demographics genderData={data.gender} countryData={data.country} />;
+  return <TK_Demographics genderData={data.gender} countryData={data.country} kpi={data.kpi} />;
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
