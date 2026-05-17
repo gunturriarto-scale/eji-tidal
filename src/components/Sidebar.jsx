@@ -56,6 +56,8 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
   const menuItems = [
     { type: 'divider', label: 'Management' },
     { id: 'commandCenter',  name: 'Command Center',   icon: <Target size={20} />,    color: '#F59E0B' },
+
+    { type: 'divider', label: 'Ads Analytics' },
     { id: 'metaDashboard',   name: 'Ads // Meta',   icon: <MetaIcon size={20} />, color: '#1877F2' },
     { id: 'tiktokDashboard', name: 'Ads // Tiktok', icon: <TikTokIcon size={20} />, color: '#FF0050' },
 
