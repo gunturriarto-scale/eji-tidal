@@ -91,7 +91,7 @@ function PostCard({ post, rank }) {
       {/* Thumbnail */}
       {type === 'STORY' ? (
         <div style={{
-          height: '160px',
+          aspectRatio: '9/16',
           background: gradient,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           position: 'relative', overflow: 'hidden',
@@ -108,17 +108,17 @@ function PostCard({ post, rank }) {
         </div>
       ) : (
         <div style={{
-          height: '160px',
           position: 'relative',
           overflow: 'hidden',
           borderTop: `1px solid rgba(255,255,255,0.04)`,
+          aspectRatio: '9/16',
         }}>
           <iframe
             src={type === 'REELS'
               ? `https://www.instagram.com/reel/${post.MEDIA_SHORTCODE}/embed/captioned/`
               : `https://www.instagram.com/p/${post.MEDIA_SHORTCODE}/embed/captioned/`}
             title={`Instagram post by @${post.USERNAME}`}
-            style={{ width: '100%', height: '160px', border: 'none', display: 'block' }}
+            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             scrolling="no"
             frameBorder="0"
             allowTransparency="true"

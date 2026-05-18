@@ -165,44 +165,25 @@ const QUERIES = {
 
   country: ({ username }) => {
     const clauses = buildAudienceFilters({ username });
-    const usernameFilter = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     return `
-      WITH latest AS (
-        SELECT USERNAME, COUNTRY, DISTRIBUTION, \`DATE\`
-        FROM \`bigdata.TIKBA_COUNTRY\`
-        ${usernameFilter}
-        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY \`DATE\` DESC) = 1
-      )
       SELECT
         COUNTRY,
         ROUND(AVG(DISTRIBUTION) * 100, 2) AS distribution_pct
-      FROM latest
+      FROM \`bigdata.TIKBA_COUNTRY\`
+      ${where(clauses)}
       GROUP BY COUNTRY
       ORDER BY distribution_pct DESC
     `;
   },
 
-  schema: () => `
-    SELECT table_name, column_name, data_type
-    FROM \`bigdata.INFORMATION_SCHEMA.COLUMNS\`
-    WHERE table_name IN ('TIKBA_COUNTRY', 'TIKBA_GENDER', 'TIKBA_PROFILE', 'TIKBA_VIDEO')
-    ORDER BY table_name, ordinal_position
-  `,
-
   gender: ({ username }) => {
     const clauses = buildAudienceFilters({ username });
-    const usernameFilter = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
     return `
-      WITH latest AS (
-        SELECT USERNAME, GENDER, DISTRIBUTION, \`DATE\`
-        FROM \`bigdata.TIKBA_GENDER\`
-        ${usernameFilter}
-        QUALIFY ROW_NUMBER() OVER (PARTITION BY USERNAME ORDER BY \`DATE\` DESC) = 1
-      )
       SELECT
         GENDER,
         ROUND(AVG(DISTRIBUTION) * 100, 2) AS distribution_pct
-      FROM latest
+      FROM \`bigdata.TIKBA_GENDER\`
+      ${where(clauses)}
       GROUP BY GENDER
       ORDER BY distribution_pct DESC
     `;

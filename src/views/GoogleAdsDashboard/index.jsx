@@ -152,50 +152,81 @@ function FilterBar({
 
 // ─── Top campaigns (overview) ──────────────────────────────────────────────────
 
-function TopCampaigns({ campaigns }) {
-  const top = (campaigns || []).slice(0, 5);
+function fmtIDR(n) {
+  if (n == null) return '—';
+  const v = Number(n);
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return String(v);
+}
+
+function CampaignTableCard({ title, campaigns, sortKey, columns }) {
+  const top = [...(campaigns || [])].sort((a, b) => Number(b[sortKey] || 0) - Number(a[sortKey] || 0)).slice(0, 5);
   if (!top.length) return null;
+
+  const chLabels = { PERFORMANCE_MAX: 'PMax', DISPLAY: 'Display', VIDEO: 'Video', DEMAND_GEN: 'DemGen' };
+  const chColors = { PERFORMANCE_MAX: '#4285F4', DISPLAY: '#FBBC04', VIDEO: '#EA4335', DEMAND_GEN: '#34A853' };
 
   return (
     <div className="glass-panel" style={{ padding: '1.25rem' }}>
       <p style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-tertiary)', marginBottom: '0.75rem' }}>
-        Top 5 Campaigns by Spend
+        {title}
       </p>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
           <thead>
             <tr>
-              {['Campaign', 'Channel', 'Spend', 'CTR', 'Conv.', 'ROAS'].map(h => (
-                <th key={h} style={{ padding: '0.4rem 0.6rem', textAlign: h === 'Campaign' ? 'left' : 'right', color: 'var(--text-tertiary)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h}</th>
+              {columns.map(h => (
+                <th key={h.label} style={{ padding: '0.4rem 0.6rem', textAlign: h.align || 'right', color: 'var(--text-tertiary)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>{h.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {top.map((row, idx) => {
               const ch = row.channel_type || row.ADVERTISING_CHANNEL_TYPE || '';
-              const chLabels = { PERFORMANCE_MAX: 'PMax', DISPLAY: 'Display', VIDEO: 'Video', DEMAND_GEN: 'DemGen' };
-              const chColors = { PERFORMANCE_MAX: '#4285F4', DISPLAY: '#FBBC04', VIDEO: '#EA4335', DEMAND_GEN: '#34A853' };
               const color = chColors[ch] || '#6B7280';
               return (
                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '0.5rem 0.6rem', color: 'var(--text-primary)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.CAMPAIGN_NAME || '—'}</td>
-                  <td style={{ padding: '0.5rem 0.6rem', textAlign: 'right' }}>
-                    <span style={{ fontSize: '0.6rem', padding: '2px 5px', background: `${color}18`, color, borderRadius: '3px', fontWeight: 700 }}>{chLabels[ch] || ch}</span>
-                  </td>
-                  <td style={{ padding: '0.5rem 0.6rem', textAlign: 'right', color: ACCENT, fontWeight: 600 }}>
-                    IDR {row.cost >= 1e6 ? (row.cost / 1e6).toFixed(1) + 'M' : row.cost >= 1e3 ? (row.cost / 1e3).toFixed(1) + 'K' : String(row.cost || 0)}
-                  </td>
-                  <td style={{ padding: '0.5rem 0.6rem', textAlign: 'right', color: 'var(--text-secondary)' }}>{row.ctr != null ? row.ctr + '%' : '—'}</td>
-                  <td style={{ padding: '0.5rem 0.6rem', textAlign: 'right', color: '#34A853' }}>{row.conversions != null ? Number(row.conversions).toFixed(1) : '—'}</td>
-                  <td style={{ padding: '0.5rem 0.6rem', textAlign: 'right', color: '#10B981', fontWeight: 600 }}>{row.roas != null ? row.roas + 'x' : '—'}</td>
+                  {columns.map(col => (
+                    <td key={col.label} style={{ padding: '0.5rem 0.6rem', textAlign: col.align || 'right', whiteSpace: 'nowrap' }}>
+                      {col.render(row, color, chLabels[ch] || ch)}
+                    </td>
+                  ))}
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function TopCampaigns({ campaigns }) {
+  const spendCols = [
+    { label: 'Campaign', align: 'left', render: (r) => <span style={{ color: 'var(--text-primary)', maxWidth: '200px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.CAMPAIGN_NAME || '—'}</span> },
+    { label: 'Channel', render: (r, color, chLabel) => <span style={{ fontSize: '0.6rem', padding: '2px 5px', background: `${color}18`, color, borderRadius: '3px', fontWeight: 700 }}>{chLabel}</span> },
+    { label: 'Spend', render: (r) => <span style={{ color: ACCENT, fontWeight: 600 }}>IDR {fmtIDR(r.cost)}</span> },
+    { label: 'CTR', render: (r) => <span style={{ color: 'var(--text-secondary)' }}>{r.ctr != null ? r.ctr + '%' : '—'}</span> },
+    { label: 'Conv.', render: (r) => <span style={{ color: '#34A853' }}>{r.conversions != null ? Number(r.conversions).toFixed(1) : '—'}</span> },
+    { label: 'ROAS', render: (r) => <span style={{ color: '#10B981', fontWeight: 600 }}>{r.roas != null ? r.roas + 'x' : '—'}</span> },
+  ];
+
+  const imprCols = [
+    { label: 'Campaign', align: 'left', render: (r) => <span style={{ color: 'var(--text-primary)', maxWidth: '200px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.CAMPAIGN_NAME || '—'}</span> },
+    { label: 'Channel', render: (r, color, chLabel) => <span style={{ fontSize: '0.6rem', padding: '2px 5px', background: `${color}18`, color, borderRadius: '3px', fontWeight: 700 }}>{chLabel}</span> },
+    { label: 'Impressions', render: (r) => <span style={{ color: '#FBBC04', fontWeight: 600 }}>{fmtIDR(r.impressions)}</span> },
+    { label: 'CPM', render: (r) => <span style={{ color: 'var(--text-secondary)' }}>{r.cpm != null ? `IDR ${fmtIDR(r.cpm)}` : '—'}</span> },
+    { label: 'CTR', render: (r) => <span style={{ color: 'var(--text-secondary)' }}>{r.ctr != null ? r.ctr + '%' : '—'}</span> },
+    { label: 'Spend', render: (r) => <span style={{ color: ACCENT, fontWeight: 600 }}>IDR {fmtIDR(r.cost)}</span> },
+  ];
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <CampaignTableCard title="Top 5 Campaigns by Spend" campaigns={campaigns} sortKey="cost" columns={spendCols} />
+      <CampaignTableCard title="Top 5 Campaigns by Impression" campaigns={campaigns} sortKey="impressions" columns={imprCols} />
     </div>
   );
 }

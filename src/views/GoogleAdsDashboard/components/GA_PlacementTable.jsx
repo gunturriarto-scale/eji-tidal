@@ -108,16 +108,23 @@ export function GA_PlacementTable({ placementData }) {
     setPage(0);
   }
 
-  function isYouTubeURL(url) {
-    return url && (url.includes('youtube.com') || url.includes('youtu.be'));
+  function isYouTubeChannelID(v) {
+    return v && /^UC[A-Za-z0-9_-]{22}$/.test(v);
+  }
+
+  function buildHref(v) {
+    if (!v) return null;
+    if (isYouTubeChannelID(v)) return `https://www.youtube.com/channel/${v}`;
+    if (v.startsWith('http')) return v;
+    return `https://${v}`;
   }
 
   function renderCell(row, col) {
     const v = row[col.key];
     switch (col.key) {
       case 'PLACEMENT': {
-        const isYT = isYouTubeURL(v || '');
-        const href = v ? (v.startsWith('http') ? v : `https://${v}`) : null;
+        const isYT = isYouTubeChannelID(v) || (v && (v.includes('youtube.com') || v.includes('youtu.be')));
+        const href = buildHref(v);
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', maxWidth: '240px' }}>
             {isYT && <span style={{ fontSize: '0.6rem', padding: '1px 4px', background: 'rgba(234,67,53,0.15)', color: '#EA4335', borderRadius: '3px', flexShrink: 0 }}>YT</span>}
