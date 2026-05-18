@@ -8,7 +8,9 @@ export const LoginView = () => {
         <div className="login-container">
             <div className="login-card">
                 <div className="login-header">
-                    <img src="/logo.png" alt="EJI Logo" className="login-logo" style={{ filter: 'invert(1)' }} />
+                    <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '12px', padding: '10px 20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img src="/logo.png" alt="EJI Logo" className="login-logo" style={{ filter: 'none' }} />
+                    </div>
                     <h1 className="gradient-text">EJI TIDAL Dashboard</h1>
                     <p>Performance Marketing Command Center</p>
                 </div>

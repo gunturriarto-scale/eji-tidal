@@ -86,16 +86,26 @@ export const Sidebar = ({ activeView, setActiveView, isCollapsed, setIsCollapsed
         alignItems: 'center',
         gap: '0.5rem'
       }}>
-        <img 
-          src="/logo.png" 
-          alt="EJI Logo" 
-          style={{ 
-            width: isCollapsed ? '32px' : '120px',
-            height: 'auto',
-            filter: 'invert(1)',
-            transition: 'all 0.3s ease'
-          }} 
-        />
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: '10px',
+          padding: isCollapsed ? '4px' : '6px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+        }}>
+          <img
+            src="/logo.png"
+            alt="EJI Logo"
+            style={{
+              width: isCollapsed ? '28px' : '110px',
+              height: 'auto',
+              display: 'block',
+              transition: 'all 0.3s ease'
+            }}
+          />
+        </div>
         <button 
           className="sidebar-toggle" 
           onClick={() => setIsCollapsed(!isCollapsed)}
