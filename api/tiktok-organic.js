@@ -182,6 +182,13 @@ const QUERIES = {
     `;
   },
 
+  schema: () => `
+    SELECT table_name, column_name, data_type
+    FROM \`bigdata.INFORMATION_SCHEMA.COLUMNS\`
+    WHERE table_name IN ('TIKBA_COUNTRY', 'TIKBA_GENDER', 'TIKBA_PROFILE', 'TIKBA_VIDEO')
+    ORDER BY table_name, ordinal_position
+  `,
+
   gender: ({ username }) => {
     const clauses = buildAudienceFilters({ username });
     const usernameFilter = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
