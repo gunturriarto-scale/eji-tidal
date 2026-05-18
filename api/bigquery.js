@@ -622,6 +622,7 @@ const QUERIES = {
       CAMPAIGN_NAME,
       AD_TEXT,
       VIDEO_ID,
+      MAX(PLAYABLE_URL) as playable_url,
       ROUND(SUM(COST)) as spend,
       SUM(IMPRESSIONS) as impressions,
       SUM(CLICKS) as clicks,
