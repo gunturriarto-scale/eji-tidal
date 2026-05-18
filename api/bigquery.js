@@ -686,6 +686,12 @@ const QUERIES = {
     GROUP BY 1
     ORDER BY spend DESC`,
 
+  tikAdSchema: () => `
+    SELECT column_name, data_type
+    FROM \`bigdata.INFORMATION_SCHEMA.COLUMNS\`
+    WHERE table_name = 'TIK_AD'
+    ORDER BY ordinal_position`,
+
 };
 
 export default async function handler(req, res) {
