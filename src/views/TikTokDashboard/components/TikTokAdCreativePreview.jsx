@@ -6,8 +6,13 @@ const fmtRp = (n) => n ? 'Rp ' + Math.round(Number(n)).toString().replace(/\B(?=
 // Try to load a thumbnail from available sources
 function getThumbnailSources(ad) {
   const sources = [];
+  // playable_url from TikTok Ads (usually empty from Supermetrics)
   if (ad.playable_url) {
     sources.push(`/api/proxy-image?url=${encodeURIComponent(ad.playable_url)}`);
+  }
+  // organic_thumbnail_url — joined from TIKBA_VIDEO for brand accounts
+  if (ad.organic_thumbnail_url) {
+    sources.push(`/api/proxy-image?url=${encodeURIComponent(ad.organic_thumbnail_url)}`);
   }
   if (ad.VIDEO_ID && String(ad.VIDEO_ID).length > 8) {
     const shareUrl = `https://www.tiktok.com/video/${ad.VIDEO_ID}`;

@@ -615,25 +615,35 @@ const QUERIES = {
 
   // ─── TIKTOK AD OVERVIEW ─────────────────────────────────────────────────────
   tiktokAdOverview: ({ start, end, account }) => `
+    WITH latest_thumbs AS (
+      SELECT DISPLAY_NAME, THUMBNAIL_URL, SHARE_URL
+      FROM \`bigdata.TIKBA_VIDEO\`
+      WHERE THUMBNAIL_URL IS NOT NULL AND THUMBNAIL_URL != ''
+      QUALIFY ROW_NUMBER() OVER (PARTITION BY DISPLAY_NAME ORDER BY CREATE_DATE DESC) = 1
+    )
     SELECT
-      AD_NAME,
-      AD_STATUS,
-      ADVERTISER_NAME as account_name,
-      CAMPAIGN_NAME,
-      AD_TEXT,
-      VIDEO_ID,
-      MAX(PLAYABLE_URL) as playable_url,
-      ROUND(SUM(COST)) as spend,
-      SUM(IMPRESSIONS) as impressions,
-      SUM(CLICKS) as clicks,
-      SUM(VIDEO_WATCHED_2S) as video_2s,
-      SUM(VIDEO_WATCHED_6S) as video_6s,
-      SUM(CONVERSIONS) as conversions,
-      ROUND(SUM(PURCHASE_VALUE)) as purchase_value
-    FROM \`bigdata.TIK_AD\`
-    WHERE DATE BETWEEN '${start}' AND '${end}'
-    ${account && account !== 'all' ? `AND ADVERTISER_NAME = '${account}'` : ''}
-    GROUP BY 1, 2, 3, 4, 5, 6
+      a.AD_NAME,
+      a.AD_STATUS,
+      a.ADVERTISER_NAME as account_name,
+      a.CAMPAIGN_NAME,
+      a.AD_TEXT,
+      a.VIDEO_ID,
+      a.DISPLAY_NAME,
+      MAX(a.PLAYABLE_URL) as playable_url,
+      MAX(lt.THUMBNAIL_URL) as organic_thumbnail_url,
+      MAX(lt.SHARE_URL) as organic_share_url,
+      ROUND(SUM(a.COST)) as spend,
+      SUM(a.IMPRESSIONS) as impressions,
+      SUM(a.CLICKS) as clicks,
+      SUM(a.VIDEO_WATCHED_2S) as video_2s,
+      SUM(a.VIDEO_WATCHED_6S) as video_6s,
+      SUM(a.CONVERSIONS) as conversions,
+      ROUND(SUM(a.PURCHASE_VALUE)) as purchase_value
+    FROM \`bigdata.TIK_AD\` a
+    LEFT JOIN latest_thumbs lt ON a.DISPLAY_NAME = lt.DISPLAY_NAME
+    WHERE a.DATE BETWEEN '${start}' AND '${end}'
+    ${account && account !== 'all' ? `AND a.ADVERTISER_NAME = '${account}'` : ''}
+    GROUP BY 1, 2, 3, 4, 5, 6, 7
     ORDER BY spend DESC
     LIMIT 50`,
 
